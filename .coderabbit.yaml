@@ -1,0 +1,169 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit AI Code Review Configuration for NidVite
+# https://docs.coderabbit.ai
+
+language: "en-US"
+early_access: false
+
+reviews:
+  # Profile: "chill" = constructive, "assertive" = stricter
+  profile: "assertive"
+
+  # Auto-review settings
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  changed_files_summary: true
+
+  # Auto-review triggers
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "develop"
+      - "main"
+      - "feature/*"
+      - "bugfix/*"
+      - "hotfix/*"
+
+  # Path-based instructions for Laravel + PostGIS project
+  path_instructions:
+    - path: "app/Actions/**/*.php"
+      instructions: |
+        Review business logic Actions for:
+        - Single Responsibility Principle adherence
+        - PostGIS queries are properly parameterized (no SQL injection)
+        - Type hints and return types are present
+        - Actions are testable and don't depend on request state
+        - State machine transitions are validated
+    - path: "app/Livewire/**/*.php"
+      instructions: |
+        Review Livewire components for:
+        - Thin controllers (business logic delegated to Actions)
+        - Proper validation rules on public properties
+        - No PostGIS raw queries inline (must use Actions or model scopes)
+        - Rate limiting and anti-spam measures are applied
+    - path: "app/Filament/**/*.php"
+      instructions: |
+        Review Filament resources for:
+        - Policy authorization on actions (RBAC enforcement)
+        - Form validation rules match model constraints
+        - Map widgets are performant (no N+1 queries)
+        - Audit logging is triggered on data changes
+    - path: "app/Models/**/*.php"
+      instructions: |
+        Review Eloquent models for:
+        - Mass assignment protection ($fillable or $guarded)
+        - Relationship definitions with return type hints
+        - Media collection configurations for Spatie
+        - PostGIS spatial scopes are present
+        - Partitioning awareness for large tables
+        - Data retention and pruning logic
+        - Soft delete usage where appropriate
+        - State machine methods (canTransitionTo, transitionTo)
+    - path: "app/Policies/**/*.php"
+      instructions: |
+        Review policies for:
+        - Role-based checks (Admin, Manager, Service Worker, Accountant, Viewer)
+        - No hardcoded role checks (use permissions)
+        - Consistent return types (bool)
+        - Tests cover all role permutations
+    - path: "app/Enums/**/*.php"
+      instructions: |
+        Review enums for:
+        - Complete state definitions (all valid states and transitions)
+        - No orphaned states (states that can be entered but never exited)
+    - path: "database/migrations/*.php"
+      instructions: |
+        Review migrations for:
+        - Presence of reversible down() method
+        - Proper PostGIS type usage (geography vs geometry)
+        - Index definitions for spatial columns (GIST)
+        - Foreign key constraints with onDelete behavior
+        - Partitioning strategy if table is large (reports table)
+        - Data retention fields (expires_at) for GDPR compliance
+        - Soft delete columns where appropriate
+        - Tax fields (tax_rate, tax_amount) on expense tables
+    - path: "tests/**/*.php"
+      instructions: |
+        Review tests for:
+        - Critical path coverage (happy path + 2 failure modes)
+        - Pest syntax usage (prefer Pest over PHPUnit style)
+        - Meaningful test descriptions
+        - No testing of framework internals (test behavior, not implementation)
+        - State machine transition tests (valid and invalid)
+        - RBAC permission tests (each role's access level)
+        - Security tests (XSS, SQL injection, rate limiting)
+    - path: "routes/**/*.php"
+      instructions: |
+        Review routes for:
+        - Rate limiting middleware on public endpoints
+        - Separate rate limits for admin endpoints
+        - Auth middleware on all admin routes
+        - 2FA enforcement in production
+    - path: "*.php"
+      instructions: |
+        General PHP review:
+        - PER Coding Style compliance (enforced by Pint)
+        - PHPStan Level 5+ type safety
+        - No raw SQL without parameterization
+        - No DB::raw() without bindings
+        - Proper error handling and logging
+        - State machine validation (no invalid transitions)
+        - XSS prevention (escaped output, stripped input)
+        - Translation compliance: no hardcoded strings in user-facing code
+    - path: "resources/views/**/*.blade.php"
+      instructions: |
+        Review Blade templates for:
+        - No hardcoded user-facing strings (must use {{ __('key') }})
+        - Proper use of @lang() or {{ __('key') }} directives
+        - HTML lang attribute set: <html lang="{{ app()->getLocale() }}">
+        - No inline scripts that bypass CSP
+    - path: "resources/views/livewire/**/*.blade.php"
+      instructions: |
+        Review Livewire views for:
+        - All labels, buttons, hints use {{ __('key') }}
+        - French-first: default text should be French
+        - No hardcoded validation messages
+    - path: "lang/**/*.json"
+      instructions: |
+        Review translation files for:
+        - Both en.json and fr.json have identical key sets
+        - No empty values in fr.json (French is primary, never optional)
+        - Semantic dot-notation keys (domain.component.element)
+        - No English text used as keys
+        - Consistent capitalization and punctuation
+    - path: "app/Filament/**/*.php"
+      instructions: |
+        Review Filament resources for:
+        - All form labels, table headers, actions use ->label(__('key'))
+        - Page titles translated
+        - Navigation labels translated
+        - Widget titles translated
+
+  # Tools integration
+  tools:
+    phpstan:
+      enabled: true
+      level: 5
+    pint:
+      enabled: true
+
+  # Ignore generated files
+  ignore:
+    - "vendor/**"
+    - "node_modules/**"
+    - "bootstrap/cache/**"
+    - "storage/**"
+    - "public/build/**"
+    - "public/vendor/**"
+
+chat:
+  auto_reply: true
+
+# Knowledge base (optional - can link to project docs)
+knowledge_base:
+  issues:
+    learning: true
