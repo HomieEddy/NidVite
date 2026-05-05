@@ -30,19 +30,19 @@ it('creates a user with auto-generated uuid', function () {
 it('creates a report with auto-generated uuid', function () {
     $report = Report::create([
         'reporter_email' => 'citizen@example.com',
-        'status' => 'pending',
+        'status' => 'received',
         'ip_address_hash' => hash('sha256', '127.0.0.1'),
         'user_agent_hash' => hash('sha256', 'Mozilla'),
     ]);
 
     expect($report->uuid)->not->toBeNull()
-        ->and($report->status)->toBe('pending');
+        ->and($report->status)->toBe('received');
 });
 
 it('sets postgis location on report', function () {
     $report = Report::create([
         'reporter_email' => 'citizen@example.com',
-        'status' => 'pending',
+        'status' => 'received',
         'ip_address_hash' => hash('sha256', '127.0.0.1'),
         'user_agent_hash' => hash('sha256', 'Mozilla'),
     ]);
@@ -60,7 +60,7 @@ it('sets postgis location on report', function () {
 it('filters reports by status', function () {
     Report::create([
         'reporter_email' => 'a@example.com',
-        'status' => 'pending',
+        'status' => 'received',
         'ip_address_hash' => hash('sha256', '127.0.0.1'),
         'user_agent_hash' => hash('sha256', 'Mozilla'),
     ]);
@@ -72,7 +72,7 @@ it('filters reports by status', function () {
         'user_agent_hash' => hash('sha256', 'Mozilla'),
     ]);
 
-    expect(Report::status('pending')->count())->toBe(1);
+    expect(Report::status('received')->count())->toBe(1);
 });
 
 it('returns active report categories', function () {
