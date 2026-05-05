@@ -62,6 +62,46 @@ CodeRabbit is configured via `.coderabbit.yaml` in the project root. Key setting
 - **Path-based rules**: Custom review instructions for `app/Actions/`, `app/Livewire/`, `app/Filament/`, `database/migrations/`, and `tests/`.
 - **Tool integration**: PHPStan Level 5 and Laravel Pint are run automatically.
 
+### CodeRabbit CLI Workflow
+
+After pushing a branch and opening a PR, use the GitHub CLI to interact with CodeRabbit:
+
+**1. Check review status:**
+```bash
+gh pr view <branch> --json statusCheckRollup
+```
+Look for `state: "SUCCESS"` (passed), `PENDING` (processing), or `FAILURE` (issues found).
+
+**2. Read review comments:**
+```bash
+gh pr view <branch> --json comments
+```
+Address all `request_changes` comments before merging. Comments from `coderabbitai` are auto-generated.
+
+**3. Fix configuration errors:**
+If CodeRabbit reports a `.coderabbit.yaml` parsing error:
+- Read the error in the PR comment (e.g., `Expected 'default' | '0' | ... received number`)
+- Fix the config value type (e.g., quote numbers: `level: "5"` instead of `level: 5`)
+- Commit and push the fix
+
+**4. Trigger re-review:**
+After fixing issues or config errors:
+```bash
+gh pr comment <pr-number> --body "@coderabbitai review"
+```
+
+**5. Handle skipped reviews:**
+CodeRabbit skips reviews if a PR exceeds **150 files**. This typically happens with initial scaffold PRs. For large PRs:
+- Ensure local checks pass (Pest, Pint, PHPStan)
+- Perform manual self-review of critical paths
+- Document the skip reason in the PR description
+- Future feature PRs will be smaller and within limits
+
+**6. Merge criteria:**
+- CodeRabbit status must be `SUCCESS` (or documented skip reason)
+- No unresolved `request_changes` comments
+- All local checks (Pest, Pint, PHPStan) must pass
+
 ---
 
 ## Merge & Deployment Logic
@@ -113,11 +153,12 @@ public function down(): void
 3. Ensure all checks pass locally (Pest, Pint, PHPStan).
 4. Open a PR targeting `develop` with a clear description and "How to Test" section.
 5. Self-review your diff on GitHub.
-6. **Wait for CodeRabbit AI review** and address any `request_changes` comments.
-7. Squash and merge into `develop`.
-8. When ready to release, open a PR from `develop` → `main`.
-9. After human review + CI + CodeRabbit, merge into `main`.
-10. Railway auto-deploys.
+6. **Check CodeRabbit status via CLI**: `gh pr view <branch> --json statusCheckRollup`
+7. **Address CodeRabbit feedback**: Fix any `request_changes` or config errors; trigger re-review with `@coderabbitai review`
+8. Squash and merge into `develop`.
+9. When ready to release, open a PR from `develop` → `main`.
+10. After human review + CI + CodeRabbit, merge into `main`.
+11. Railway auto-deploys.
 
 ---
 
