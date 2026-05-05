@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ReportStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,15 +12,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Report extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected static function booted(): void
     {
         static::creating(function (Report $report) {
             $report->uuid ??= (string) Str::uuid();
+            $report->status ??= ReportStatus::Received->value;
         });
     }
 
@@ -66,6 +71,14 @@ class Report extends Model
         'completed_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'priority', 'admin_notes', 'rejection_reason'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     public function category(): BelongsTo
     {
@@ -120,5 +133,64 @@ class Report extends Model
     public function scopeNotSpam(Builder $query): Builder
     {
         return $query->where('is_spam', false);
+    }
+
+    /**
+     * Transition the report to a new status.
+     *
+     * @throws InvalidArgumentException
+     */
+    public function transitionTo(string $newStatus, ?string $reason = null): void
+    {
+        $current = ReportStatus::tryFrom($this->status);
+
+        if ($current === null) {
+            throw new InvalidArgumentException("Invalid current status: {$this->status}");
+        }
+
+        if (! $current->canTransitionTo($newStatus)) {
+            throw new InvalidArgumentException(
+                "Cannot transition from '{$this->status}' to '{$newStatus}'. Allowed: "
+                .implode(', ', $current->transitions())
+            );
+        }
+
+        $oldStatus = $this->status;
+        $this->status = $newStatus;
+
+        if ($newStatus === ReportStatus::Rejected->value && $reason !== null) {
+            $this->rejection_reason = $reason;
+        }
+
+        $this->save();
+
+        activity('report_status')
+            ->performedOn($this)
+            ->withProperties([
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'reason' => $reason,
+            ])
+            ->log("Report status changed from {$oldStatus} to {$newStatus}");
+    }
+
+    /**
+     * Check if the report can transition to the given status.
+     */
+    public function canTransitionTo(string $status): bool
+    {
+        $current = ReportStatus::tryFrom($this->status);
+
+        return $current !== null && $current->canTransitionTo($status);
+    }
+
+    /**
+     * Check if the report is in a terminal state.
+     */
+    public function isTerminal(): bool
+    {
+        $current = ReportStatus::tryFrom($this->status);
+
+        return $current !== null && $current->isTerminal();
     }
 }
