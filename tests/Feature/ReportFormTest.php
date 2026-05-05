@@ -1,12 +1,13 @@
 <?php
 
 use App\Models\ReportCategory;
+use Database\Seeders\ReportCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(\Database\Seeders\ReportCategorySeeder::class);
+    $this->seed(ReportCategorySeeder::class);
 });
 
 it('displays the public report form', function () {
