@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('address', 500)->nullable();
             $table->string('neighborhood', 100)->nullable()->index();
             $table->string('borough', 100)->nullable()->index();
-            $table->enum('status', ['pending', 'scheduled', 'in_progress', 'repaired', 'rejected'])->default('pending')->index();
+            $table->enum('status', ['received', 'verified', 'scheduled', 'in_progress', 'repaired', 'rejected'])->default('received')->index();
             $table->enum('priority', ['low', 'normal', 'high', 'critical'])->default('normal')->index();
             $table->unsignedSmallInteger('category_id')->nullable();
             $table->text('description')->nullable();
@@ -35,7 +35,7 @@ return new class extends Migration
             $table->integer('submission_duration_ms')->nullable();
             $table->boolean('is_spam')->default(false)->index();
             $table->float('spam_score')->nullable();
-            $table->enum('rejection_reason', ['false_report', 'out_of_scope', 'duplicate', 'not_found', 'insufficient_info'])->nullable();
+            $table->string('rejection_reason', 500)->nullable();
             $table->text('admin_notes')->nullable();
             $table->timestamp('first_scheduled_at')->nullable();
             $table->timestamp('first_started_at')->nullable();
