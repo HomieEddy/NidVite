@@ -4,19 +4,21 @@ use App\Models\Report;
 use App\Models\ReportCategory;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\ReportCategorySeeder;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(\Database\Seeders\RoleSeeder::class);
-    $this->seed(\Database\Seeders\ReportCategorySeeder::class);
+    $this->seed(RoleSeeder::class);
+    $this->seed(ReportCategorySeeder::class);
 });
 
 it('creates a user with auto-generated uuid', function () {
     $user = User::create([
         'name' => 'Test',
-        'email' => 'test-' . uniqid() . '@example.com',
+        'email' => 'test-'.uniqid().'@example.com',
         'password' => bcrypt('secret'),
         'role_id' => Role::first()->id,
     ]);
