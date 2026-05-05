@@ -8,7 +8,7 @@ use App\Models\User;
 it('creates a user with auto-generated uuid', function () {
     $user = User::create([
         'name' => 'Test',
-        'email' => 'test-' . uniqid() . '@example.com',
+        'email' => 'test-'.uniqid().'@example.com',
         'password' => bcrypt('secret'),
         'role_id' => Role::first()->id,
     ]);

@@ -90,7 +90,7 @@ class Report extends Model
     public function setLocation(float $latitude, float $longitude): void
     {
         DB::statement(
-            "UPDATE reports SET location = ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography WHERE id = ?",
+            'UPDATE reports SET location = ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography WHERE id = ?',
             [$longitude, $latitude, $this->id]
         );
     }
@@ -101,7 +101,7 @@ class Report extends Model
     public function scopeNear(Builder $query, float $latitude, float $longitude, int $radiusMeters = 1000): Builder
     {
         return $query->whereRaw(
-            "ST_DWithin(location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)",
+            'ST_DWithin(location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)',
             [$longitude, $latitude, $radiusMeters]
         );
     }
