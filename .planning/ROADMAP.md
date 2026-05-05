@@ -17,25 +17,36 @@
 - [x] All gaps closed
 
 ## Phase 1: Laravel Scaffolding
-- [ ] Create Laravel 11 project with Sail
-- [ ] Configure Sail with PostGIS 15-3.4
-- [ ] Install core packages:
-  - [ ] `filament/filament`
-  - [ ] `spatie/laravel-medialibrary`
-  - [ ] `matanyada/laravel-postgis`
-  - [ ] `laravel/reverb`
-  - [ ] `laravel/fortify`
-- [ ] Configure `.env.example` with all required keys
+- [x] Create Laravel 11 project with Sail
+- [x] Configure Sail with PostGIS 15-3.4
+- [x] Install core packages:
+  - [x] `filament/filament`
+  - [x] `spatie/laravel-medialibrary`
+  - [x] `matanyada/laravel-postgis`
+  - [x] `laravel/reverb`
+  - [x] `laravel/fortify`
+- [x] Configure `.env.example` with all required keys
 - [ ] Set up GitHub Actions CI workflow
-- [ ] Create `develop` branch
+- [x] Create `develop` branch
 
 ## Phase 2: Database & Models
-- [ ] Create migrations:
-  - [ ] `roles`, `permissions`, `role_permissions`
-  - [ ] `users` (with role_id FK, 2FA fields)
+- [x] Create migrations:
+  - [x] `roles`
+  - [x] `users` (with role_id FK, 2FA fields)
+  - [x] `reports` (SLA fields)
+  - [x] `repair_jobs`
+  - [x] `job_reports`
+  - [x] `job_workers`
+  - [x] `expense_categories`
+  - [x] `materials`
+  - [x] `expenses`
+  - [x] `material_purchases`
+  - [x] `job_materials`
+  - [x] `media` (Spatie)
+  - [x] `telescope_entries`
+  - [ ] `permissions`, `role_permissions`
   - [ ] `admin_sessions`
   - [ ] `admin_audit_log`
-  - [ ] `reports` (partitioned by month, SLA fields)
   - [ ] `clusters` (pre-computed with geohash)
   - [ ] `montreal_boundary`
   - [ ] `device_fingerprints`
@@ -45,37 +56,40 @@
   - [ ] `email_deliveries`
   - [ ] `hourly_stats`, `daily_stats`, `weekly_stats`
   - [ ] `neighborhood_stats`
-  - [ ] `report_categories`
   - [ ] `notifications`
 - [ ] Configure table partitioning (monthly ranges)
-- [ ] Seed roles, permissions, categories, Montreal boundary
-- [ ] Create Eloquent models with relationships
+- [x] Seed roles, categories
+- [x] Create Eloquent models with relationships
 - [ ] Set up Spatie media collections (with perceptual hash)
-- [ ] Configure PostGIS indexes (GIST, geohash)
+- [x] Configure PostGIS indexes (GIST)
 - [ ] Set up data retention jobs (IP purging, archiving)
 - [ ] Configure automated backups to R2
 
 ## Phase 3: Citizen PWA
-- [ ] Livewire `ReportForm` component
+- [x] Livewire `ReportForm` component (basic)
 - [ ] Livewire `PhotoUploader` component
 - [ ] Livewire `TrackReport` component
-- [ ] One-tap geolocation capture
+- [x] One-tap geolocation capture
 - [ ] Photo upload with EXIF stripping
 - [ ] Geofencing validation (Montreal only)
-- [ ] Anti-spam (honeypot + reCAPTCHA)
+- [x] Anti-spam (honeypot)
 - [ ] Rate limiting (IP + device fingerprint)
-- [ ] PWA manifest and service worker
+- [x] PWA manifest and service worker
 - [ ] Unique tracking URL generation
 - [ ] Report state machine (strict transitions)
 - [ ] **Bilingual support (FR/EN)**:
   - [ ] Language switcher (globe icon, cookie persistence)
-  - [ ] All PWA strings in `lang/fr.json` and `lang/en.json`
-  - [ ] French-first default, English toggle
+  - [x] Basic PWA strings in `lang/fr/report.php` and `lang/en/report.php`
+  - [x] French-first default
   - [ ] Localized dates (FR: "4 mai 2026", EN: "May 4, 2026")
   - [ ] Localized numbers (FR: "1 234,56", EN: "1,234.56")
 
 ## Phase 4: Entrepreneur Dashboard (Core)
-- [ ] Filament `ReportResource` with RBAC policies
+- [x] Filament `ReportResource` (basic CRUD)
+- [x] Filament `UserResource`
+- [x] Filament `RepairJobResource`
+- [x] Filament `ExpenseResource`
+- [ ] RBAC policies on all resources
 - [ ] MapLibre map widget (all reports + clusters)
 - [ ] Status management with state machine
 - [ ] Priority assignment
@@ -85,13 +99,14 @@
 - [ ] Real-time notifications (Reverb)
 - [ ] Admin audit log viewer (Admin only)
 - [ ] **Bilingual dashboard**:
-  - [ ] User locale preference stored in `users.locale`
+  - [x] User locale preference stored in `users.locale`
   - [ ] All Filament resources translated (`__()` keys)
-  - [ ] French-first default, English toggle in profile
-  - [ ] Dynamic content (`expense_categories`, `notifications`) bilingual
+  - [x] French-first default
+  - [ ] English toggle in profile
 
 ## Phase 4a: RBAC & Admin Security
-- [ ] Fortify integration with 2FA
+- [x] Fortify integration
+- [ ] 2FA setup
 - [ ] Role-based access control on all resources
 - [ ] Admin session management
 - [ ] Brute force protection
@@ -195,55 +210,53 @@
 ## Package Installation Tracker
 
 ### Core (Phase 1)
-- [ ] `filament/filament:^3.0`
-- [ ] `filament/spatie-laravel-media-library-plugin:^3.0`
-- [ ] `spatie/laravel-medialibrary:^11.0`
-- [ ] `intervention/image:^3.0`
-- [ ] `matanyada/laravel-postgis:^5.0`
-- [ ] `laravel/reverb:^1.0`
-- [ ] `laravel/fortify:^1.0`
+- [x] `filament/filament:^5.0` (v5.6.1 for Laravel 11)
+- [x] `spatie/laravel-medialibrary:^11.0` (v11.22.1)
+- [x] `intervention/image:^3.0`
+- [x] `matanyada/laravel-postgis:^5.0`
+- [x] `laravel/reverb:^1.0` (v1.10.0)
+- [x] `laravel/fortify:^1.0` (v1.37)
 
 ### Security (Phase 3)
-- [ ] `spatie/laravel-honeypot:^3.0`
-- [ ] `anhskohbo/no-captcha:^3.0`
-- [ ] `bepsvpt/secure-headers:^7.0`
-- [ ] `jenssegers/agent:^2.6`
+- [x] `spatie/laravel-honeypot:^3.0`
+- [x] `anhskohbo/no-captcha:^3.0`
+- [x] `bepsvpt/secure-headers:^7.0`
+- [x] `jenssegers/agent:^2.6`
 
 ### Mail (Phase 5)
-- [ ] `resend/resend-laravel:^0.1`
+- [x] `resend/resend-laravel:^0.1`
 
 ### PWA (Phase 3)
-- [ ] `silviolleite/laravelpwa:^2.0`
+- [x] `silviolleite/laravelpwa:^2.0` (v2.0.3)
 
 ### Audit (Phase 4)
-- [ ] `spatie/laravel-activitylog:^4.0`
+- [x] `spatie/laravel-activitylog:^4.0` (v4.12.3)
 
 ### Monitoring (Phase 6)
-- [ ] `sentry/sentry-laravel:^4.0`
-- [ ] `spatie/laravel-health:^1.0`
-- [ ] `spatie/laravel-schedule-monitor:^1.0`
+- [x] `sentry/sentry-laravel:^4.0`
+- [x] `spatie/laravel-health:^1.0`
+- [x] `spatie/laravel-schedule-monitor:^1.0`
 
 ### Performance (Phase 6)
-- [ ] `appstract/laravel-opcache:^4.0`
-- [ ] `spatie/laravel-response-cache:^7.0`
-- [ ] `spatie/laravel-backup:^8.0`
+- [x] `appstract/laravel-opcache:^4.0`
+- [x] `spatie/laravel-response-cache:^7.0`
+- [x] `spatie/laravel-backup:^9.0` (v9.3.6, PHP 8.2 compatible)
 
 ### Export (Phase 4)
-- [ ] `maatwebsite/laravel-excel:^3.1`
+- [x] `maatwebsite/laravel-excel:^3.1` (v3.1.69)
 
 ### Testing (Phase 1)
-- [ ] `pestphp/pest:^3.0`
-- [ ] `pestphp/pest-plugin-laravel:^3.0`
-- [ ] `pestphp/pest-plugin-livewire:^3.0`
-- [ ] `pestphp/pest-plugin-faker:^3.0`
-- [ ] `nunomaduro/larastan:^2.0`
+- [x] `pestphp/pest:^2.0` (v2.36, PHP 8.2 compatible)
+- [x] `pestphp/pest-plugin-laravel:^2.0`
+- [x] `pestphp/pest-plugin-faker:^2.0`
+- [x] `nunomaduro/larastan:^2.0` (v2.11)
 
 ### Dev Tools (Phase 1)
-- [ ] `barryvdh/laravel-debugbar:^3.0`
-- [ ] `laravel/pint:^1.0`
-- [ ] `laravel/telescope:^5.0`
+- [x] `barryvdh/laravel-debugbar:^3.0` (v3.16)
+- [x] `laravel/pint:^1.0`
+- [x] `laravel/telescope:^5.0` (v5.20)
 
 ---
 
-*Last updated: 2024-05-04*
+*Last updated: 2026-05-05*
 *Update this file as phases are completed.*
