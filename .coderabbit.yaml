@@ -147,7 +147,7 @@ reviews:
   tools:
     phpstan:
       enabled: true
-      level: 5
+      level: "5"
     pint:
       enabled: true
 
