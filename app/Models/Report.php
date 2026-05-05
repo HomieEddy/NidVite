@@ -144,6 +144,7 @@ class Report extends Model
     {
         $current = ReportStatus::tryFrom($this->status);
 
+        /** @phpstan-ignore identical.alwaysFalse */
         if ($current === null) {
             throw new InvalidArgumentException("Invalid current status: {$this->status}");
         }
