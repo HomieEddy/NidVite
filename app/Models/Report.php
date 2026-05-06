@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ReportStatus;
+use App\Mail\ReportStatusUpdated;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Spatie\Activitylog\LogOptions;
@@ -173,6 +175,21 @@ class Report extends Model
                 'reason' => $reason,
             ])
             ->log("Report status changed from {$oldStatus} to {$newStatus}");
+
+        $this->sendStatusNotification($oldStatus);
+    }
+
+    /**
+     * Send email notification to reporter about status change.
+     */
+    protected function sendStatusNotification(string $oldStatus): void
+    {
+        if ($this->reporter_email === null) {
+            return;
+        }
+
+        Mail::to($this->reporter_email)
+            ->send(new ReportStatusUpdated($this, $oldStatus));
     }
 
     /**
