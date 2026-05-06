@@ -4,16 +4,58 @@
 
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+    #welcome-map { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 1rem; z-index: 0; }
+    .map-container { position: relative; height: calc(100vh - 8rem); min-height: 300px; padding: 0.5rem; }
+</style>
 @endpush
 
 @section('content')
-<div x-data="tracker()" class="w-full">
-    {{-- Fixed 80vh map area with slight border padding --}}
-    <div class="relative p-2" style="height: 80vh;">
-        <div id="welcome-map" class="absolute inset-2 rounded-2xl overflow-hidden shadow-md border border-gray-200 bg-gray-200"></div>
+@php $errorMsg = app()->getLocale() === 'fr' ? 'Signalement non trouvé' : 'Report not found'; @endphp
+<script>
+    function tracker() {
+        return {
+            showInput: false,
+            trackingId: '',
+            error: '',
+            errorMsg: @json($errorMsg),
+            modalOpen: false,
+            loading: false,
+            report: null,
+            lookup() {
+                this.error = '';
+                var id = this.trackingId.trim();
+                if (!id) return;
+                this.showInput = false;
+                this.modalOpen = true;
+                this.loading = true;
+                this.report = null;
+                fetch('/api/reports/' + id + '/lookup')
+                    .then(function(r) {
+                        if (!r.ok) throw new Error('not_found');
+                        return r.json();
+                    })
+                    .then(function(data) {
+                        this.report = data;
+                        this.loading = false;
+                    }.bind(this))
+                    .catch(function() {
+                        this.loading = false;
+                        this.modalOpen = false;
+                        this.error = this.errorMsg;
+                        this.showInput = true;
+                    }.bind(this));
+            }
+        }
+    }
+</script>
+<div x-data="tracker()" class="flex flex-col h-full">
+    {{-- Map with border padding --}}
+    <div class="map-container">
+        <div id="welcome-map"></div>
 
         {{-- Overlay buttons --}}
-        <div class="absolute bottom-6 left-4 right-4 z-[2000]">
+        <div class="absolute bottom-6 left-4 right-4 z-10">
             <div class="max-w-sm mx-auto space-y-3">
                 {{-- Report CTA --}}
                 <a href="{{ route('report.create') }}"
@@ -61,7 +103,7 @@
     </div>
 
     {{-- Tracking Modal --}}
-    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-[1002] flex items-center justify-center p-4" x-transition.opacity>
+    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center p-4" x-transition.opacity>
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" x-on:click="modalOpen = false"></div>
         <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto animate-slide-up" x-on:click.away="modalOpen = false">
             {{-- Header --}}
@@ -177,41 +219,6 @@
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-    function tracker() {
-        return {
-            showInput: false,
-            trackingId: '',
-            error: '',
-            modalOpen: false,
-            loading: false,
-            report: null,
-            lookup() {
-                this.error = '';
-                const id = this.trackingId.trim();
-                if (!id) return;
-                this.showInput = false;
-                this.modalOpen = true;
-                this.loading = true;
-                this.report = null;
-                fetch('/api/reports/' + id + '/lookup')
-                    .then(r => {
-                        if (!r.ok) throw new Error('not_found');
-                        return r.json();
-                    })
-                    .then(data => {
-                        this.report = data;
-                        this.loading = false;
-                    })
-                    .catch(() => {
-                        this.loading = false;
-                        this.modalOpen = false;
-                        this.error = {{ app()->getLocale() === 'fr' ? "'Signalement non trouvé'" : "'Report not found'" }};
-                        this.showInput = true;
-                    });
-            }
-        }
-    }
-
     const map = L.map('welcome-map', { zoomControl: false }).setView([45.5017, -73.5673], 12);
     L.control.zoom({ position: 'topright' }).addTo(map);
 
