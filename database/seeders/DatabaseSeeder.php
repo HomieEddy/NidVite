@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             ReportCategorySeeder::class,
             ExpenseCategorySeeder::class,
+            MontrealBoundarySeeder::class,
             AdminUserSeeder::class,
         ]);
     }
