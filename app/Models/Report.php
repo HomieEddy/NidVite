@@ -18,10 +18,12 @@ use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Report extends Model
+class Report extends Model implements HasMedia
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, InteractsWithMedia, LogsActivity, SoftDeletes;
 
     protected static function booted(): void
     {
@@ -81,6 +83,12 @@ class Report extends Model
             ->logOnly(['status', 'priority', 'admin_notes', 'rejection_reason'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('report-photos')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
     }
 
     public function category(): BelongsTo

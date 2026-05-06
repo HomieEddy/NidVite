@@ -3,6 +3,7 @@
 use App\Events\ReportCreated;
 use App\Models\Report;
 use App\Models\ReportCategory;
+use App\Services\ExifStripper;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -39,7 +40,7 @@ new class extends Component
     public ?float $longitude = null;
 
     #[Validate('nullable|array|max:5')]
-    #[Validate('each:file|max:10240')]
+    #[Validate('each:file|mimes:jpeg,png,gif,webp|max:10240')]
     public array $photos = [];
 
     public string $recaptcha_response = '';
@@ -63,7 +64,7 @@ new class extends Component
             'neighborhood' => 'nullable|string|max:100',
             'borough' => 'nullable|string|max:100',
             'photos' => 'nullable|array|max:5',
-            'photos.*' => 'file|max:10240',
+            'photos.*' => 'file|mimes:jpeg,png,gif,webp|max:10240',
         ]);
 
         // Require location
@@ -97,9 +98,11 @@ new class extends Component
 
         event(new ReportCreated($report));
 
-        if (!empty($this->photos)) {
+        if (! empty($this->photos)) {
             foreach ($this->photos as $photo) {
-                $report->addMedia($photo->getRealPath())
+                $cleanPath = ExifStripper::process($photo);
+
+                $report->addMedia($cleanPath)
                     ->usingName($photo->getClientOriginalName())
                     ->toMediaCollection('report-photos');
             }
