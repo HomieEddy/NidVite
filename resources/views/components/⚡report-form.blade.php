@@ -51,6 +51,52 @@ new class extends Component
     public function mount(): void
     {
         $this->honeypotData = new HoneypotData();
+        $pothole = ReportCategory::where('slug', 'pothole')->first();
+        if ($pothole) {
+            $this->category_id = $pothole->id;
+        }
+    }
+
+    public function getPotholeCategoryProperty()
+    {
+        return ReportCategory::where('slug', 'pothole')->first();
+    }
+
+    public function getNeighborhoodsProperty(): array
+    {
+        return [
+            'Ahuntsic', 'Bordeaux', 'Cartierville', 'Chinatown',
+            'Côte-Saint-Luc', 'Côte-des-Neiges', 'Downtown',
+            'Griffintown', 'Hampstead', 'Hochelaga',
+            'Île-Bizard', 'La Petite-Patrie', 'Lachine',
+            'LaSalle', 'Maisonneuve', 'Mercier',
+            'Mile End', 'Montréal-Est', 'Montréal-Nord',
+            'Mont-Royal', 'Notre-Dame-de-Grâce', 'Nouveau-Rosemont',
+            'Outremont', 'Parc-Extension', 'Petite-Bourgogne',
+            'Pierrefonds', 'Plateau-Mont-Royal', 'Pointe-aux-Trembles',
+            'Pointe-Saint-Charles', 'Quartier des Spectacles',
+            'Rivière-des-Prairies', 'Rosemont', 'Roxboro',
+            'Sainte-Geneviève', 'Saint-Henri', 'Saint-Laurent',
+            'Saint-Léonard', 'Saint-Michel', 'Snowdon',
+            'Verdun', 'Vieux-Montréal', 'Village',
+            'Ville-Marie', 'Villeray', 'Westmount',
+        ];
+    }
+
+    public function getBoroughsProperty(): array
+    {
+        return [
+            'Ahuntsic-Cartierville', 'Anjou',
+            'Côte-des-Neiges–Notre-Dame-de-Grâce',
+            'Lachine', 'LaSalle', 'Le Plateau-Mont-Royal',
+            'Le Sud-Ouest', "L'Île-Bizard–Sainte-Geneviève",
+            'Mercier–Hochelaga-Maisonneuve', 'Montréal-Nord',
+            'Outremont', 'Pierrefonds-Roxboro',
+            'Rivière-des-Prairies–Pointe-aux-Trembles',
+            'Rosemont–La Petite-Patrie', 'Saint-Laurent',
+            'Saint-Léonard', 'Verdun', 'Ville-Marie',
+            'Villeray–Saint-Michel–Parc-Extension',
+        ];
     }
 
     public function updatedPhotos(): void
@@ -138,9 +184,10 @@ new class extends Component
     map: null,
     marker: null,
     mapReady: false,
+    geocoding: false,
     initMap() {
         if (this.map) return;
-        const el = document.getElementById('form-map');
+        var el = document.getElementById('form-map');
         if (!el) return;
         this.map = L.map(el).setView([45.5017, -73.5673], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -165,16 +212,64 @@ new class extends Component
         }
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                $wire.latitude = position.coords.latitude;
-                $wire.longitude = position.coords.longitude;
+                var lat = position.coords.latitude;
+                var lng = position.coords.longitude;
+                $wire.latitude = lat;
+                $wire.longitude = lng;
                 setTimeout(() => {
-                    this.updateMap(position.coords.latitude, position.coords.longitude);
+                    this.updateMap(lat, lng);
                 }, 300);
+                this.reverseGeocode(lat, lng);
             },
             () => {
                 alert(@js(__('report.geolocation_failed')));
             }
         );
+    },
+    reverseGeocode(lat, lng) {
+        var lang = document.documentElement.lang || 'en';
+        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&addressdetails=1&accept-language=' + lang)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data || !data.display_name) return;
+                var parts = data.display_name.split(',');
+                if (parts[0]) {
+                    $wire.address = parts[0].trim();
+                }
+                if (data.address) {
+                    if (data.address.suburb) {
+                        $wire.neighborhood = data.address.suburb;
+                    }
+                    if (data.address.city_district) {
+                        $wire.borough = data.address.city_district;
+                    } else if (data.address.county) {
+                        $wire.borough = data.address.county;
+                    }
+                }
+            })
+            .catch(function() {});
+    },
+    geocodeAddress() {
+        if (this.geocoding) return;
+        var el = this.$refs.addressInput;
+        if (!el) return;
+        var q = el.value.trim();
+        if (q.length < 5) return;
+        this.geocoding = true;
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&city=Montreal&country=Canada&limit=1')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                this.geocoding = false;
+                if (!data || !data[0]) return;
+                var lat = parseFloat(data[0].lat);
+                var lng = parseFloat(data[0].lon);
+                $wire.latitude = lat;
+                $wire.longitude = lng;
+                setTimeout(function() {
+                    this.updateMap(lat, lng);
+                }.bind(this), 300);
+            }.bind(this))
+            .catch(function() { this.geocoding = false; }.bind(this));
     }
 }" x-init="$nextTick(() => { setTimeout(() => initMap(), 100); })">
     @if ($submitted)
@@ -221,20 +316,22 @@ new class extends Component
                     @error('reporter_email') <span class="mt-1.5 text-sm text-red-600">{{ $message }}</span> @enderror
                 </div>
 
-                {{-- Category --}}
+                {{-- Category -- Pothole only --}}
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">
                         {{ __('report.category') }}
                         <span class="text-red-500">*</span>
                     </label>
-                    <select wire:model="category_id"
-                        class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 bg-white">
-                        <option value="">{{ __('report.choose') }}</option>
-                        @foreach ($this->categories as $category)
-                            <option value="{{ $category->id }}">{{ app()->getLocale() === 'fr' ? $category->label_fr : $category->label_en }}</option>
-                        @endforeach
-                    </select>
-                    @error('category_id') <span class="mt-1.5 text-sm text-red-600">{{ $message }}</span> @enderror
+                    <div class="flex items-center px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 text-base">
+                        <svg class="w-5 h-5 mr-2 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                            <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                        </svg>
+                        @if ($this->potholeCategory)
+                            {{ app()->getLocale() === 'fr' ? $this->potholeCategory->label_fr : $this->potholeCategory->label_en }}
+                        @endif
+                    </div>
+                    <input type="hidden" name="category_id" wire:model="category_id">
                 </div>
 
                 {{-- Description --}}
@@ -257,7 +354,7 @@ new class extends Component
                         <span class="text-red-500">*</span>
                     </label>
                     <p class="text-xs text-gray-500 mb-2">{{ __('report.address_help') }}</p>
-                    <input type="text" wire:model="address"
+                    <input type="text" wire:model="address" x-ref="addressInput" x-on:blur="geocodeAddress()"
                         class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3"
                         placeholder="123 rue Example">
                     @error('address') <span class="mt-1.5 text-sm text-red-600">{{ $message }}</span> @enderror
@@ -268,14 +365,24 @@ new class extends Component
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ __('report.neighborhood') }}</label>
                         <span class="text-xs text-gray-400">({{ __('report.optional') }})</span>
-                        <input type="text" wire:model="neighborhood"
+                        <input type="text" wire:model="neighborhood" list="neighborhoods-list" autocomplete="off"
                             class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3">
+                        <datalist id="neighborhoods-list">
+                            @foreach ($this->neighborhoods as $name)
+                                <option value="{{ $name }}">
+                            @endforeach
+                        </datalist>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ __('report.borough') }}</label>
                         <span class="text-xs text-gray-400">({{ __('report.optional') }})</span>
-                        <input type="text" wire:model="borough"
+                        <input type="text" wire:model="borough" list="boroughs-list" autocomplete="off"
                             class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3">
+                        <datalist id="boroughs-list">
+                            @foreach ($this->boroughs as $name)
+                                <option value="{{ $name }}">
+                            @endforeach
+                        </datalist>
                     </div>
                 </div>
 
