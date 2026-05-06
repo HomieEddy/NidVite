@@ -1,6 +1,6 @@
 @extends('layouts.citizen')
 
-@section('title', __('Carte des signalements') . ' - ' . config('app.name'))
+@section('title', __('map.title') . ' - ' . config('app.name'))
 
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -62,7 +62,7 @@
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
-            {{ app()->getLocale() === 'fr' ? 'Retour' : 'Back' }}
+            {{ __('map.back_home') }}
         </a>
         <a href="{{ route('report.create') }}"
            class="inline-flex items-center px-3 py-1.5 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 active:scale-[0.98] transition-all btn-touch">
@@ -115,17 +115,27 @@
                     fillOpacity: 0.85,
                 }).addTo(map);
 
-                const popupContent = `
-                    <div class="report-popup">
-                        <span class="status status-${props.status}">${props.status_label}</span>
-                        <h3>${props.address || '{{ __('map.no_address') }}'}</h3>
-                        <p>${props.neighborhood || ''}</p>
-                        <p>${props.description ? props.description.substring(0, 100) + (props.description.length > 100 ? '...' : '') : ''}</p>
-                        <a href="${props.url}" target="_blank">{{ __('map.view_details') }}</a>
-                    </div>
-                `;
-
-                marker.bindPopup(popupContent);
+                var popupEl = document.createElement('div');
+                popupEl.className = 'report-popup';
+                var statusSpan = document.createElement('span');
+                statusSpan.className = 'status status-' + props.status;
+                statusSpan.textContent = props.status_label;
+                popupEl.appendChild(statusSpan);
+                var titleEl = document.createElement('h3');
+                titleEl.textContent = props.address || '{{ __('map.no_address') }}';
+                popupEl.appendChild(titleEl);
+                var hoodEl = document.createElement('p');
+                hoodEl.textContent = props.neighborhood || '';
+                popupEl.appendChild(hoodEl);
+                var descEl = document.createElement('p');
+                descEl.textContent = props.description ? props.description.substring(0, 100) + (props.description.length > 100 ? '...' : '') : '';
+                popupEl.appendChild(descEl);
+                var linkEl = document.createElement('a');
+                linkEl.href = props.url;
+                linkEl.target = '_blank';
+                linkEl.textContent = '{{ __('map.view_details') }}';
+                popupEl.appendChild(linkEl);
+                marker.bindPopup(popupEl);
                 bounds.extend([coords[1], coords[0]]);
             });
 

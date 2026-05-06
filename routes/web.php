@@ -42,7 +42,8 @@ Route::get('/api/reports/geojson', [MapController::class, 'geojson'])
 
 Route::get('/api/reports/{uuid}/lookup', [ReportTrackingController::class, 'lookup'])
     ->name('api.reports.lookup')
-    ->whereUuid('uuid');
+    ->whereUuid('uuid')
+    ->middleware('throttle:60,1');
 
 Route::get('/locale/{locale}', function (string $locale) {
     if (in_array($locale, ['fr', 'en'], true)) {

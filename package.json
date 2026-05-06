@@ -9,7 +9,6 @@
     },
     "devDependencies": {
         "@tailwindcss/postcss": "^4.2.4",
-        "autoprefixer": "^10.5.0",
         "axios": "^1.6.4",
         "chokidar-cli": "^3.0.0",
         "concurrently": "^9.2.1",

@@ -1,6 +1,6 @@
 @extends('layouts.citizen')
 
-@section('title', __('Suivi de signalement') . ' - ' . config('app.name'))
+@section('title', __('tracking.Suivi de signalement') . ' - ' . config('app.name'))
 
 @push('styles')
 @if($location)
@@ -18,7 +18,7 @@
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
         </svg>
-        {{ app()->getLocale() === 'fr' ? 'Retour' : 'Back' }}
+        {{ __('map.back_home') }}
     </a>
 </div>
 
@@ -26,7 +26,7 @@
     {{-- Report Card --}}
     <div class="citizen-card p-5 mb-4 animate-fade-in">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-bold text-gray-900">{{ __('Votre signalement') }}</h2>
+            <h2 class="text-lg font-bold text-gray-900">{{ __('tracking.Votre signalement') }}</h2>
             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
                 @switch($report->status)
                     @case('received') bg-gray-100 text-gray-800 @break
@@ -43,22 +43,22 @@
 
         <div class="space-y-2.5">
             <div class="flex items-center text-sm">
-                <span class="text-gray-500 w-20 flex-shrink-0">{{ __('Numéro') }}</span>
+                <span class="text-gray-500 w-20 flex-shrink-0">{{ __('tracking.Numéro') }}</span>
                 <span class="font-mono text-gray-700 bg-gray-100 px-2 py-0.5 rounded text-xs">{{ $report->uuid }}</span>
             </div>
             <div class="flex items-center text-sm">
-                <span class="text-gray-500 w-20 flex-shrink-0">{{ __('Date') }}</span>
+                <span class="text-gray-500 w-20 flex-shrink-0">{{ __('tracking.Date') }}</span>
                 <span class="text-gray-700">{{ $report->created_at->translatedFormat('j F Y') }}</span>
             </div>
             @if($report->category)
                 <div class="flex items-center text-sm">
-                    <span class="text-gray-500 w-20 flex-shrink-0">{{ __('Catégorie') }}</span>
+                    <span class="text-gray-500 w-20 flex-shrink-0">{{ __('tracking.Catégorie') }}</span>
                     <span class="text-gray-700">{{ app()->getLocale() === 'fr' ? $report->category->label_fr : $report->category->label_en }}</span>
                 </div>
             @endif
             @if($report->address)
                 <div class="flex items-start text-sm">
-                    <span class="text-gray-500 w-20 flex-shrink-0">{{ __('Adresse') }}</span>
+                    <span class="text-gray-500 w-20 flex-shrink-0">{{ __('tracking.Adresse') }}</span>
                     <span class="text-gray-700">{{ $report->address }}</span>
                 </div>
             @endif
@@ -71,7 +71,7 @@
 
     {{-- Timeline --}}
     <div class="citizen-card p-5 animate-slide-up">
-        <h3 class="text-base font-bold text-gray-900 mb-4">{{ __('Historique') }}</h3>
+        <h3 class="text-base font-bold text-gray-900 mb-4">{{ __('tracking.Historique') }}</h3>
 
         <div class="space-y-0">
             @php
@@ -92,7 +92,7 @@
                 <div class="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
                     <span class="text-xl flex-shrink-0">❌</span>
                     <div>
-                        <p class="font-semibold text-red-900">{{ __('Signalement rejeté') }}</p>
+                        <p class="font-semibold text-red-900">{{ __('tracking.Signalement rejeté') }}</p>
                         @if($report->rejection_reason)
                             <p class="text-sm text-red-700 mt-1">{{ $report->rejection_reason }}</p>
                         @endif
@@ -108,7 +108,7 @@
                                 {{ $step['label'] }}
                             </p>
                             @if($index === $currentIndex)
-                                <p class="text-xs text-amber-700 mt-0.5">{{ __('Statut actuel') }}</p>
+                                <p class="text-xs text-amber-700 mt-0.5">{{ __('tracking.Statut actuel') }}</p>
                             @endif
                         </div>
                     </div>
@@ -126,7 +126,7 @@
             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
-            {{ __('Faire un nouveau signalement') }}
+            {{ __('tracking.Faire un nouveau signalement') }}
         </a>
     </div>
 </div>

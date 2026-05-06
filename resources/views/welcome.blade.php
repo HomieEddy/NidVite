@@ -27,7 +27,7 @@
                 this.modalOpen = true;
                 this.loading = true;
                 this.report = null;
-                fetch('/api/reports/' + id + '/lookup')
+                fetch('/api/reports/' + encodeURIComponent(id) + '/lookup')
                     .then(function(r) {
                         if (!r.ok) throw new Error('not_found');
                         return r.json();
