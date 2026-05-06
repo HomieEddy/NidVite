@@ -61,7 +61,7 @@
     </main>
     
     {{-- Bottom Navigation (PWA-style) --}}
-    <nav class="sticky bottom-0 z-40 bg-white border-t border-gray-200 safe-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+    <nav class="sticky bottom-0 z-[1001] bg-white border-t border-gray-200 safe-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         <div class="max-w-3xl mx-auto px-2">
             <div class="flex items-center justify-around">
                 <a href="{{ route('report.create') }}" 

@@ -22,6 +22,10 @@ Route::get('/carte', [MapController::class, 'index'])
 Route::get('/api/reports/geojson', [MapController::class, 'geojson'])
     ->name('api.reports.geojson');
 
+Route::get('/api/reports/{uuid}/lookup', [ReportTrackingController::class, 'lookup'])
+    ->name('api.reports.lookup')
+    ->whereUuid('uuid');
+
 Route::get('/locale/{locale}', function (string $locale) {
     if (in_array($locale, ['fr', 'en'], true)) {
         session()->put('locale', $locale);
