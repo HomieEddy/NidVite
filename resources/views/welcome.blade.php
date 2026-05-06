@@ -7,13 +7,13 @@
 @endpush
 
 @section('content')
-<div x-data="tracker()" class="flex-1 flex flex-col min-h-0">
-    {{-- Map fills all available space with padding --}}
-    <div class="flex-1 min-h-0 p-2 relative">
-        <div id="welcome-map" class="absolute inset-2 rounded-2xl overflow-hidden shadow-md border border-gray-200"></div>
+<div x-data="tracker()" class="w-full">
+    {{-- Fixed 80vh map area with slight border padding --}}
+    <div class="relative p-2" style="height: 80vh;">
+        <div id="welcome-map" class="absolute inset-2 rounded-2xl overflow-hidden shadow-md border border-gray-200 bg-gray-200"></div>
 
         {{-- Overlay buttons --}}
-        <div class="absolute bottom-6 left-4 right-4 z-[1000]">
+        <div class="absolute bottom-6 left-4 right-4 z-[2000]">
             <div class="max-w-sm mx-auto space-y-3">
                 {{-- Report CTA --}}
                 <a href="{{ route('report.create') }}"
