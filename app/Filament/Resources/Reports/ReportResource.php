@@ -8,6 +8,7 @@ use App\Filament\Resources\Reports\Pages\ListReports;
 use App\Filament\Resources\Reports\Schemas\ReportForm;
 use App\Filament\Resources\Reports\Tables\ReportsTable;
 use App\Models\Report;
+use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -46,6 +47,24 @@ class ReportResource extends Resource
             'create' => CreateReport::route('/create'),
             'edit' => EditReport::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+
+        /** @var User|null $user */
+        $user = auth()->user();
+
+        if ($user !== null && ! $user->isAdmin()) {
+            $query->where('is_spam', false)
+                ->whereNotIn('status', ['rejected']);
+        }
+
+        return $query;
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
