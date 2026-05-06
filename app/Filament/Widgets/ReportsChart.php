@@ -27,7 +27,8 @@ class ReportsChart extends ChartWidget
         $start = now()->subDays(29)->startOfDay();
         $end = now()->endOfDay();
 
-        $counts = Report::whereBetween('created_at', [$start, $end])
+        $counts = Report::where('status', '!=', 'rejected')
+            ->whereBetween('created_at', [$start, $end])
             ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->groupBy('date')
             ->pluck('count', 'date');

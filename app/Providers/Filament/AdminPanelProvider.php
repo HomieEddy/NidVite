@@ -2,9 +2,9 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Widgets\ExpensesChart;
 use App\Filament\Widgets\ReportsByNeighborhood;
 use App\Filament\Widgets\ReportsChart;
+use App\Filament\Widgets\ReportsMap;
 use App\Filament\Widgets\ReportsOverview;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
@@ -42,9 +42,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
+                ReportsMap::class,
                 ReportsOverview::class,
                 ReportsChart::class,
-                ExpensesChart::class,
                 ReportsByNeighborhood::class,
             ])
             ->middleware([

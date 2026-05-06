@@ -12,8 +12,8 @@ class Expense extends Model
 
     protected $fillable = [
         'repair_job_id',
-        'category_id',
         'material_id',
+        'vendor_id',
         'description',
         'quantity',
         'unit',
@@ -22,7 +22,6 @@ class Expense extends Model
         'tax_rate',
         'tax_amount',
         'total',
-        'vendor',
         'incurred_at',
         'created_by',
     ];
@@ -42,14 +41,14 @@ class Expense extends Model
         return $this->belongsTo(RepairJob::class);
     }
 
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(ExpenseCategory::class, 'category_id');
-    }
-
     public function material(): BelongsTo
     {
         return $this->belongsTo(Material::class);
+    }
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class);
     }
 
     public function creator(): BelongsTo

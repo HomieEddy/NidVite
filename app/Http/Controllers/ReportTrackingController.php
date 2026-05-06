@@ -13,6 +13,15 @@ class ReportTrackingController extends Controller
             ->with('category')
             ->firstOrFail();
 
-        return view('tracking', compact('report'));
+        $location = null;
+        /** @phpstan-ignore property.notFound */
+        if ($report->location !== null) {
+            $location = \DB::selectOne(
+                'SELECT ST_Y(location::geometry) as lat, ST_X(location::geometry) as lng FROM reports WHERE id = ?',
+                [$report->id]
+            );
+        }
+
+        return view('tracking', compact('report', 'location'));
     }
 }

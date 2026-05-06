@@ -16,11 +16,12 @@ class ExpenseForm
                 Select::make('repair_job_id')
                     ->relationship('repairJob', 'title')
                     ->required(),
-                Select::make('category_id')
-                    ->relationship('category', 'id')
-                    ->required(),
                 Select::make('material_id')
                     ->relationship('material', 'name'),
+                Select::make('vendor_id')
+                    ->relationship('vendor', 'name')
+                    ->searchable()
+                    ->preload(),
                 TextInput::make('description')
                     ->required(),
                 TextInput::make('quantity')
@@ -41,11 +42,10 @@ class ExpenseForm
                     ->numeric(),
                 TextInput::make('total')
                     ->numeric(),
-                TextInput::make('vendor'),
                 DateTimePicker::make('incurred_at'),
-                TextInput::make('created_by')
-                    ->required()
-                    ->numeric(),
+                Select::make('created_by')
+                    ->relationship('creator', 'name')
+                    ->required(),
             ]);
     }
 }

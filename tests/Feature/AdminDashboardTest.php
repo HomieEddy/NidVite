@@ -1,13 +1,11 @@
 <?php
 
 use App\Models\Expense;
-use App\Models\ExpenseCategory;
 use App\Models\RepairJob;
 use App\Models\Report;
 use App\Models\ReportCategory;
 use App\Models\Role;
 use App\Models\User;
-use Database\Seeders\ExpenseCategorySeeder;
 use Database\Seeders\ReportCategorySeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,7 +16,6 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
     $this->seed(ReportCategorySeeder::class);
-    $this->seed(ExpenseCategorySeeder::class);
 
     $this->admin = User::factory()->create([
         'role_id' => Role::where('slug', 'admin')->first()->id,
@@ -41,11 +38,8 @@ it('dashboard widgets run without SQL errors', function () {
         'created_by' => $this->admin->getKey(),
     ]);
 
-    $expenseCategory = ExpenseCategory::firstOrFail();
-
     Expense::factory()->count(3)->create([
         'repair_job_id' => $repairJob->getKey(),
-        'category_id' => $expenseCategory->getKey(),
         'created_by' => $this->admin->getKey(),
         'total' => 100.00,
     ]);
@@ -83,15 +77,6 @@ it('dashboard widgets run without SQL errors', function () {
         ->pluck('count', 'date');
     expect($counts)->toBeInstanceOf(Collection::class);
 
-    // ExpensesChart: category totals (uses total, not amount)
-    $totals = Expense::whereMonth('created_at', now()->month)
-        ->whereYear('created_at', now()->year)
-        ->selectRaw('category_id, SUM(total) as total')
-        ->groupBy('category_id')
-        ->pluck('total', 'category_id');
-    expect($totals)->toBeInstanceOf(Collection::class);
-    expect((float) $totals->first())->toBeGreaterThan(0);
-
     // ReportsByNeighborhood: top 10 neighborhoods
     $neighborhoods = Report::whereNotNull('neighborhood')
         ->where('neighborhood', '!=', '')
@@ -109,11 +94,8 @@ it('expenses table has total column not amount', function () {
         'created_by' => $this->admin->getKey(),
     ]);
 
-    $expenseCategory = ExpenseCategory::firstOrFail();
-
     Expense::factory()->create([
         'repair_job_id' => $repairJob->getKey(),
-        'category_id' => $expenseCategory->getKey(),
         'created_by' => $this->admin->getKey(),
         'total' => 250.00,
     ]);

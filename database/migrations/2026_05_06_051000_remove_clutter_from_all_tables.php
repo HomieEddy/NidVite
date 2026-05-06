@@ -26,11 +26,6 @@ return new class extends Migration
             $table->dropColumn(['cost_override_reason', 'repair_notes']);
         });
 
-        // expense_categories: is_required adds no value
-        Schema::table('expense_categories', function (Blueprint $table) {
-            $table->dropColumn('is_required');
-        });
-
         // expenses: vendor_contact and receipt_media_id are not MVP
         Schema::table('expenses', function (Blueprint $table) {
             $table->dropColumn(['vendor_contact', 'receipt_media_id']);
@@ -55,10 +50,6 @@ return new class extends Migration
         Schema::table('job_reports', function (Blueprint $table) {
             $table->string('cost_override_reason', 255)->nullable()->after('cost_allocation_percentage');
             $table->text('repair_notes')->nullable()->after('cost_override_reason');
-        });
-
-        Schema::table('expense_categories', function (Blueprint $table) {
-            $table->boolean('is_required')->default(false)->after('is_inventory_related');
         });
 
         Schema::table('expenses', function (Blueprint $table) {
