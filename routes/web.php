@@ -3,7 +3,6 @@
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\ReportTrackingController;
 use App\Models\Report;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -18,9 +17,9 @@ Route::get('/', function () {
         ->value('avg_days');
 
     if (app()->getLocale() === 'fr') {
-        $velocity = $avgDays ? round($avgDays, 1) . ' jours' : 'N/D';
+        $velocity = $avgDays ? round($avgDays, 1).' jours' : 'N/D';
     } else {
-        $velocity = $avgDays ? round($avgDays, 1) . ' days' : 'N/A';
+        $velocity = $avgDays ? round($avgDays, 1).' days' : 'N/A';
     }
 
     return view('welcome', compact('totalReported', 'totalFixed', 'totalPending', 'velocity'));
