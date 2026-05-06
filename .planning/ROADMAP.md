@@ -26,7 +26,7 @@
   - [x] `laravel/reverb`
   - [x] `laravel/fortify`
 - [x] Configure `.env.example` with all required keys
-- [ ] Set up GitHub Actions CI workflow
+- [x] Set up GitHub Actions CI workflow (Pest, Pint, PHPStan L5 on PostGIS 15-3.4)
 - [x] Create `develop` branch
 
 ## Phase 2: Database & Models
@@ -44,6 +44,7 @@
   - [x] `job_materials`
   - [x] `media` (Spatie)
   - [x] `telescope_entries`
+  - [x] `activity_log` (Spatie)
   - [ ] `permissions`, `role_permissions`
   - [ ] `admin_sessions`
   - [ ] `admin_audit_log`
@@ -68,20 +69,22 @@
 ## Phase 3: Citizen PWA
 - [x] Livewire `ReportForm` component (basic)
 - [ ] Livewire `PhotoUploader` component
-- [ ] Livewire `TrackReport` component
+- [x] Livewire `TrackReport` component (via `/suivi/{uuid}` page)
 - [x] One-tap geolocation capture
 - [ ] Photo upload with EXIF stripping
 - [ ] Geofencing validation (Montreal only)
 - [x] Anti-spam (honeypot)
 - [ ] Rate limiting (IP + device fingerprint)
 - [x] PWA manifest and service worker
-- [ ] Unique tracking URL generation
-- [ ] Report state machine (strict transitions)
-- [ ] **Bilingual support (FR/EN)**:
+- [x] Unique tracking URL generation (`/suivi/{uuid}`)
+- [x] Report state machine (strict transitions)
+- [x] **Bilingual support (FR/EN)**:
   - [ ] Language switcher (globe icon, cookie persistence)
   - [x] Basic PWA strings in `lang/fr/report.php` and `lang/en/report.php`
+  - [x] Email translations in `lang/fr/email.php` and `lang/en/email.php`
+  - [x] Tracking page translations in `lang/fr/tracking.php` and `lang/en/tracking.php`
   - [x] French-first default
-  - [ ] Localized dates (FR: "4 mai 2026", EN: "May 4, 2026")
+  - [x] Localized dates (FR: "4 mai 2026", EN: "May 4, 2026")
   - [ ] Localized numbers (FR: "1 234,56", EN: "1,234.56")
 
 ## Phase 4: Entrepreneur Dashboard (Core)
@@ -89,13 +92,13 @@
 - [x] Filament `UserResource`
 - [x] Filament `RepairJobResource`
 - [x] Filament `ExpenseResource`
-- [ ] RBAC policies on all resources
+- [x] RBAC policies on all resources (Reports, Users, RepairJobs, Expenses)
 - [ ] MapLibre map widget (all reports + clusters)
-- [ ] Status management with state machine
+- [x] Status management with state machine
 - [ ] Priority assignment
 - [ ] "After" photo upload
 - [ ] Pre-computed clustering display
-- [ ] Activity log integration
+- [x] Activity log integration (Spatie ActivityLog on Report model)
 - [ ] Real-time notifications (Reverb)
 - [ ] Admin audit log viewer (Admin only)
 - [ ] **Bilingual dashboard**:
@@ -107,27 +110,28 @@
 ## Phase 4a: RBAC & Admin Security
 - [x] Fortify integration
 - [ ] 2FA setup
-- [ ] Role-based access control on all resources
+- [x] Role-based access control on all resources (4 policies + AuthServiceProvider)
 - [ ] Admin session management
 - [ ] Brute force protection
-- [ ] Audit logging for all data changes
+- [x] Audit logging for data changes (Spatie ActivityLog)
 - [ ] Viewer page-view logging
 
 ## Phase 4b: Job & Expense Management
-- [ ] Repair jobs CRUD
+- [x] Repair jobs CRUD (Filament resource)
 - [ ] Multi-worker assignment
 - [ ] Self-assignment for Service Workers
-- [ ] Expense entry (all optional fields)
+- [x] Expense entry (basic Filament resource)
 - [ ] Receipt photo upload via Spatie
-- [ ] Expense category management
+- [x] Expense category management (seeder + model)
 - [ ] Cost allocation (equal split + manual override)
 - [ ] Tax calculation (GST + QST)
 
 ## Phase 4c: Inventory System
-- [ ] Materials CRUD
+- [x] Materials CRUD (model + migration)
 - [ ] Stock level tracking
 - [ ] Low stock alerts (dashboard + email + filter)
-- [ ] Purchase logging with receipt upload
+- [x] Purchase logging (model + migration)
+- [ ] Purchase receipt upload
 - [ ] Automatic stock decrement on job completion
 - [ ] Reserved stock for in-progress jobs
 
@@ -139,20 +143,19 @@
 - [ ] Excel/PDF export
 
 ## Phase 5: Email & Notifications
-- [ ] Resend integration
-- [ ] Automated email on status change to "repaired"
-- [ ] Email on report rejection (with reason)
-- [ ] Email template with tracking link
+- [x] Resend integration (mailer configured, `RESEND_API_KEY` env)
+- [x] Automated email on all status changes (queued via database)
+- [x] Email on report rejection (with reason)
+- [x] Email template with tracking link CTA button
 - [ ] Bounced email handling (3 retries → permanent)
-- [ ] Queue worker configuration
+- [x] Queue worker configuration (database queue, `ShouldQueue` interface)
 - [ ] Notification system (dashboard badges + emails)
 - [ ] Critical report alerts to Manager/Admin
-- [ ] **Bilingual emails**:
-  - [ ] Store `preferred_locale` on `reports` (default 'fr')
-  - [ ] Single-language emails based on reporter preference
-  - [ ] French subject/body stored in `email_deliveries.subject_fr`, `.body_fr`
-  - [ ] English subject/body stored in `.subject_en`, `.body_en`
-  - [ ] `locale_sent` tracked for audit
+- [x] **Bilingual emails**:
+  - [x] Store `preferred_locale` on `reports` (default 'fr')
+  - [x] Single-language emails based on reporter preference
+  - [x] Markdown email template with localized subject and body
+  - [ ] `locale_sent` tracked for audit (deferred to Phase 6)
 
 ## Phase 6: Monitoring & Hardening
 - [ ] Sentry error tracking
@@ -165,12 +168,12 @@
 - [ ] Suspicious activity dashboard (Filament)
 
 ## Phase 7: Testing & Polish
-- [ ] Critical-path Pest tests (all features)
-- [ ] State machine transition tests
-- [ ] RBAC permission tests
-- [ ] PHPStan Level 5 compliance
-- [ ] Laravel Pint formatting
-- [ ] CodeRabbit configuration verification
+- [x] Critical-path Pest tests (all features, 86 tests, 117 assertions)
+- [x] State machine transition tests (18 tests)
+- [x] RBAC permission tests (46 tests)
+- [x] PHPStan Level 5 compliance (Larastan)
+- [x] Laravel Pint formatting (enforced in CI)
+- [x] CodeRabbit configuration verification (`.coderabbit.yaml`)
 - [ ] Branch protection rules
 - [ ] Railway auto-deploy verification
 - [ ] Load testing (optional)
@@ -258,5 +261,5 @@
 
 ---
 
-*Last updated: 2026-05-05*
+*Last updated: 2026-05-06*
 *Update this file as phases are completed.*
