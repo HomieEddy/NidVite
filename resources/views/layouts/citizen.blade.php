@@ -31,16 +31,35 @@
     
     {{-- Header --}}
     <header class="citizen-header text-white safe-top sticky top-0 z-40 shadow-lg">
-        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="{{ route('report.create') }}" class="flex items-center space-x-2.5 btn-touch">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <a href="/" class="flex items-center space-x-2.5 btn-touch shrink-0">
                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
                 <span class="text-lg font-bold tracking-tight">{{ config('app.name') }}</span>
             </a>
+
+            {{-- Desktop nav links --}}
+            <div class="hidden md:flex items-center space-x-1">
+                <a href="/"
+                   class="px-3 py-1.5 rounded-lg text-sm font-medium transition btn-touch inline-flex items-center justify-center
+                   {{ request()->is('/') ? 'bg-white/20 text-white' : 'text-amber-100 hover:text-white hover:bg-white/10' }}">
+                    {{ __('Accueil') }}
+                </a>
+                <a href="{{ route('report.create') }}"
+                   class="px-3 py-1.5 rounded-lg text-sm font-medium transition btn-touch inline-flex items-center justify-center
+                   {{ request()->routeIs('report.create') ? 'bg-white/20 text-white' : 'text-amber-100 hover:text-white hover:bg-white/10' }}">
+                    {{ __('Signaler') }}
+                </a>
+                <a href="{{ route('map.public') }}"
+                   class="px-3 py-1.5 rounded-lg text-sm font-medium transition btn-touch inline-flex items-center justify-center
+                   {{ request()->routeIs('map.public') ? 'bg-white/20 text-white' : 'text-amber-100 hover:text-white hover:bg-white/10' }}">
+                    {{ __('Carte') }}
+                </a>
+            </div>
             
-            <div class="flex items-center space-x-1">
+            <div class="flex items-center space-x-1 shrink-0">
                 <a href="{{ route('locale.switch', 'fr') }}" 
                    class="px-2.5 py-1 rounded-md text-sm font-medium transition btn-touch inline-flex items-center justify-center
                    {{ app()->getLocale() === 'fr' ? 'bg-white/20 text-white' : 'text-amber-100 hover:text-white hover:bg-white/10' }}">
@@ -60,8 +79,8 @@
         @yield('content')
     </main>
     
-    {{-- Bottom Navigation (PWA-style) --}}
-    <nav class="sticky bottom-0 z-[1001] bg-white border-t border-gray-200 safe-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+    {{-- Bottom Navigation (mobile only) --}}
+    <nav class="sticky bottom-0 z-[1001] bg-white border-t border-gray-200 safe-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:hidden">
         <div class="max-w-3xl mx-auto px-2">
             <div class="flex items-center justify-around">
                 <a href="{{ route('report.create') }}" 
