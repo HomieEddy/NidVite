@@ -1,0 +1,164 @@
+{
+  "project": {
+    "name": "NidVite",
+    "description": "Frictionless pothole reporting bridge for Montreal citizens and repair entrepreneurs",
+    "version": "0.1.0-mvp",
+    "milestone": "MVP",
+    "target_scale": "100k-reports"
+  },
+  "tech": {
+    "framework": "laravel-11",
+    "php_version": "8.3",
+    "frontend": "livewire-3-alpine-maryui",
+    "database": "postgresql-15-postgis-3.4",
+    "database_partitioning": "monthly-range",
+    "admin": "filament-3",
+    "maps": "maplibre-maptiler",
+    "testing": "pest-3",
+    "linting": "pint-phpstan-level-5",
+    "deployment": "railway",
+    "queue": "database",
+    "storage_dev": "local",
+    "storage_prod": "r2",
+    "cdn": "cloudflare",
+    "error_tracking": "sentry",
+    "realtime": "reverb",
+    "auth": "fortify-2fa"
+  },
+  "packages": {
+    "core": [
+      "filament/filament",
+      "filament/spatie-laravel-media-library-plugin",
+      "spatie/laravel-medialibrary",
+      "intervention/image",
+      "matanyada/laravel-postgis"
+    ],
+    "realtime": [
+      "laravel/reverb"
+    ],
+    "auth": [
+      "laravel/fortify"
+    ],
+    "security": [
+      "spatie/laravel-honeypot",
+      "anhskohbo/no-captcha",
+      "bepsvpt/secure-headers",
+      "jenssegers/agent"
+    ],
+    "mail": [
+      "resend/resend-laravel"
+    ],
+    "pwa": [
+      "silviolleite/laravelpwa"
+    ],
+    "audit": [
+      "spatie/laravel-activitylog"
+    ],
+    "monitoring": [
+      "sentry/sentry-laravel",
+      "spatie/laravel-health",
+      "spatie/laravel-schedule-monitor"
+    ],
+    "performance": [
+      "appstract/laravel-opcache",
+      "spatie/laravel-response-cache",
+      "spatie/laravel-backup"
+    ],
+    "export": [
+      "maatwebsite/laravel-excel"
+    ],
+    "testing": [
+      "pestphp/pest",
+      "pestphp/pest-plugin-laravel",
+      "pestphp/pest-plugin-livewire",
+      "pestphp/pest-plugin-faker",
+      "nunomaduro/larastan"
+    ],
+    "dev": [
+      "barryvdh/laravel-debugbar",
+      "laravel/pint",
+      "laravel/telescope"
+    ]
+  },
+  "features": {
+    "pwa": true,
+    "zero_auth": true,
+    "email_loop": true,
+    "postgis_clustering": true,
+    "geofencing": true,
+    "anti_spam": true,
+    "photo_upload": true,
+    "exif_stripping": true,
+    "rate_limiting": true,
+    "audit_trail": true,
+    "response_caching": true,
+    "error_tracking": true,
+    "health_checks": true,
+    "device_fingerprinting": true,
+    "ip_reputation_check": true,
+    "photo_deduplication": true,
+    "data_retention_policy": true,
+    "database_partitioning": true,
+    "automated_backups": true,
+    "email_delivery_tracking": true,
+    "neighborhood_analytics": true,
+    "suspicious_activity_detection": true,
+    "rbac": true,
+    "two_factor_auth": true,
+    "admin_session_management": true,
+    "admin_audit_logging": true,
+    "job_based_expenses": true,
+    "inventory_tracking": true,
+    "tax_calculation": true,
+    "realtime_notifications": true,
+    "export_to_excel": true,
+    "state_machine": true,
+    "self_assignment": true,
+    "cost_allocation": true,
+    "bilingual_support": true,
+    "i18n": {
+      "default_locale": "fr",
+      "fallback_locale": "fr",
+      "supported_locales": ["en", "fr"],
+      "strategy": "laravel-native"
+    }
+  },
+  "security": {
+    "rate_limit_layers": ["ip", "email", "device"],
+    "anti_spam_layers": ["honeypot", "recaptcha-v2", "behavioral"],
+    "admin_rate_limit": "30-per-minute",
+    "brute_force_protection": "5-attempts-per-15-min",
+    "session_timeout": "15-minutes",
+    "data_retention_days": {
+      "reports": 730,
+      "raw_ip": 30,
+      "suspicious_activity": 365,
+      "email_deliveries": 365,
+      "device_fingerprints": 90,
+      "admin_audit_log": 730
+    },
+    "blocked_entity_ttl": {
+      "auto_ip": "24h",
+      "manual_ip": "permanent"
+    }
+  },
+  "performance": {
+    "caching_tiers": ["application", "cdn", "edge"],
+    "cache_warming": true,
+    "partitioning": "monthly",
+    "archive_strategy": "r2-cold-storage",
+    "query_optimization": ["gist-indexes", "partition-pruning", "materialized-views"]
+  },
+  "graphify": {
+    "enabled": true,
+    "build_timeout": 300,
+    "update_on_commit": false
+  },
+  "ci_cd": {
+    "platform": "github-actions",
+    "branching": "gitflow-develop",
+    "review": "coderabbit",
+    "deploy_target": "railway",
+    "auto_deploy_branch": "main"
+  }
+}

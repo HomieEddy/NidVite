@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+if [ "$SUPERVISOR_PHP_USER" != "root" ] && [ "$SUPERVISOR_PHP_USER" != "sail" ]; then
+    echo "You should set SUPERVISOR_PHP_USER to either 'sail' or 'root'."
+    exit 1
+fi
+
+if [ ! -z "$WWWUSER" ]; then
+    usermod -u $WWWUSER sail
+fi
+
+if [ ! -d /.composer ]; then
+    mkdir /.composer
+fi
+
+chmod -R ugo+rw /.composer
+
+# Disable Xdebug by default for performance (can be enabled via SAIL_XDEBUG_MODE=develop)
+if [ "${SAIL_XDEBUG_MODE:-off}" = "off" ]; then
+    if [ -f /etc/php/8.3/cli/conf.d/20-xdebug.ini ]; then
+        echo "; Xdebug disabled for performance (set SAIL_XDEBUG_MODE=develop to enable)" > /etc/php/8.3/cli/conf.d/20-xdebug.ini
+    fi
+fi
+
+if [ $# -gt 0 ]; then
+    if [ "$SUPERVISOR_PHP_USER" = "root" ]; then
+        exec "$@"
+    else
+        exec gosu $WWWUSER "$@"
+    fi
+else
+    exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+fi
