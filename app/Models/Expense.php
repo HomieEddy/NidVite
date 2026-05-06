@@ -12,7 +12,6 @@ class Expense extends Model
 
     protected $fillable = [
         'repair_job_id',
-        'category_id',
         'material_id',
         'description',
         'quantity',
@@ -40,11 +39,6 @@ class Expense extends Model
     public function repairJob(): BelongsTo
     {
         return $this->belongsTo(RepairJob::class);
-    }
-
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(ExpenseCategory::class, 'category_id');
     }
 
     public function material(): BelongsTo

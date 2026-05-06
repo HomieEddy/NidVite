@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Expense;
-use App\Models\ExpenseCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ExpenseFactory extends Factory
@@ -20,7 +19,6 @@ class ExpenseFactory extends Factory
 
         return [
             'repair_job_id' => null,
-            'category_id' => ExpenseCategory::factory(),
             'description' => $this->faker->words(3, true),
             'quantity' => $quantity,
             'unit' => 'unité',

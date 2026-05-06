@@ -16,9 +16,6 @@ class ExpenseForm
                 Select::make('repair_job_id')
                     ->relationship('repairJob', 'title')
                     ->required(),
-                Select::make('category_id')
-                    ->relationship('category', 'id')
-                    ->required(),
                 Select::make('material_id')
                     ->relationship('material', 'name'),
                 TextInput::make('description')

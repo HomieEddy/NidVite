@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Expense;
-use App\Models\ExpenseCategory;
 use App\Models\Material;
 use App\Models\RepairJob;
 use App\Models\Report;
@@ -114,26 +113,17 @@ class TestDataSeeder extends Seeder
     private function createMaterials(): void
     {
         $materials = [
-            ['sku' => 'ASP-001', 'name' => 'Asphalt chaud (tonne)', 'unit' => 'tonne', 'current_stock' => 50, 'min_stock_alert' => 10, 'avg_purchase_price' => 120.00],
-            ['sku' => 'CON-001', 'name' => 'Ciment Portland (sac)', 'unit' => 'sac', 'current_stock' => 200, 'min_stock_alert' => 50, 'avg_purchase_price' => 15.50],
-            ['sku' => 'AGG-001', 'name' => 'Granulat 0-20mm (tonne)', 'unit' => 'tonne', 'current_stock' => 100, 'min_stock_alert' => 20, 'avg_purchase_price' => 35.00],
-            ['sku' => 'SEA-001', 'name' => 'Scellant bitumineux (seau)', 'unit' => 'seau', 'current_stock' => 30, 'min_stock_alert' => 5, 'avg_purchase_price' => 85.00],
-            ['sku' => 'BAR-001', 'name' => 'Barrières de chantier', 'unit' => 'unité', 'current_stock' => 150, 'min_stock_alert' => 30, 'avg_purchase_price' => 45.00],
-            ['sku' => 'CÔN-001', 'name' => 'Cônes de signalisation', 'unit' => 'unité', 'current_stock' => 300, 'min_stock_alert' => 50, 'avg_purchase_price' => 12.00],
-            ['sku' => 'PEI-001', 'name' => 'Peinture routine blanche (seau)', 'unit' => 'seau', 'current_stock' => 25, 'min_stock_alert' => 5, 'avg_purchase_price' => 95.00],
-            ['sku' => 'TUB-001', 'name' => 'Tuyau PVC 200mm (mètre)', 'unit' => 'mètre', 'current_stock' => 500, 'min_stock_alert' => 100, 'avg_purchase_price' => 18.50],
-            ['sku' => 'SAB-001', 'name' => 'Sable de jointoiement (tonne)', 'unit' => 'tonne', 'current_stock' => 40, 'min_stock_alert' => 10, 'avg_purchase_price' => 55.00],
-            ['sku' => 'GÉO-001', 'name' => 'Géotextile (rouleau)', 'unit' => 'rouleau', 'current_stock' => 15, 'min_stock_alert' => 3, 'avg_purchase_price' => 220.00],
+            ['sku' => 'ASP-001', 'name' => 'Asphalt bags', 'unit' => 'bag', 'current_stock' => 200, 'min_stock_alert' => 50, 'avg_purchase_price' => 15.50],
         ];
 
         foreach ($materials as $data) {
             Material::firstOrCreate(
                 ['sku' => $data['sku']],
                 array_merge($data, [
-                    'description' => "Matériel pour travaux routiers - {$data['name']}",
+                    'description' => "Material for road works - {$data['name']}",
                     'reserved_stock' => 0,
                     'last_purchase_price' => $data['avg_purchase_price'],
-                    'location' => 'Entrepôt principal',
+                    'location' => 'Main warehouse',
                     'is_active' => true,
                 ])
             );
@@ -145,7 +135,14 @@ class TestDataSeeder extends Seeder
      */
     private function createReports(): Collection
     {
-        $categories = ReportCategory::all();
+        $potholeCategory = ReportCategory::where('slug', 'pothole')->first();
+
+        if (! $potholeCategory) {
+            $this->command->warn('Pothole category not found. Skipping report creation.');
+
+            return collect();
+        }
+
         $statuses = [
             'received' => 25,
             'verified' => 15,
@@ -168,7 +165,7 @@ class TestDataSeeder extends Seeder
                     'preferred_locale' => rand(0, 10) > 3 ? 'fr' : 'en',
                     'status' => $status,
                     'priority' => $this->randomPriority(),
-                    'category_id' => $categories->random()->id,
+                    'category_id' => $potholeCategory->id,
                     'description' => $this->generateReportDescription(),
                     'address' => $this->generateMontrealAddress(),
                     'neighborhood' => $this->generateNeighborhood($location),
@@ -286,9 +283,28 @@ class TestDataSeeder extends Seeder
      */
     private function createExpenses(Collection $repairJobs, array $users): void
     {
-        $expenseCategories = ExpenseCategory::all();
         $materials = Material::all();
         $accountantId = $users['accountant']->id ?? null;
+
+        $descriptions = [
+            'Achat d\'asphalte chaud',
+            'Ciment Portland',
+            'Granulat pour base',
+            'Scellant bitumineux',
+            'Sable de jointoiement',
+            'Heures de main-d\'œuvre - Équipe A',
+            'Heures supplémentaires weekend',
+            'Diesel pour camion benne',
+            'Essence pour équipement',
+            'Location compacteur vibrant',
+            'Transport matériaux',
+            'Livraison urgent',
+            'Repas d\'équipe',
+            'Frais de stationnement',
+            'Petits outillages',
+        ];
+
+        $units = ['tonne', 'sac', 'seau', 'mètre', 'heure', 'litre', 'jour', 'km', 'unité'];
 
         $vendors = [
             'Béton Provincial', 'Ciment Québec', 'Matériaux Rive-Sud',
@@ -303,7 +319,6 @@ class TestDataSeeder extends Seeder
             $jobTotal = 0;
 
             for ($i = 0; $i < $expenseCount; $i++) {
-                $category = $expenseCategories->random();
                 $quantity = rand(1, 20);
                 $unitCost = rand(50, 500) + (rand(0, 99) / 100);
                 $subtotal = $quantity * $unitCost;
@@ -312,7 +327,7 @@ class TestDataSeeder extends Seeder
                 $total = $subtotal + $taxAmount;
                 $jobTotal += $total;
 
-                $materialId = $category->slug === 'materials' && $materials->isNotEmpty()
+                $materialId = $materials->isNotEmpty() && rand(0, 10) > 6
                     ? $materials->random()->id
                     : null;
 
@@ -320,11 +335,10 @@ class TestDataSeeder extends Seeder
 
                 Expense::create([
                     'repair_job_id' => $job->id,
-                    'category_id' => $category->id,
                     'material_id' => $materialId,
-                    'description' => $this->generateExpenseDescription($category->slug),
+                    'description' => $descriptions[array_rand($descriptions)],
                     'quantity' => $quantity,
-                    'unit' => $this->getUnitForCategory($category->slug),
+                    'unit' => $units[array_rand($units)],
                     'unit_cost' => $unitCost,
                     'subtotal' => round($subtotal, 2),
                     'tax_rate' => $taxRate,
@@ -488,33 +502,5 @@ class TestDataSeeder extends Seeder
         if (! empty($updates)) {
             $report->update($updates);
         }
-    }
-
-    private function generateExpenseDescription(string $categorySlug): string
-    {
-        $descriptions = [
-            'materials' => ['Achat d\'asphalte chaud', 'Ciment Portland', 'Granulat pour base', 'Scellant bitumineux', 'Sable de jointoiement'],
-            'labor' => ['Heures de main-d\'œuvre - Équipe A', 'Heures supplémentaires weekend', 'Technicien spécialisé', 'Surveillance chantier'],
-            'fuel' => ['Diesel pour camion benne', 'Essence pour équipement', 'Carburant chauffage asphalt'],
-            'equipment_rental' => ['Location compacteur vibrant', 'Location camion-citerne', 'Location plateforme élévatrice'],
-            'transport' => ['Transport matériaux', 'Livraison urgent', 'Déplacement équipe'],
-            'other' => ['Repas d\'équipe', 'Frais de stationnement', 'Petits outillages'],
-        ];
-
-        $items = $descriptions[$categorySlug] ?? $descriptions['other'];
-
-        return $items[array_rand($items)];
-    }
-
-    private function getUnitForCategory(string $categorySlug): string
-    {
-        return match ($categorySlug) {
-            'materials' => ['tonne', 'sac', 'seau', 'mètre'][array_rand(['tonne', 'sac', 'seau', 'mètre'])],
-            'labor' => 'heure',
-            'fuel' => 'litre',
-            'equipment_rental' => 'jour',
-            'transport' => 'km',
-            default => 'unité',
-        };
     }
 }
