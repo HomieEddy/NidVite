@@ -14,8 +14,7 @@ class RepairJobFactory extends Factory
         return [
             'title' => $this->faker->words(3, true),
             'description' => $this->faker->sentence(),
-            'status' => 'pending',
-            'priority' => 'medium',
+            'status' => 'planned',
             'created_by' => null,
         ];
     }

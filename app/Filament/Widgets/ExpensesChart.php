@@ -29,7 +29,7 @@ class ExpensesChart extends ChartWidget
 
         $totals = Expense::whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
-            ->selectRaw('category_id, SUM(amount) as total')
+            ->selectRaw('category_id, SUM(total) as total')
             ->groupBy('category_id')
             ->pluck('total', 'category_id');
 
