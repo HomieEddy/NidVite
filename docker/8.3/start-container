@@ -15,6 +15,13 @@ fi
 
 chmod -R ugo+rw /.composer
 
+# Disable Xdebug by default for performance (can be enabled via SAIL_XDEBUG_MODE=develop)
+if [ "${SAIL_XDEBUG_MODE:-off}" = "off" ]; then
+    if [ -f /etc/php/8.3/cli/conf.d/20-xdebug.ini ]; then
+        echo "; Xdebug disabled for performance (set SAIL_XDEBUG_MODE=develop to enable)" > /etc/php/8.3/cli/conf.d/20-xdebug.ini
+    fi
+fi
+
 if [ $# -gt 0 ]; then
     if [ "$SUPERVISOR_PHP_USER" = "root" ]; then
         exec "$@"
