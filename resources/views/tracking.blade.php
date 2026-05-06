@@ -11,6 +11,13 @@
     <link rel="manifest" href="/manifest.json">
     @laravelPWA
     <script src="https://cdn.tailwindcss.com"></script>
+    @if($location)
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    @endif
+    <style>
+        #tracking-map { height: 250px; border-radius: 0.75rem; }
+    </style>
 </head>
 <body class="antialiased bg-gray-50">
     <div class="min-h-screen flex flex-col">
@@ -51,6 +58,10 @@
 
                 @if($report->description)
                     <p class="text-sm text-gray-700 mb-4"><span class="font-medium">{{ __('Description') }}:</span> {{ $report->description }}</p>
+                @endif
+
+                @if($location)
+                    <div id="tracking-map" class="mt-4 border border-gray-200"></div>
                 @endif
             </div>
 
@@ -111,5 +122,16 @@
             </div>
         </main>
     </div>
+
+    @if($location)
+    <script>
+        const map = L.map('tracking-map').setView([{{ $location->lat }}, {{ $location->lng }}], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19,
+        }).addTo(map);
+        L.marker([{{ $location->lat }}, {{ $location->lng }}]).addTo(map);
+    </script>
+    @endif
 </body>
 </html>

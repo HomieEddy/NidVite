@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\MapController;
 use App\Http\Controllers\ReportTrackingController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,12 @@ Route::get('/signaler', function () {
 Route::get('/suivi/{uuid}', [ReportTrackingController::class, 'show'])
     ->name('report.tracking')
     ->whereUuid('uuid');
+
+Route::get('/carte', [MapController::class, 'index'])
+    ->name('map.public');
+
+Route::get('/api/reports/geojson', [MapController::class, 'geojson'])
+    ->name('api.reports.geojson');
 
 Route::get('/locale/{locale}', function (string $locale) {
     if (in_array($locale, ['fr', 'en'], true)) {

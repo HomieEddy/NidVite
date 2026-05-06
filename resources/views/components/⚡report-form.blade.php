@@ -134,7 +134,29 @@ new class extends Component
     }
 } ?>
 
-<div class="min-h-screen bg-gray-50" x-data="{
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <div class="min-h-screen bg-gray-50" x-data="{
+    map: null,
+    marker: null,
+    initMap() {
+        if (this.map) return;
+        this.map = L.map('form-map').setView([45.5017, -73.5673], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19,
+        }).addTo(this.map);
+        @if($latitude && $longitude)
+        this.updateMap({{ $latitude }}, {{ $longitude }});
+        @endif
+    },
+    updateMap(lat, lng) {
+        if (!this.map) this.initMap();
+        if (this.marker) this.map.removeLayer(this.marker);
+        this.marker = L.marker([lat, lng]).addTo(this.map);
+        this.map.setView([lat, lng], 15);
+    },
     captureLocation() {
         if (! navigator.geolocation) {
             alert(@js(__('report.geolocation_not_supported')));
@@ -144,13 +166,16 @@ new class extends Component
             (position) => {
                 $wire.latitude = position.coords.latitude;
                 $wire.longitude = position.coords.longitude;
+                setTimeout(() => {
+                    this.updateMap(position.coords.latitude, position.coords.longitude);
+                }, 300);
             },
             () => {
                 alert(@js(__('report.geolocation_failed')));
             }
         );
     }
-}">
+}" x-init="initMap()">
     {{-- Header --}}
     <header class="bg-amber-600 shadow-lg">
         <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -161,9 +186,14 @@ new class extends Component
                 </svg>
                 <span class="text-xl font-bold text-white">{{ config('app.name') }}</span>
             </div>
-            <div class="flex items-center space-x-2">
-                <a href="{{ route('locale.switch', 'fr') }}" class="px-2 py-1 rounded text-sm font-medium {{ app()->getLocale() === 'fr' ? 'bg-white text-amber-600' : 'text-amber-100 hover:text-white' }}">FR</a>
-                <a href="{{ route('locale.switch', 'en') }}" class="px-2 py-1 rounded text-sm font-medium {{ app()->getLocale() === 'en' ? 'bg-white text-amber-600' : 'text-amber-100 hover:text-white' }}">EN</a>
+            <div class="flex items-center space-x-3">
+                <a href="{{ route('map.public') }}" class="text-sm font-medium text-amber-100 hover:text-white transition">
+                    {{ __('map.title') }}
+                </a>
+                <div class="flex items-center space-x-1">
+                    <a href="{{ route('locale.switch', 'fr') }}" class="px-2 py-1 rounded text-sm font-medium {{ app()->getLocale() === 'fr' ? 'bg-white text-amber-600' : 'text-amber-100 hover:text-white' }}">FR</a>
+                    <a href="{{ route('locale.switch', 'en') }}" class="px-2 py-1 rounded text-sm font-medium {{ app()->getLocale() === 'en' ? 'bg-white text-amber-600' : 'text-amber-100 hover:text-white' }}">EN</a>
+                </div>
             </div>
         </div>
     </header>
@@ -294,6 +324,7 @@ new class extends Component
                                         <span class="text-xs text-gray-500">{{ number_format($latitude, 5) }}, {{ number_format($longitude, 5) }}</span>
                                     </div>
                                 @endif
+                                <div id="form-map" class="w-full h-48 rounded-lg border border-gray-200 mb-3" wire:ignore></div>
 
                                 <button type="button" x-on:click="captureLocation()"
                                     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition">
