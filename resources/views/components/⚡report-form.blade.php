@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\ReportCreated;
 use App\Models\Report;
 use App\Models\ReportCategory;
 use Illuminate\Support\Facades\DB;
@@ -93,6 +94,8 @@ new class extends Component
         ]);
 
         $report->setLocation($this->latitude, $this->longitude);
+
+        event(new ReportCreated($report));
 
         if (!empty($this->photos)) {
             foreach ($this->photos as $photo) {
