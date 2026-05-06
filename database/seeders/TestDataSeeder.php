@@ -173,13 +173,8 @@ class TestDataSeeder extends Seeder
                     'address' => $this->generateMontrealAddress(),
                     'neighborhood' => $this->generateNeighborhood($location),
                     'borough' => $this->generateBorough($location),
-                    'ip_address_hash' => hash('sha256', fake()->ipv4()),
-                    'user_agent_hash' => hash('sha256', fake()->userAgent()),
                     'geofence_passed' => true,
-                    'geofence_checked_at' => $createdAt,
-                    'submission_duration_ms' => rand(5000, 45000),
                     'is_spam' => false,
-                    'spam_score' => 0.0,
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);

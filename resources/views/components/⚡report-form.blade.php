@@ -105,9 +105,6 @@ new class extends Component
                 'address' => $validated['address'],
                 'neighborhood' => $validated['neighborhood'] ?: null,
                 'borough' => $validated['borough'] ?: null,
-                'ip_address_hash' => hash('sha256', request()->ip() ?? 'unknown'),
-                'ip_address_raw' => request()->ip(),
-                'user_agent_hash' => hash('sha256', request()->userAgent() ?? ''),
             ]);
 
             $report->setLocation($this->latitude, $this->longitude);

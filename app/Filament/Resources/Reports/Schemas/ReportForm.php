@@ -24,15 +24,12 @@ class ReportForm
                 TextInput::make('preferred_locale')
                     ->required()
                     ->default('fr'),
-                DateTimePicker::make('email_verified_at'),
-                TextInput::make('location_accuracy')
-                    ->numeric(),
                 TextInput::make('address'),
                 TextInput::make('neighborhood'),
                 TextInput::make('borough'),
                 TextInput::make('status')
                     ->required()
-                    ->default('pending'),
+                    ->default('received'),
                 TextInput::make('priority')
                     ->required()
                     ->default('normal'),
@@ -40,20 +37,10 @@ class ReportForm
                     ->relationship('category', 'id'),
                 Textarea::make('description')
                     ->columnSpanFull(),
-                TextInput::make('ip_address_hash')
-                    ->required(),
-                TextInput::make('ip_address_raw'),
-                TextInput::make('user_agent_hash')
-                    ->required(),
                 Toggle::make('geofence_passed')
                     ->required(),
-                DateTimePicker::make('geofence_checked_at'),
-                TextInput::make('submission_duration_ms')
-                    ->numeric(),
                 Toggle::make('is_spam')
                     ->required(),
-                TextInput::make('spam_score')
-                    ->numeric(),
                 TextInput::make('rejection_reason'),
                 Textarea::make('admin_notes')
                     ->columnSpanFull(),

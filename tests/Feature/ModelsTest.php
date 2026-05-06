@@ -31,8 +31,6 @@ it('creates a report with auto-generated uuid', function () {
     $report = Report::create([
         'reporter_email' => 'citizen@example.com',
         'status' => 'received',
-        'ip_address_hash' => hash('sha256', '127.0.0.1'),
-        'user_agent_hash' => hash('sha256', 'Mozilla'),
     ]);
 
     expect($report->uuid)->not->toBeNull()
@@ -43,8 +41,6 @@ it('sets postgis location on report', function () {
     $report = Report::create([
         'reporter_email' => 'citizen@example.com',
         'status' => 'received',
-        'ip_address_hash' => hash('sha256', '127.0.0.1'),
-        'user_agent_hash' => hash('sha256', 'Mozilla'),
     ]);
 
     $report->setLocation(45.5019, -73.5674);
@@ -61,15 +57,11 @@ it('filters reports by status', function () {
     Report::create([
         'reporter_email' => 'a@example.com',
         'status' => 'received',
-        'ip_address_hash' => hash('sha256', '127.0.0.1'),
-        'user_agent_hash' => hash('sha256', 'Mozilla'),
     ]);
 
     Report::create([
         'reporter_email' => 'b@example.com',
         'status' => 'repaired',
-        'ip_address_hash' => hash('sha256', '127.0.0.1'),
-        'user_agent_hash' => hash('sha256', 'Mozilla'),
     ]);
 
     expect(Report::status('received')->count())->toBe(1);

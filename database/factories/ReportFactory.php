@@ -22,8 +22,6 @@ class ReportFactory extends Factory
             'priority' => 'normal',
             'category_id' => ReportCategory::factory(),
             'description' => $this->faker->sentence(),
-            'ip_address_hash' => hash('sha256', $this->faker->ipv4()),
-            'user_agent_hash' => hash('sha256', $this->faker->userAgent()),
             'is_spam' => false,
         ];
     }

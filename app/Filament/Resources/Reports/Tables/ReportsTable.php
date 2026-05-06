@@ -24,12 +24,6 @@ class ReportsTable
                     ->searchable(),
                 TextColumn::make('preferred_locale')
                     ->searchable(),
-                TextColumn::make('email_verified_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('location_accuracy')
-                    ->numeric()
-                    ->sortable(),
                 TextColumn::make('address')
                     ->searchable(),
                 TextColumn::make('neighborhood')
@@ -42,25 +36,10 @@ class ReportsTable
                     ->searchable(),
                 TextColumn::make('category.id')
                     ->searchable(),
-                TextColumn::make('ip_address_hash')
-                    ->searchable(),
-                TextColumn::make('ip_address_raw')
-                    ->searchable(),
-                TextColumn::make('user_agent_hash')
-                    ->searchable(),
                 IconColumn::make('geofence_passed')
                     ->boolean(),
-                TextColumn::make('geofence_checked_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('submission_duration_ms')
-                    ->numeric()
-                    ->sortable(),
                 IconColumn::make('is_spam')
                     ->boolean(),
-                TextColumn::make('spam_score')
-                    ->numeric()
-                    ->sortable(),
                 TextColumn::make('rejection_reason')
                     ->searchable(),
                 TextColumn::make('first_scheduled_at')
