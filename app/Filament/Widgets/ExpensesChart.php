@@ -27,15 +27,16 @@ class ExpensesChart extends ChartWidget
     {
         $categories = ExpenseCategory::all();
 
-        $data = $categories->map(function ($category): array {
-            $total = Expense::where('category_id', $category->id)
-                ->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year)
-                ->sum('amount');
+        $totals = Expense::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->selectRaw('category_id, SUM(amount) as total')
+            ->groupBy('category_id')
+            ->pluck('total', 'category_id');
 
+        $data = $categories->map(function ($category) use ($totals): array {
             return [
                 'label' => app()->getLocale() === 'fr' ? $category->label_fr : $category->label_en,
-                'total' => (float) $total,
+                'total' => (float) ($totals[$category->id] ?? 0),
             ];
         });
 

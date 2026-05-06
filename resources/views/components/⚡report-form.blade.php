@@ -40,7 +40,6 @@ new class extends Component
     public ?float $longitude = null;
 
     #[Validate('nullable|array|max:5')]
-    #[Validate('each:file|mimes:jpeg,png,gif,webp|max:10240')]
     public array $photos = [];
 
     public string $recaptcha_response = '';
@@ -81,32 +80,36 @@ new class extends Component
             return;
         }
 
-        $report = Report::create([
-            'reporter_email' => $validated['reporter_email'],
-            'preferred_locale' => app()->getLocale(),
-            'category_id' => $validated['category_id'],
-            'description' => $validated['description'],
-            'address' => $validated['address'],
-            'neighborhood' => $validated['neighborhood'] ?: null,
-            'borough' => $validated['borough'] ?: null,
-            'ip_address_hash' => hash('sha256', request()->ip() ?? 'unknown'),
-            'ip_address_raw' => request()->ip(),
-            'user_agent_hash' => hash('sha256', request()->userAgent() ?? ''),
-        ]);
+        $report = DB::transaction(function () use ($validated): Report {
+            $report = Report::create([
+                'reporter_email' => $validated['reporter_email'],
+                'preferred_locale' => app()->getLocale(),
+                'category_id' => $validated['category_id'],
+                'description' => $validated['description'],
+                'address' => $validated['address'],
+                'neighborhood' => $validated['neighborhood'] ?: null,
+                'borough' => $validated['borough'] ?: null,
+                'ip_address_hash' => hash('sha256', request()->ip() ?? 'unknown'),
+                'ip_address_raw' => request()->ip(),
+                'user_agent_hash' => hash('sha256', request()->userAgent() ?? ''),
+            ]);
 
-        $report->setLocation($this->latitude, $this->longitude);
+            $report->setLocation($this->latitude, $this->longitude);
+
+            if (! empty($this->photos)) {
+                foreach ($this->photos as $photo) {
+                    $cleanPath = ExifStripper::process($photo);
+
+                    $report->addMedia($cleanPath)
+                        ->usingName($photo->getClientOriginalName())
+                        ->toMediaCollection('report-photos');
+                }
+            }
+
+            return $report;
+        });
 
         event(new ReportCreated($report));
-
-        if (! empty($this->photos)) {
-            foreach ($this->photos as $photo) {
-                $cleanPath = ExifStripper::process($photo);
-
-                $report->addMedia($cleanPath)
-                    ->usingName($photo->getClientOriginalName())
-                    ->toMediaCollection('report-photos');
-            }
-        }
 
         $this->submitted = true;
         $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'latitude', 'longitude']);
@@ -172,21 +175,26 @@ new class extends Component
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700">{{ __('report.location') }} *</label>
-                <button type="button" x-data="" x-on:click="
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition((position) => {
+            <div x-data="{
+                captureLocation() {
+                    if (! navigator.geolocation) {
+                        alert(@js(__('report.geolocation_not_supported')));
+                        return;
+                    }
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
                             $wire.latitude = position.coords.latitude;
                             $wire.longitude = position.coords.longitude;
-                            alert('Localisation capturee: ' + position.coords.latitude + ', ' + position.coords.longitude);
-                        }, () => {
-                            alert('Impossible d\'obtenir la localisation.');
-                        });
-                    } else {
-                        alert('Geolocalisation non supportee.');
-                    }
-                " class="mt-1 inline-flex items-center px-4 py-2 bg-amber-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-amber-700 focus:bg-amber-700 active:bg-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                            alert(@js(__('report.geolocation_captured')) + ': ' + position.coords.latitude + ', ' + position.coords.longitude);
+                        },
+                        () => {
+                            alert(@js(__('report.geolocation_failed')));
+                        }
+                    );
+                }
+            }">
+                <label class="block text-sm font-medium text-gray-700">{{ __('report.location') }} *</label>
+                <button type="button" x-on:click="captureLocation()" class="mt-1 inline-flex items-center px-4 py-2 bg-amber-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-amber-700 focus:bg-amber-700 active:bg-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition ease-in-out duration-150">
                     {{ __('report.capture_location') }}
                 </button>
                 @if ($latitude && $longitude)

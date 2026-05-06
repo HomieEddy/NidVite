@@ -19,12 +19,26 @@ class ExifStripper
 
         $image = $manager->read($file->getRealPath());
 
-        $extension = strtolower($file->getClientOriginalExtension());
-        $tempPath = tempnam(sys_get_temp_dir(), 'clean_').'.'.$extension;
+        $extension = strtolower($file->extension());
+        $tempPath = tempnam(sys_get_temp_dir(), 'clean_');
 
-        $image->encodeByExtension($extension, quality: 90)->save($tempPath);
+        if ($tempPath === false) {
+            throw new RuntimeException('Failed to create temporary file.');
+        }
 
-        return $tempPath;
+        $finalPath = $tempPath.'.'.$extension;
+
+        try {
+            $image->encodeByExtension($extension, quality: 90)->save($finalPath);
+        } catch (\Throwable $e) {
+            @unlink($tempPath);
+            @unlink($finalPath);
+            throw $e;
+        }
+
+        @unlink($tempPath);
+
+        return $finalPath;
     }
 
     private static function createManager(): ImageManager

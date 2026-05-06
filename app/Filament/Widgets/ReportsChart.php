@@ -24,13 +24,21 @@ class ReportsChart extends ChartWidget
 
     protected function getData(): array
     {
+        $start = now()->subDays(29)->startOfDay();
+        $end = now()->endOfDay();
+
+        $counts = Report::whereBetween('created_at', [$start, $end])
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->pluck('count', 'date');
+
         $data = collect(range(29, 0))
-            ->map(function (int $daysAgo): array {
-                $date = now()->subDays($daysAgo);
+            ->map(function (int $daysAgo) use ($counts): array {
+                $date = now()->subDays($daysAgo)->format('Y-m-d');
 
                 return [
-                    'date' => $date->format('Y-m-d'),
-                    'count' => Report::whereDate('created_at', $date)->count(),
+                    'date' => $date,
+                    'count' => (int) ($counts[$date] ?? 0),
                 ];
             });
 
