@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -210,5 +211,19 @@ class Report extends Model
         $current = ReportStatus::tryFrom($this->status);
 
         return $current !== null && $current->isTerminal();
+    }
+
+    /**
+     * Validate that the given coordinates are within the Montreal boundary.
+     *
+     * @throws ValidationException
+     */
+    public static function validateGeofence(float $latitude, float $longitude): void
+    {
+        if (! MontrealBoundary::contains($latitude, $longitude)) {
+            throw ValidationException::withMessages([
+                'location' => [__('report.validation.outside_montreal')],
+            ]);
+        }
     }
 }
