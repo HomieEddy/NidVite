@@ -66,7 +66,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 'panels::body.start',
-                fn (): string => Blade::render('@include("filament.reverb-scripts")'),
+                fn (): string => Blade::render('@include("vendor.filament.reverb-scripts")'),
             );
     }
 }
