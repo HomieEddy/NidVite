@@ -56,7 +56,7 @@
     </header>
     
     {{-- Main Content --}}
-    <main id="main-content" class="flex-1 w-full">
+    <main id="main-content" class="flex-1 flex flex-col min-h-0">
         @yield('content')
     </main>
     

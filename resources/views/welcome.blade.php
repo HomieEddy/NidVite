@@ -4,20 +4,16 @@
 
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-<style>
-    #welcome-map { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 1rem; z-index: 0; }
-    .map-container { position: relative; height: 80vh; padding: 0.5rem; }
-</style>
 @endpush
 
 @section('content')
-<div x-data="tracker()" class="flex flex-col h-full">
-    {{-- Map with border padding --}}
-    <div class="map-container">
-        <div id="welcome-map"></div>
+<div x-data="tracker()" class="flex-1 flex flex-col min-h-0">
+    {{-- Map fills all available space with padding --}}
+    <div class="flex-1 min-h-0 p-2 relative">
+        <div id="welcome-map" class="absolute inset-2 rounded-2xl overflow-hidden shadow-md border border-gray-200"></div>
 
         {{-- Overlay buttons --}}
-        <div class="absolute bottom-6 left-4 right-4 z-10">
+        <div class="absolute bottom-6 left-4 right-4 z-[1000]">
             <div class="max-w-sm mx-auto space-y-3">
                 {{-- Report CTA --}}
                 <a href="{{ route('report.create') }}"
@@ -65,7 +61,7 @@
     </div>
 
     {{-- Tracking Modal --}}
-    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center p-4" x-transition.opacity>
+    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-[1002] flex items-center justify-center p-4" x-transition.opacity>
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" x-on:click="modalOpen = false"></div>
         <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto animate-slide-up" x-on:click.away="modalOpen = false">
             {{-- Header --}}

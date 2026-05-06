@@ -5,8 +5,8 @@
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <style>
-    .map-page-container { display: flex; flex-direction: column; height: calc(100vh - 7rem); }
-    #map { flex: 1; min-height: 0; width: 100%; border-radius: 0.75rem; }
+    .map-page-container { display: flex; flex-direction: column; height: calc(100vh - 8rem); overflow: hidden; }
+    #map { flex: 1; min-height: 0; width: 100%; border-radius: 0.75rem; overflow: hidden; }
     .report-popup {
         min-width: 200px;
         font-family: 'Inter', system-ui, sans-serif;
