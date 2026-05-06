@@ -2,10 +2,16 @@
 
 namespace App\Filament\Resources\Expenses\Tables;
 
+use App\Filament\Resources\Expenses\ExpenseResource;
+use App\Models\Expense;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 
 class ExpensesTable
@@ -13,56 +19,73 @@ class ExpensesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->emptyStateHeading('No expenses found')
+            ->emptyStateDescription('Expenses will appear here once recorded.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Create Expense')
+                    ->url(ExpenseResource::getUrl('create'))
+                    ->icon('heroicon-m-plus')
+                    ->visible(fn (): bool => auth()->user()?->can('create', Expense::class) ?? false),
+            ])
             ->columns([
                 TextColumn::make('repairJob.title')
-                    ->searchable(),
-                TextColumn::make('category.id')
-                    ->searchable(),
+                    ->label('Repair Job')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('vendor.name')
+                    ->label('Vendor')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('material.name')
-                    ->searchable(),
+                    ->label('Material')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('description')
-                    ->searchable(),
+                    ->searchable()
+                    ->limit(40),
                 TextColumn::make('quantity')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('unit')
                     ->searchable(),
                 TextColumn::make('unit_cost')
-                    ->money()
-                    ->sortable(),
-                TextColumn::make('subtotal')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('tax_rate')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('tax_amount')
-                    ->numeric()
+                    ->money('CAD')
                     ->sortable(),
                 TextColumn::make('total')
-                    ->numeric()
+                    ->money('CAD')
                     ->sortable(),
-                TextColumn::make('vendor')
-                    ->searchable(),
                 TextColumn::make('incurred_at')
-                    ->dateTime()
+                    ->dateTime('M j, Y')
                     ->sortable(),
-                TextColumn::make('created_by')
-                    ->numeric()
+                TextColumn::make('creator.name')
+                    ->label('Created By')
+                    ->searchable()
                     ->sortable(),
                 TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->dateTime('M j, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('vendor_id')
+                    ->relationship('vendor', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->multiple(),
             ])
+            ->groups([
+                Group::make('vendor.name')
+                    ->label('Vendor'),
+                Group::make('repairJob.title')
+                    ->label('Repair Job'),
+                Group::make('incurred_at')
+                    ->label('Month')
+                    ->getTitleFromRecordUsing(fn ($record) => $record->incurred_at?->format('M Y') ?? 'Unknown'),
+            ])
+            ->defaultGroup('vendor.name')
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([
