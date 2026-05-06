@@ -12,7 +12,17 @@
 @endpush
 
 @section('content')
-<div class="max-w-3xl mx-auto px-4 py-6">
+{{-- Back button --}}
+<div class="max-w-3xl mx-auto px-4 pt-3 pb-1">
+    <a href="/" class="inline-flex items-center text-sm text-gray-500 hover:text-amber-600 transition btn-touch py-1">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        {{ app()->getLocale() === 'fr' ? 'Retour' : 'Back' }}
+    </a>
+</div>
+
+<div class="max-w-3xl mx-auto px-4 py-4">
     {{-- Report Card --}}
     <div class="citizen-card p-5 mb-4 animate-fade-in">
         <div class="flex items-center justify-between mb-4">

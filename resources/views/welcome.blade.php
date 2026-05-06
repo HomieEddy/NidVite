@@ -2,125 +2,114 @@
 
 @section('title', config('app.name'))
 
+@push('styles')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+    #welcome-map { height: 280px; width: 100%; border-radius: 1rem; }
+    @media (min-width: 640px) { #welcome-map { height: 320px; } }
+</style>
+@endpush
+
 @section('content')
-<div class="min-h-[calc(100vh-8rem)] flex flex-col">
-    {{-- Hero Section --}}
-    <div class="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center animate-fade-in">
-        {{-- App Icon / Logo --}}
-        <div class="relative mb-8">
-            <div class="w-24 h-24 rounded-3xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-xl flex items-center justify-center mx-auto">
-                <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-            </div>
-            {{-- Floating notification badge --}}
-            <div class="absolute -top-1 -right-1 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-            </div>
-        </div>
-        
-        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3 tracking-tight">
-            {{ config('app.name') }}
-        </h1>
-        
-        <p class="text-lg text-gray-600 mb-2 max-w-sm mx-auto leading-relaxed">
-            {{ app()->getLocale() === 'fr' 
-                ? 'Améliorons Montréal ensemble' 
-                : 'Let\'s improve Montreal together' }}
-        </p>
-        
-        <p class="text-sm text-gray-500 mb-10 max-w-xs mx-auto">
-            {{ app()->getLocale() === 'fr' 
-                ? 'Signalez les nids-de-poule et problèmes de voirie en quelques secondes' 
-                : 'Report potholes and road issues in seconds' }}
-        </p>
-        
-        {{-- Primary CTA --}}
-        <a href="{{ route('report.create') }}" 
-           class="w-full max-w-xs inline-flex items-center justify-center px-8 py-4 text-lg font-semibold rounded-2xl shadow-lg text-white bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 active:scale-[0.98] transition-all duration-200 btn-touch">
+<div class="flex flex-col">
+    {{-- Map --}}
+    <div class="px-4 pt-4 pb-2">
+        <div id="welcome-map" class="shadow-md border border-gray-200"></div>
+    </div>
+
+    {{-- Actions --}}
+    <div class="px-4 py-4 space-y-3">
+        {{-- Report CTA --}}
+        <a href="{{ route('report.create') }}"
+           class="w-full inline-flex items-center justify-center px-6 py-4 text-lg font-semibold rounded-2xl shadow-lg text-white bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 active:scale-[0.98] transition-all duration-200 btn-touch">
             <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
             {{ app()->getLocale() === 'fr' ? 'Faire un signalement' : 'Report an issue' }}
         </a>
-        
-        {{-- Secondary CTA --}}
-        <a href="{{ route('map.public') }}" 
-           class="mt-3 w-full max-w-xs inline-flex items-center justify-center px-8 py-4 text-base font-medium rounded-2xl border-2 border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] transition-all duration-200 btn-touch">
-            <svg class="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0121 18.382V7.618a1 1 0 01-.553-.894L15 7m0 13V7"/>
-            </svg>
-            {{ app()->getLocale() === 'fr' ? 'Voir la carte' : 'View map' }}
-        </a>
-    </div>
-    
-    {{-- Stats / Trust Section --}}
-    <div class="px-6 pb-6">
-        <div class="citizen-card p-5 max-w-sm mx-auto animate-slide-up">
-            <div class="grid grid-cols-3 gap-4 text-center">
-                <div>
-                    <div class="text-2xl font-bold text-amber-600">3</div>
-                    <div class="text-xs text-gray-500 mt-0.5">{{ app()->getLocale() === 'fr' ? 'clics' : 'clicks' }}</div>
+
+        {{-- Track CTA --}}
+        <div x-data="{ trackingId: '', showInput: false }" class="w-full">
+            <button type="button"
+                    x-show="!showInput"
+                    x-on:click="showInput = true"
+                    class="w-full inline-flex items-center justify-center px-6 py-4 text-lg font-medium rounded-2xl border-2 border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] transition-all duration-200 btn-touch">
+                <svg class="w-6 h-6 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                </svg>
+                {{ app()->getLocale() === 'fr' ? 'Suivre un signalement' : 'Follow up on an issue' }}
+            </button>
+
+            <div x-show="showInput" x-cloak class="space-y-3 animate-fade-in">
+                <div class="relative">
+                    <input type="text" x-model="trackingId"
+                           class="block w-full rounded-2xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-4 pr-24 uppercase tracking-wide"
+                           placeholder="{{ app()->getLocale() === 'fr' ? 'Numéro de signalement' : 'Report ID' }}"
+                           x-on:keydown.enter="if(trackingId.trim()) window.location.href = '/suivi/' + trackingId.trim()">
+                    <button type="button"
+                            x-on:click="if(trackingId.trim()) window.location.href = '/suivi/' + trackingId.trim()"
+                            class="absolute right-2 top-2 bottom-2 px-4 bg-amber-600 text-white text-sm font-semibold rounded-xl hover:bg-amber-700 active:scale-[0.98] transition-all btn-touch">
+                        {{ app()->getLocale() === 'fr' ? 'OK' : 'Go' }}
+                    </button>
                 </div>
-                <div>
-                    <div class="text-2xl font-bold text-amber-600">30s</div>
-                    <div class="text-xs text-gray-500 mt-0.5">{{ app()->getLocale() === 'fr' ? 'pour signaler' : 'to report' }}</div>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-amber-600">100%</div>
-                    <div class="text-xs text-gray-500 mt-0.5">{{ app()->getLocale() === 'fr' ? 'gratuit' : 'free' }}</div>
-                </div>
+                <button type="button" x-on:click="showInput = false; trackingId = ''"
+                        class="w-full text-sm text-gray-500 hover:text-gray-700 py-2 btn-touch">
+                    {{ app()->getLocale() === 'fr' ? 'Annuler' : 'Cancel' }}
+                </button>
             </div>
         </div>
     </div>
-    
-    {{-- How it works --}}
-    <div class="px-6 pb-8">
-        <h2 class="text-center text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
-            {{ app()->getLocale() === 'fr' ? 'Comment ça marche' : 'How it works' }}
-        </h2>
-        
-        <div class="space-y-3 max-w-sm mx-auto">
-            <div class="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-                <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                    <span class="text-amber-700 font-bold text-sm">1</span>
-                </div>
-                <div>
-                    <p class="font-medium text-gray-900 text-sm">{{ app()->getLocale() === 'fr' ? 'Prenez une photo' : 'Take a photo' }}</p>
-                    <p class="text-xs text-gray-500">{{ app()->getLocale() === 'fr' ? 'Du nid-de-poule ou du problème' : 'Of the pothole or issue' }}</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-                <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                    <span class="text-amber-700 font-bold text-sm">2</span>
-                </div>
-                <div>
-                    <p class="font-medium text-gray-900 text-sm">{{ app()->getLocale() === 'fr' ? 'Partagez la localisation' : 'Share location' }}</p>
-                    <p class="text-xs text-gray-500">{{ app()->getLocale() === 'fr' ? 'GPS automatique en un clic' : 'Automatic GPS in one click' }}</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-                <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                    <span class="text-amber-700 font-bold text-sm">3</span>
-                </div>
-                <div>
-                    <p class="font-medium text-gray-900 text-sm">{{ app()->getLocale() === 'fr' ? 'Suivez les réparations' : 'Track repairs' }}</p>
-                    <p class="text-xs text-gray-500">{{ app()->getLocale() === 'fr' ? 'Notifications par email' : 'Email notifications' }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
+
     {{-- Footer --}}
-    <footer class="mt-auto py-6 text-center">
+    <footer class="mt-auto py-4 text-center">
         <p class="text-xs text-gray-400">
             {{ config('app.name') }} - {{ app()->getLocale() === 'fr' ? 'Montréal' : 'Montreal' }} 2026
         </p>
     </footer>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    const map = L.map('welcome-map').setView([45.5017, -73.5673], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19,
+    }).addTo(map);
+
+    const statusColors = {
+        received: '#d97706',
+        verified: '#3b82f6',
+        scheduled: '#6366f1',
+        in_progress: '#db2777',
+        repaired: '#10b981',
+        rejected: '#ef4444',
+    };
+
+    fetch('{{ route('api.reports.geojson') }}')
+        .then(r => r.json())
+        .then(data => {
+            const bounds = L.latLngBounds();
+            data.features.forEach(feature => {
+                const coords = feature.geometry.coordinates;
+                const props = feature.properties;
+                const color = statusColors[props.status] || '#6b7280';
+                const marker = L.circleMarker([coords[1], coords[0]], {
+                    radius: 6,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.85,
+                }).addTo(map);
+                marker.bindPopup(`<div style="font-family:system-ui,sans-serif;font-size:0.8rem"><strong>${props.address || ''}</strong><br><span style="color:${color};font-weight:600">${props.status_label}</span></div>`);
+                bounds.extend([coords[1], coords[0]]);
+            });
+            if (data.features.length > 0) {
+                map.fitBounds(bounds, { padding: [40, 40] });
+            }
+        })
+        .catch(err => console.error('Error loading reports:', err));
+</script>
+@endpush

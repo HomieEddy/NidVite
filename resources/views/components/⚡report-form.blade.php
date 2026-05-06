@@ -134,20 +134,15 @@ new class extends Component
     }
 } ?>
 
-@push('styles')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-@endpush
-
-@push('scripts')
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-@endpush
-
-<div class="max-w-3xl mx-auto px-4 py-6" x-data="{
+<div class="max-w-3xl mx-auto px-4 py-4" x-data="{
     map: null,
     marker: null,
+    mapReady: false,
     initMap() {
         if (this.map) return;
-        this.map = L.map('form-map').setView([45.5017, -73.5673], 12);
+        const el = document.getElementById('form-map');
+        if (!el) return;
+        this.map = L.map(el).setView([45.5017, -73.5673], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors',
             maxZoom: 19,
@@ -155,6 +150,7 @@ new class extends Component
         @if($latitude && $longitude)
         this.updateMap({{ $latitude }}, {{ $longitude }});
         @endif
+        this.mapReady = true;
     },
     updateMap(lat, lng) {
         if (!this.map) this.initMap();
@@ -180,7 +176,7 @@ new class extends Component
             }
         );
     }
-}" x-init="initMap()">
+}" x-init="$nextTick(() => { setTimeout(() => initMap(), 100); })">
     @if ($submitted)
         {{-- Success State --}}
         <div class="citizen-card p-8 text-center animate-fade-in">
@@ -196,8 +192,8 @@ new class extends Component
                 <button wire:click="$set('submitted', false)" class="w-full inline-flex items-center justify-center px-6 py-3.5 border border-transparent text-base font-semibold rounded-xl text-white bg-amber-600 hover:bg-amber-700 active:scale-[0.98] transition-all duration-200 btn-touch">
                     {{ __('report.new_report') }}
                 </button>
-                <a href="{{ route('map.public') }}" class="w-full inline-flex items-center justify-center px-6 py-3.5 border-2 border-gray-200 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 active:scale-[0.98] transition-all duration-200 btn-touch">
-                    {{ __('map.title') }}
+                <a href="/" class="w-full inline-flex items-center justify-center px-6 py-3.5 border-2 border-gray-200 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 active:scale-[0.98] transition-all duration-200 btn-touch">
+                    {{ app()->getLocale() === 'fr' ? 'Retour à l\'accueil' : 'Back to home' }}
                 </a>
             </div>
         </div>
