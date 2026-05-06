@@ -25,6 +25,7 @@ class MapController extends Controller
     public function geojson(): JsonResponse
     {
         $reports = Report::where('is_spam', false)
+            ->where('status', '!=', 'rejected')
             ->whereNotNull('location')
             ->select([
                 'id',

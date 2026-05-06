@@ -24,7 +24,8 @@ class ReportsByNeighborhood extends ChartWidget
 
     protected function getData(): array
     {
-        $neighborhoods = Report::whereNotNull('neighborhood')
+        $neighborhoods = Report::where('status', '!=', 'rejected')
+            ->whereNotNull('neighborhood')
             ->where('neighborhood', '!=', '')
             ->selectRaw('neighborhood, COUNT(*) as count')
             ->groupBy('neighborhood')

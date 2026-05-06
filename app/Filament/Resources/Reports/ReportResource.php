@@ -21,7 +21,7 @@ class ReportResource extends Resource
 {
     protected static ?string $model = Report::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;
 
     public static function form(Schema $schema): Schema
     {
