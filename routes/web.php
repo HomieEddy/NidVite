@@ -14,3 +14,12 @@ Route::get('/signaler', function () {
 Route::get('/suivi/{uuid}', [ReportTrackingController::class, 'show'])
     ->name('report.tracking')
     ->whereUuid('uuid');
+
+Route::get('/locale/{locale}', function (string $locale) {
+    if (in_array($locale, ['fr', 'en'], true)) {
+        session()->put('locale', $locale);
+        app()->setLocale($locale);
+    }
+
+    return redirect()->back();
+})->name('locale.switch');

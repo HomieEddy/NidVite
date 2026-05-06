@@ -49,7 +49,7 @@
   - [ ] `admin_sessions`
   - [ ] `admin_audit_log`
   - [ ] `clusters` (pre-computed with geohash)
-  - [ ] `montreal_boundary`
+  - [x] `montreal_boundary`
   - [ ] `device_fingerprints`
   - [ ] `rate_limit_buckets`
   - [ ] `blocked_ips`
@@ -61,18 +61,18 @@
 - [ ] Configure table partitioning (monthly ranges)
 - [x] Seed roles, categories
 - [x] Create Eloquent models with relationships
-- [ ] Set up Spatie media collections (with perceptual hash)
+- [x] Set up Spatie media collections (`report-photos` with EXIF stripping)
 - [x] Configure PostGIS indexes (GIST)
 - [ ] Set up data retention jobs (IP purging, archiving)
 - [ ] Configure automated backups to R2
 
 ## Phase 3: Citizen PWA
 - [x] Livewire `ReportForm` component (basic)
-- [ ] Livewire `PhotoUploader` component
+- [x] Livewire `PhotoUploader` component (integrated in ReportForm)
 - [x] Livewire `TrackReport` component (via `/suivi/{uuid}` page)
 - [x] One-tap geolocation capture
-- [ ] Photo upload with EXIF stripping
-- [ ] Geofencing validation (Montreal only)
+- [x] Photo upload with EXIF stripping
+- [x] Geofencing validation (Montreal only)
 - [x] Anti-spam (honeypot)
 - [ ] Rate limiting (IP + device fingerprint)
 - [x] PWA manifest and service worker
@@ -99,7 +99,7 @@
 - [ ] "After" photo upload
 - [ ] Pre-computed clustering display
 - [x] Activity log integration (Spatie ActivityLog on Report model)
-- [ ] Real-time notifications (Reverb)
+- [x] Real-time notifications (Reverb)
 - [ ] Admin audit log viewer (Admin only)
 - [ ] **Bilingual dashboard**:
   - [x] User locale preference stored in `users.locale`
@@ -109,7 +109,7 @@
 
 ## Phase 4a: RBAC & Admin Security
 - [x] Fortify integration
-- [ ] 2FA setup
+- [x] 2FA setup (TOTP with QR codes + recovery codes)
 - [x] Role-based access control on all resources (4 policies + AuthServiceProvider)
 - [ ] Admin session management
 - [ ] Brute force protection
@@ -136,8 +136,10 @@
 - [ ] Reserved stock for in-progress jobs
 
 ## Phase 4d: Dashboard & Analytics
-- [ ] 4 KPI cards (Open Reports, Repair Velocity, Money Spent, Repairs This Week)
-- [ ] Expense charts (ApexCharts)
+- [x] 4 KPI cards (Open Reports, Repairs This Week, Money Spent, Avg Repair Time)
+- [x] Reports chart (30-day line chart)
+- [x] Expense charts (by category bar chart)
+- [x] Neighborhood analytics (top 10 bar chart)
 - [ ] Repair velocity trend
 - [ ] Cost per neighborhood analysis
 - [ ] Excel/PDF export
@@ -174,7 +176,8 @@
 - [x] PHPStan Level 5 compliance (Larastan)
 - [x] Laravel Pint formatting (enforced in CI)
 - [x] CodeRabbit configuration verification (`.coderabbit.yaml`)
-- [ ] Branch protection rules
+- [x] Branch protection rules (main + develop)
+- [x] Railway deployment configuration (`railway.toml`)
 - [ ] Railway auto-deploy verification
 - [ ] Load testing (optional)
 
@@ -262,4 +265,5 @@
 ---
 
 *Last updated: 2026-05-06*
+*Current milestone: Phase 1-4 complete, Phase 5 (Email) complete, Phase 7 (CI/CD) complete*
 *Update this file as phases are completed.*
