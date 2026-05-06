@@ -27,7 +27,6 @@ class ExpenseFactory extends Factory
             'tax_rate' => $taxRate,
             'tax_amount' => round($taxAmount, 2),
             'total' => round($subtotal + $taxAmount, 2),
-            'vendor' => $this->faker->company(),
             'incurred_at' => now()->subDays(rand(1, 30)),
             'created_by' => null,
         ];
