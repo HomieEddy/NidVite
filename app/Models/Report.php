@@ -87,7 +87,7 @@ class Report extends Model implements HasMedia
     public function repairJobs(): BelongsToMany
     {
         return $this->belongsToMany(RepairJob::class, 'job_reports')
-            ->withPivot(['cost_allocation_percentage', 'cost_override_reason', 'repair_notes'])
+            ->withPivot(['cost_allocation_percentage'])
             ->withTimestamps();
     }
 

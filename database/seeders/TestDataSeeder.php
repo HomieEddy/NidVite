@@ -251,7 +251,6 @@ class TestDataSeeder extends Seeder
                 'created_by' => $managerId,
                 'estimated_cost' => $estimatedCost,
                 'actual_cost' => $actualCost,
-                'weather_conditions' => $this->randomWeather(),
             ]);
 
             // Link report to job
@@ -259,7 +258,6 @@ class TestDataSeeder extends Seeder
                 'repair_job_id' => $job->id,
                 'report_id' => $report->id,
                 'cost_allocation_percentage' => 100,
-                'repair_notes' => 'Signalement principal lié à cet intervention.',
                 'created_at' => $scheduledAt,
                 'updated_at' => $scheduledAt,
             ]);
@@ -333,7 +331,6 @@ class TestDataSeeder extends Seeder
                     'tax_amount' => round($taxAmount, 2),
                     'total' => round($total, 2),
                     'vendor' => $vendors[array_rand($vendors)],
-                    'vendor_contact' => fake()->phoneNumber(),
                     'incurred_at' => $incurredAt,
                     'created_by' => $accountantId,
                 ]);
@@ -491,13 +488,6 @@ class TestDataSeeder extends Seeder
         if (! empty($updates)) {
             $report->update($updates);
         }
-    }
-
-    private function randomWeather(): ?string
-    {
-        $conditions = ['Ensoleillé', 'Nuageux', 'Pluie légère', 'Pluie forte', 'Neige fondante', null];
-
-        return $conditions[array_rand($conditions)];
     }
 
     private function generateExpenseDescription(string $categorySlug): string

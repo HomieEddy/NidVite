@@ -42,9 +42,6 @@ class ExpenseForm
                 TextInput::make('total')
                     ->numeric(),
                 TextInput::make('vendor'),
-                TextInput::make('vendor_contact'),
-                TextInput::make('receipt_media_id')
-                    ->numeric(),
                 DateTimePicker::make('incurred_at'),
                 TextInput::make('created_by')
                     ->required()

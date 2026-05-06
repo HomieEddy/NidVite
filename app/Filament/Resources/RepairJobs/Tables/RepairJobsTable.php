@@ -38,8 +38,6 @@ class RepairJobsTable
                 TextColumn::make('actual_cost')
                     ->money()
                     ->sortable(),
-                TextColumn::make('weather_conditions')
-                    ->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

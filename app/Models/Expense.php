@@ -23,8 +23,6 @@ class Expense extends Model
         'tax_amount',
         'total',
         'vendor',
-        'vendor_contact',
-        'receipt_media_id',
         'incurred_at',
         'created_by',
     ];

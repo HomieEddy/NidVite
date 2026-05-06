@@ -35,7 +35,6 @@ class RepairJobForm
                 TextInput::make('actual_cost')
                     ->numeric()
                     ->prefix('$'),
-                TextInput::make('weather_conditions'),
             ]);
     }
 }

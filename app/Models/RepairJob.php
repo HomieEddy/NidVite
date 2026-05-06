@@ -31,7 +31,6 @@ class RepairJob extends Model
         'created_by',
         'estimated_cost',
         'actual_cost',
-        'weather_conditions',
     ];
 
     protected $casts = [
@@ -55,7 +54,7 @@ class RepairJob extends Model
     public function reports(): BelongsToMany
     {
         return $this->belongsToMany(Report::class, 'job_reports')
-            ->withPivot(['cost_allocation_percentage', 'cost_override_reason', 'repair_notes'])
+            ->withPivot(['cost_allocation_percentage'])
             ->withTimestamps();
     }
 

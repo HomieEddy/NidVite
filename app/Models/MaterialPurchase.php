@@ -21,8 +21,6 @@ class MaterialPurchase extends Model
         'tax_amount',
         'total',
         'vendor',
-        'vendor_contact',
-        'receipt_media_id',
         'stock_updated',
         'purchased_at',
         'created_by',

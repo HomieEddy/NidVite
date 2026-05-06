@@ -44,11 +44,6 @@ class ExpensesTable
                     ->sortable(),
                 TextColumn::make('vendor')
                     ->searchable(),
-                TextColumn::make('vendor_contact')
-                    ->searchable(),
-                TextColumn::make('receipt_media_id')
-                    ->numeric()
-                    ->sortable(),
                 TextColumn::make('incurred_at')
                     ->dateTime()
                     ->sortable(),

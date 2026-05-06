@@ -22,13 +22,11 @@ class ExpenseCategory extends Model
         'label_en',
         'color',
         'is_inventory_related',
-        'is_required',
         'sort_order',
     ];
 
     protected $casts = [
         'is_inventory_related' => 'boolean',
-        'is_required' => 'boolean',
         'sort_order' => 'integer',
     ];
 
