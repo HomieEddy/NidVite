@@ -1,20 +1,25 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#D97706">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="NidVite">
-    <title>{{ __('Signaler un nid-de-poule') }} - {{ config('app.name') }}</title>
-    <link rel="manifest" href="/manifest.json">
-    @laravelPWA
-    @livewireStyles
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="antialiased">
-    <livewire:report-form />
-    @livewireScripts
-</body>
-</html>
+@extends('layouts.citizen')
+
+@section('title', __('report.title') . ' - ' . config('app.name'))
+
+@push('styles')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+@endpush
+
+@section('content')
+{{-- Back button --}}
+<div class="max-w-3xl mx-auto px-4 pt-3 pb-1">
+    <a href="/" class="inline-flex items-center text-sm text-gray-500 hover:text-amber-600 transition btn-touch py-1">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        {{ __('map.back_home') }}
+    </a>
+</div>
+
+<livewire:report-form />
+@endsection
+
+@push('scripts')
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+@endpush

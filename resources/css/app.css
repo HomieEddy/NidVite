@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@theme {
+    --color-amber-50: #fffbeb;
+    --color-amber-100: #fef3c7;
+    --color-amber-200: #fde68a;
+    --color-amber-300: #fcd34d;
+    --color-amber-400: #fbbf24;
+    --color-amber-500: #f59e0b;
+    --color-amber-600: #d97706;
+    --color-amber-700: #b45309;
+    --color-amber-800: #92400e;
+    --color-amber-900: #78350f;
+    
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-text-size-adjust: 100%;
+    }
+    
+    body {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        @apply antialiased text-gray-900 bg-gray-50;
+    }
+    
+    *:focus-visible {
+        @apply outline-hidden ring-2 ring-amber-500 ring-offset-2;
+    }
+    
+    button {
+        -webkit-appearance: none;
+    }
+    
+    input, textarea, select {
+        @apply text-base;
+        font-size: 16px;
+    }
+    
+    @media (min-width: 640px) {
+        input, textarea, select {
+            @apply text-sm;
+        }
+    }
+}
+
+@layer components {
+    .citizen-container {
+        @apply min-h-screen flex flex-col;
+    }
+    
+    .safe-top {
+        padding-top: env(safe-area-inset-top);
+    }
+    
+    .safe-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .btn-touch {
+        @apply min-h-[44px] min-w-[44px];
+    }
+    
+    .citizen-card {
+        @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+    }
+    
+    .citizen-header {
+        @apply bg-gradient-to-r from-amber-600 to-amber-500;
+    }
+}
+
+@layer utilities {
+    .no-overscroll {
+        overscroll-behavior-y: none;
+    }
+    
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    .animate-slide-up {
+        animation: slideUp 0.4s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    [x-cloak] { display: none !important; }
+}

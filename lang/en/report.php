@@ -35,6 +35,15 @@ return [
     'geolocation_failed' => 'Unable to get location',
     'geolocation_not_supported' => 'Geolocation not supported by your browser',
 
+    'status' => [
+        'received' => 'Received',
+        'verified' => 'Verified',
+        'scheduled' => 'Scheduled',
+        'in_progress' => 'In Progress',
+        'repaired' => 'Repaired',
+        'rejected' => 'Rejected',
+    ],
+
     'validation' => [
         'location_required' => 'Please allow geolocation or specify the location.',
         'outside_montreal' => 'This location appears to be outside Montreal. Please report issues located within Montreal only.',
