@@ -18,6 +18,10 @@ return [
     'loading' => 'Chargement...',
     'submit' => 'Envoyer le signalement',
 
+    'geolocation_captured' => 'Localisation capturee',
+    'geolocation_failed' => 'Impossible d\'obtenir la localisation',
+    'geolocation_not_supported' => 'Geolocalisation non supportee',
+
     'validation' => [
         'location_required' => 'Veuillez autoriser la geolocalisation ou preciser l\'emplacement.',
         'outside_montreal' => 'Cet emplacement semble etre en dehors de Montreal. Veuillez signaler uniquement les nids-de-poule situes sur le territoire de Montreal.',

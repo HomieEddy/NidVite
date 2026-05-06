@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
+use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -10,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasAppAuthentication, HasAppAuthenticationRecovery
 {
     use HasFactory, Notifiable;
 
@@ -27,9 +29,6 @@ class User extends Authenticatable
         'password',
         'uuid',
         'role_id',
-        'two_factor_secret',
-        'two_factor_recovery_codes',
-        'two_factor_confirmed_at',
         'last_login_at',
         'locale',
         'is_active',
@@ -114,5 +113,42 @@ class User extends Authenticatable
     public function canManage(): bool
     {
         return in_array($this->role?->slug, ['admin', 'manager'], true);
+    }
+
+    public function getAppAuthenticationSecret(): ?string
+    {
+        return $this->two_factor_secret ? decrypt($this->two_factor_secret) : null;
+    }
+
+    public function saveAppAuthenticationSecret(?string $secret): void
+    {
+        $this->forceFill([
+            'two_factor_secret' => $secret !== null ? encrypt($secret) : null,
+        ])->save();
+    }
+
+    public function getAppAuthenticationHolderName(): string
+    {
+        return $this->email;
+    }
+
+    /**
+     * @return ?array<string>
+     */
+    public function getAppAuthenticationRecoveryCodes(): ?array
+    {
+        return $this->two_factor_recovery_codes
+            ? json_decode(decrypt($this->two_factor_recovery_codes), true)
+            : null;
+    }
+
+    /**
+     * @param  ?array<string>  $codes
+     */
+    public function saveAppAuthenticationRecoveryCodes(?array $codes): void
+    {
+        $this->forceFill([
+            'two_factor_recovery_codes' => $codes !== null ? encrypt(json_encode($codes)) : null,
+        ])->save();
     }
 }
