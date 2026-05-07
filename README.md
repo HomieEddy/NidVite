@@ -121,6 +121,7 @@ Every status transition (received→verified→scheduled→in_progress→repaire
 - [Integration Specs](docs/integrations/INTEGRATION_SPECS.md)
 - [Security & Privacy](docs/security/SECURITY_PRIVACY.md)
 - [Monitoring](docs/engineering/MONITORING_PACKAGES.md)
+- [Railway Runtime (Phase 5)](docs/process/RAILWAY_PHASE5_RUNTIME.md)
 - [Roadmap](.planning/ROADMAP.md)
 
 ## License

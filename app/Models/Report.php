@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -82,6 +83,16 @@ class Report extends Model implements HasMedia
     {
         $this->addMediaCollection('report-photos')
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+    }
+
+    public function signedPhotoUrls(int $ttlMinutes = 5): array
+    {
+        $expiresAt = now()->addMinutes($ttlMinutes);
+
+        return $this->getMedia('report-photos')
+            ->map(fn ($media) => URL::temporarySignedRoute('media.signed', $expiresAt, ['media' => $media->getKey()]))
+            ->values()
+            ->all();
     }
 
     public function category(): BelongsTo

@@ -67,6 +67,24 @@
         @if($location)
             <div id="tracking-map" class="mt-4 border border-gray-200"></div>
         @endif
+
+        @if(!empty($photoUrls))
+            <div class="mt-4">
+                <p class="text-sm font-semibold text-gray-800 mb-2">{{ __('report.photos') }}</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    @foreach($photoUrls as $photoUrl)
+                        <a
+                            href="{{ $photoUrl }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex items-center justify-center px-3 py-2 rounded-lg border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 transition text-sm"
+                        >
+                            {{ __('report.photos') }} #{{ $loop->iteration }}
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     </div>
 
     {{-- Timeline --}}
