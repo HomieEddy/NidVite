@@ -5,6 +5,7 @@ use App\Http\Controllers\ReportTrackingController;
 use App\Http\Controllers\SignedMediaController;
 use App\Models\Report;
 use Illuminate\Support\Facades\Route;
+use Spatie\Health\Http\Controllers\HealthCheckJsonResultsController;
 
 Route::get('/', function () {
     $totalReported = Report::count();
@@ -44,6 +45,9 @@ Route::get('/api/reports/{uuid}/lookup', [ReportTrackingController::class, 'look
     ->name('api.reports.lookup')
     ->whereUuid('uuid')
     ->middleware('throttle:60,1');
+
+Route::get('/health', HealthCheckJsonResultsController::class)
+    ->name('health.json');
 
 Route::get('/media/{media}', SignedMediaController::class)
     ->name('media.signed')

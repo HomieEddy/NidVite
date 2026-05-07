@@ -31,6 +31,7 @@ class Report extends Model implements HasMedia
         static::creating(function (Report $report) {
             $report->uuid ??= (string) Str::uuid();
             $report->status ??= ReportStatus::Received->value;
+            $report->ip_address_raw ??= request()->ip();
 
             $fingerprint = request()->attributes->get('device_fingerprint_hash');
             if (is_string($fingerprint) && $fingerprint !== '') {
@@ -50,6 +51,9 @@ class Report extends Model implements HasMedia
         'priority',
         'category_id',
         'description',
+        'ip_address_raw',
+        'archive_path',
+        'archived_at',
         'geofence_passed',
         'is_spam',
         'rejection_reason',
@@ -68,6 +72,7 @@ class Report extends Model implements HasMedia
         'first_started_at' => 'datetime',
         'target_completion_at' => 'datetime',
         'completed_at' => 'datetime',
+        'archived_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
 

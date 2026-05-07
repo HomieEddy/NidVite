@@ -21,6 +21,18 @@ it('keeps redis as the queue default fallback', function () {
     expect($queueConfig)->toContain("'default' => env('QUEUE_CONNECTION', 'redis')");
 });
 
+it('configures backups to use r2 by default', function () {
+    expect(config('backup.backup.destination.disks'))->toContain('r2');
+    expect(config('backup.monitor_backups.0.disks'))->toContain('r2');
+});
+
+it('registers a health check json endpoint route', function () {
+    $route = app('router')->getRoutes()->getByName('health.json');
+
+    expect($route)->not->toBeNull();
+    expect($route->uri())->toBe('health');
+});
+
 it('registers a signed media proxy route', function () {
     $route = app('router')->getRoutes()->getByName('media.signed');
 
@@ -56,4 +68,23 @@ it('provides dedicated railway command scripts for web worker and scheduler', fu
     expect(file_get_contents(base_path('railway.toml')))->toContain('sh deploy/railway/web.sh');
     expect(file_get_contents(base_path('deploy/railway/worker.sh')))->toContain('queue:work redis');
     expect(file_get_contents(base_path('deploy/railway/scheduler.sh')))->toContain('schedule:run');
+    expect(file_get_contents(base_path('deploy/railway/scheduler.sh')))->toContain('schedule-monitor:sync');
+});
+
+it('schedules backup monitoring and retention commands', function () {
+    $consoleRoutes = file_get_contents(base_path('routes/console.php'));
+
+    expect($consoleRoutes)->toContain("Schedule::command('backup:run --only-db')");
+    expect($consoleRoutes)->toContain("Schedule::command('backup:clean')");
+    expect($consoleRoutes)->toContain("Schedule::command('health:check --fail-command-on-failing-check')");
+    expect($consoleRoutes)->toContain("Schedule::command('health:schedule-check-heartbeat')");
+    expect($consoleRoutes)->toContain("Schedule::command('health:queue-check-heartbeat')");
+    expect($consoleRoutes)->toContain("Artisan::command('reports:run-retention'");
+    expect($consoleRoutes)->toContain("->monitorName('reports:run-retention')");
+});
+
+it('defines retention config defaults', function () {
+    expect(config('retention.ip_purge_days'))->toBe(30);
+    expect(config('retention.report_archive_days'))->toBe(730);
+    expect(config('retention.cold_storage_disk'))->toBe('r2-cold');
 });
