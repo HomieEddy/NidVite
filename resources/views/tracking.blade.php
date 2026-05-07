@@ -4,7 +4,6 @@
 
 @push('styles')
 @if($location)
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <style>
     #tracking-map { height: 200px; border-radius: 0.75rem; }
 </style>
@@ -23,49 +22,52 @@
 </div>
 
 <div class="max-w-3xl mx-auto px-4 py-4">
+    @php
+        $statusClass = match($report->status) {
+            'received' => 'bg-gray-100 text-gray-800',
+            'verified' => 'bg-blue-100 text-blue-800',
+            'scheduled' => 'bg-yellow-100 text-yellow-800',
+            'in_progress' => 'bg-orange-100 text-orange-800',
+            'repaired' => 'bg-green-100 text-green-800',
+            'rejected' => 'bg-red-100 text-red-800',
+            default => 'bg-gray-100 text-gray-800',
+        };
+    @endphp
+
     {{-- Report Card --}}
     <div class="citizen-card p-5 mb-4 animate-fade-in">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-bold text-gray-900">{{ __('tracking.Votre signalement') }}</h2>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                @switch($report->status)
-                    @case('received') bg-gray-100 text-gray-800 @break
-                    @case('verified') bg-blue-100 text-blue-800 @break
-                    @case('scheduled') bg-yellow-100 text-yellow-800 @break
-                    @case('in_progress') bg-orange-100 text-orange-800 @break
-                    @case('repaired') bg-green-100 text-green-800 @break
-                    @case('rejected') bg-red-100 text-red-800 @break
-                    @default bg-gray-100 text-gray-800
-                @endswitch">
+            <span class="status-pill {{ $statusClass }}">
                 {{ __("report.status.{$report->status}") }}
             </span>
         </div>
 
         <div class="space-y-2.5">
             <div class="flex items-center text-sm">
-                <span class="text-gray-500 w-20 flex-shrink-0">{{ __('tracking.Numéro') }}</span>
+                <span class="text-gray-500 w-20 shrink-0">{{ __('tracking.Numéro') }}</span>
                 <span class="font-mono text-gray-700 bg-gray-100 px-2 py-0.5 rounded text-xs">{{ $report->uuid }}</span>
             </div>
             <div class="flex items-center text-sm">
-                <span class="text-gray-500 w-20 flex-shrink-0">{{ __('tracking.Date') }}</span>
+                <span class="text-gray-500 w-20 shrink-0">{{ __('tracking.Date') }}</span>
                 <span class="text-gray-700">{{ $report->created_at->translatedFormat('j F Y') }}</span>
             </div>
             @if($report->category)
                 <div class="flex items-center text-sm">
-                    <span class="text-gray-500 w-20 flex-shrink-0">{{ __('tracking.Catégorie') }}</span>
+                    <span class="text-gray-500 w-20 shrink-0">{{ __('tracking.Catégorie') }}</span>
                     <span class="text-gray-700">{{ app()->getLocale() === 'fr' ? $report->category->label_fr : $report->category->label_en }}</span>
                 </div>
             @endif
             @if($report->address)
                 <div class="flex items-start text-sm">
-                    <span class="text-gray-500 w-20 flex-shrink-0">{{ __('tracking.Adresse') }}</span>
+                    <span class="text-gray-500 w-20 shrink-0">{{ __('tracking.Adresse') }}</span>
                     <span class="text-gray-700">{{ $report->address }}</span>
                 </div>
             @endif
         </div>
 
         @if($location)
-            <div id="tracking-map" class="mt-4 border border-gray-200"></div>
+            <div id="tracking-map" class="mt-4 border border-gray-200" data-lat="{{ $location->lat }}" data-lng="{{ $location->lng }}"></div>
         @endif
 
         @if(!empty($photoUrls))
@@ -94,11 +96,11 @@
         <div class="space-y-0">
             @php
                 $steps = [
-                    ['status' => 'received', 'label' => __('report.status.received'), 'icon' => '📥'],
-                    ['status' => 'verified', 'label' => __('report.status.verified'), 'icon' => '🔍'],
-                    ['status' => 'scheduled', 'label' => __('report.status.scheduled'), 'icon' => '📅'],
-                    ['status' => 'in_progress', 'label' => __('report.status.in_progress'), 'icon' => '🚧'],
-                    ['status' => 'repaired', 'label' => __('report.status.repaired'), 'icon' => '✅'],
+                    ['status' => 'received', 'label' => __('report.status.received'), 'icon' => 'M4 7h16M4 12h16m-7 5h7'],
+                    ['status' => 'verified', 'label' => __('report.status.verified'), 'icon' => 'm21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z'],
+                    ['status' => 'scheduled', 'label' => __('report.status.scheduled'), 'icon' => 'M8 2v3m8-3v3M3.5 9.5h17M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 19 20.5H5A1.5 1.5 0 0 1 3.5 19V8A1.5 1.5 0 0 1 5 6.5Z'],
+                    ['status' => 'in_progress', 'label' => __('report.status.in_progress'), 'icon' => 'M12 3v4m0 10v4m9-9h-4M7 12H3m15.364 6.364-2.828-2.828M8.464 8.464 5.636 5.636m12.728 0-2.828 2.828M8.464 15.536l-2.828 2.828'],
+                    ['status' => 'repaired', 'label' => __('report.status.repaired'), 'icon' => 'm5 12 4 4 10-10'],
                 ];
                 $currentIndex = array_search($report->status, array_column($steps, 'status'));
                 if ($currentIndex === false && $report->status === 'rejected') {
@@ -108,7 +110,11 @@
 
             @if($report->status === 'rejected')
                 <div class="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
-                    <span class="text-xl flex-shrink-0">❌</span>
+                    <span class="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 6l12 12M18 6 6 18"/>
+                        </svg>
+                    </span>
                     <div>
                         <p class="font-semibold text-red-900">{{ __('tracking.Signalement rejeté') }}</p>
                         @if($report->rejection_reason)
@@ -120,7 +126,11 @@
                 @foreach($steps as $index => $step)
                     <div class="flex items-start gap-3 p-3.5 rounded-xl
                         {{ $index <= $currentIndex ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50 border border-gray-100 opacity-60' }}">
-                        <span class="text-xl flex-shrink-0">{{ $step['icon'] }}</span>
+                        <span class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 {{ $index <= $currentIndex ? 'bg-amber-100 text-amber-800' : 'bg-white text-gray-400 border border-gray-200' }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="{{ $step['icon'] }}"/>
+                            </svg>
+                        </span>
                         <div class="min-w-0">
                             <p class="font-semibold text-sm {{ $index <= $currentIndex ? 'text-amber-900' : 'text-gray-500' }}">
                                 {{ $step['label'] }}
@@ -149,17 +159,4 @@
     </div>
 </div>
 
-@push('scripts')
-@if($location)
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script>
-    const map = L.map('tracking-map').setView([{{ $location->lat }}, {{ $location->lng }}], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19,
-    }).addTo(map);
-    L.marker([{{ $location->lat }}, {{ $location->lng }}]).addTo(map);
-</script>
-@endif
-@endpush
 @endsection

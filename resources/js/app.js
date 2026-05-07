@@ -1,1 +1,163 @@
 import './bootstrap';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+window.L = L;
+
+window.nidviteTracker = function nidviteTracker(errorMsg) {
+	return {
+		showInput: false,
+		trackingId: '',
+		error: '',
+		errorMsg: errorMsg || 'Report not found',
+		modalOpen: false,
+		loading: false,
+		report: null,
+		lookup() {
+			this.error = '';
+			var id = this.trackingId.trim();
+			if (!id) return;
+			this.showInput = false;
+			this.modalOpen = true;
+			this.loading = true;
+			this.report = null;
+			fetch('/api/reports/' + encodeURIComponent(id) + '/lookup')
+				.then(function (r) {
+					if (!r.ok) throw new Error('not_found');
+					return r.json();
+				})
+				.then(function (data) {
+					this.report = data;
+					this.loading = false;
+				}.bind(this))
+				.catch(function () {
+					this.loading = false;
+					this.modalOpen = false;
+					this.error = this.errorMsg;
+					this.showInput = true;
+				}.bind(this));
+		},
+	};
+};
+
+if ('serviceWorker' in navigator) {
+	window.addEventListener('load', function () {
+		navigator.serviceWorker.register('/serviceworker.js', { scope: '.' }).catch(function () {
+			// Keep failure silent in production to avoid noisy console logs.
+		});
+	});
+}
+
+function initTrackingMap() {
+	var mapEl = document.getElementById('tracking-map');
+	if (!mapEl) return;
+
+	var lat = parseFloat(mapEl.dataset.lat || '');
+	var lng = parseFloat(mapEl.dataset.lng || '');
+	if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+	var map = L.map(mapEl).setView([lat, lng], 15);
+	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; OpenStreetMap contributors',
+		maxZoom: 19,
+	}).addTo(map);
+	L.marker([lat, lng]).addTo(map);
+}
+
+function initPublicMapPage() {
+	var mapEl = document.getElementById('map');
+	if (!mapEl) return;
+
+	var geojsonUrl = mapEl.dataset.geojsonUrl;
+	var noAddressLabel = mapEl.dataset.noAddress || '';
+	var viewDetailsLabel = mapEl.dataset.viewDetails || 'View details';
+
+	var map = L.map(mapEl, { zoomControl: false }).setView([45.5017, -73.5673], 12);
+	L.control.zoom({ position: 'topright' }).addTo(map);
+
+	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+		maxZoom: 19,
+	}).addTo(map);
+
+	var statusColors = {
+		received: '#d97706',
+		verified: '#3b82f6',
+		scheduled: '#6366f1',
+		in_progress: '#db2777',
+		repaired: '#10b981',
+		rejected: '#ef4444',
+	};
+
+	fetch(geojsonUrl)
+		.then(function (response) {
+			return response.json();
+		})
+		.then(function (data) {
+			var bounds = L.latLngBounds();
+
+			data.features.forEach(function (feature) {
+				var coords = feature.geometry.coordinates;
+				var props = feature.properties;
+				var color = statusColors[props.status] || '#6b7280';
+
+				var marker = L.circleMarker([coords[1], coords[0]], {
+					radius: 8,
+					fillColor: color,
+					color: '#fff',
+					weight: 2,
+					opacity: 1,
+					fillOpacity: 0.85,
+				}).addTo(map);
+
+				var popupEl = document.createElement('div');
+				popupEl.className = 'report-popup';
+
+				var statusSpan = document.createElement('span');
+				statusSpan.className = 'status status-' + props.status;
+				statusSpan.textContent = props.status_label;
+				popupEl.appendChild(statusSpan);
+
+				var titleEl = document.createElement('h3');
+				titleEl.textContent = props.address || noAddressLabel;
+				popupEl.appendChild(titleEl);
+
+				var hoodEl = document.createElement('p');
+				hoodEl.textContent = props.neighborhood || '';
+				popupEl.appendChild(hoodEl);
+
+				var descEl = document.createElement('p');
+				descEl.textContent = props.description
+					? props.description.substring(0, 100) + (props.description.length > 100 ? '...' : '')
+					: '';
+				popupEl.appendChild(descEl);
+
+				var linkEl = document.createElement('a');
+				linkEl.href = props.url;
+				linkEl.target = '_blank';
+				linkEl.textContent = viewDetailsLabel;
+				popupEl.appendChild(linkEl);
+
+				marker.bindPopup(popupEl);
+				bounds.extend([coords[1], coords[0]]);
+			});
+
+			if (data.features.length > 0) {
+				map.fitBounds(bounds, { padding: [50, 50] });
+			}
+		})
+		.catch(function () {
+			// Keep failure silent in production to avoid noisy console logs.
+		});
+}
+
+function bootNidvitePublicPages() {
+	initTrackingMap();
+	initPublicMapPage();
+}
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', bootNidvitePublicPages);
+} else {
+	bootNidvitePublicPages();
+}

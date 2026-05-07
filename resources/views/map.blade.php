@@ -3,17 +3,16 @@
 @section('title', __('map.title') . ' - ' . config('app.name'))
 
 @push('styles')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <style>
-    .map-page-container { display: flex; flex-direction: column; height: calc(100vh - 8rem); overflow: hidden; }
+    .map-page-container { display: flex; flex-direction: column; height: calc(100dvh - 8rem); overflow: hidden; }
     #map { flex: 1; min-height: 0; width: 100%; border-radius: 0.75rem; overflow: hidden; }
     .report-popup {
-        min-width: 200px;
-        font-family: 'Inter', system-ui, sans-serif;
+        min-width: 220px;
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     }
     .report-popup h3 {
-        font-size: 0.875rem;
-        font-weight: 600;
+        font-size: 0.9rem;
+        font-weight: 700;
         color: #1f2937;
         margin-bottom: 4px;
     }
@@ -25,10 +24,11 @@
     }
     .report-popup .status {
         display: inline-block;
-        padding: 2px 8px;
+        padding: 3px 10px;
         border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
         margin-bottom: 8px;
     }
     .report-popup .status-received { background: #fef3c7; color: #92400e; }
@@ -39,17 +39,18 @@
     .report-popup .status-rejected { background: #fee2e2; color: #991b1b; }
     .report-popup a {
         display: inline-block;
-        padding: 6px 12px;
-        background: #d97706;
+        padding: 8px 12px;
+        background: linear-gradient(90deg, #b45309, #d97706);
         color: white;
         border-radius: 8px;
         font-size: 0.75rem;
-        font-weight: 500;
+        font-weight: 700;
         text-decoration: none;
-        transition: background 0.2s;
+        transition: transform 0.2s, opacity 0.2s;
     }
     .report-popup a:hover {
-        background: #b45309;
+        opacity: 0.95;
+        transform: translateY(-1px);
     }
 </style>
 @endpush
@@ -57,7 +58,7 @@
 @section('content')
 <div class="map-page-container px-4 py-2">
     {{-- Back button + header --}}
-    <div class="flex items-center justify-between mb-2 flex-shrink-0">
+    <div class="flex items-center justify-between mb-2 shrink-0">
         <a href="/" class="inline-flex items-center text-sm text-gray-500 hover:text-amber-600 transition btn-touch py-1">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -65,7 +66,7 @@
             {{ __('map.back_home') }}
         </a>
         <a href="{{ route('report.create') }}"
-           class="inline-flex items-center px-3 py-1.5 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 active:scale-[0.98] transition-all btn-touch">
+           class="inline-flex items-center px-3 py-1.5 bg-linear-to-r from-amber-700 to-orange-500 text-white text-sm font-semibold rounded-lg hover:from-amber-800 hover:to-orange-600 active:scale-[0.98] transition-all btn-touch interactive-lift">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
@@ -73,79 +74,11 @@
         </a>
     </div>
 
-    <div id="map"></div>
+    <div
+        id="map"
+        data-geojson-url="{{ route('api.reports.geojson') }}"
+        data-no-address="{{ __('map.no_address') }}"
+        data-view-details="{{ __('map.view_details') }}"
+    ></div>
 </div>
-
-@push('scripts')
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script>
-    const map = L.map('map', { zoomControl: false }).setView([45.5017, -73.5673], 12);
-    L.control.zoom({ position: 'topright' }).addTo(map);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-    }).addTo(map);
-
-    const statusColors = {
-        received: '#d97706',
-        verified: '#3b82f6',
-        scheduled: '#6366f1',
-        in_progress: '#db2777',
-        repaired: '#10b981',
-        rejected: '#ef4444',
-    };
-
-    fetch('{{ route('api.reports.geojson') }}')
-        .then(response => response.json())
-        .then(data => {
-            const bounds = L.latLngBounds();
-
-            data.features.forEach(feature => {
-                const coords = feature.geometry.coordinates;
-                const props = feature.properties;
-                const color = statusColors[props.status] || '#6b7280';
-
-                const marker = L.circleMarker([coords[1], coords[0]], {
-                    radius: 8,
-                    fillColor: color,
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.85,
-                }).addTo(map);
-
-                var popupEl = document.createElement('div');
-                popupEl.className = 'report-popup';
-                var statusSpan = document.createElement('span');
-                statusSpan.className = 'status status-' + props.status;
-                statusSpan.textContent = props.status_label;
-                popupEl.appendChild(statusSpan);
-                var titleEl = document.createElement('h3');
-                titleEl.textContent = props.address || '{{ __('map.no_address') }}';
-                popupEl.appendChild(titleEl);
-                var hoodEl = document.createElement('p');
-                hoodEl.textContent = props.neighborhood || '';
-                popupEl.appendChild(hoodEl);
-                var descEl = document.createElement('p');
-                descEl.textContent = props.description ? props.description.substring(0, 100) + (props.description.length > 100 ? '...' : '') : '';
-                popupEl.appendChild(descEl);
-                var linkEl = document.createElement('a');
-                linkEl.href = props.url;
-                linkEl.target = '_blank';
-                linkEl.textContent = '{{ __('map.view_details') }}';
-                popupEl.appendChild(linkEl);
-                marker.bindPopup(popupEl);
-                bounds.extend([coords[1], coords[0]]);
-            });
-
-            if (data.features.length > 0) {
-                map.fitBounds(bounds, { padding: [50, 50] });
-            }
-        })
-        .catch(error => {
-            console.error('Error loading reports:', error);
-        });
-</script>
-@endpush
 @endsection
