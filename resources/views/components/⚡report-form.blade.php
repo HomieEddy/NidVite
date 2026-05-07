@@ -4,7 +4,9 @@ use App\Events\ReportCreated;
 use App\Models\Report;
 use App\Models\ReportCategory;
 use App\Services\ExifStripper;
+use App\Services\RecaptchaValidator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -128,7 +130,21 @@ new class extends Component
             'borough' => 'nullable|string|max:100',
             'photos' => 'nullable|array|max:5',
             'photos.*' => 'file|mimes:jpeg,png,gif,webp|max:10240',
+            'recaptcha_response' => 'required|string',
+        ], [
+            'recaptcha_response.required' => __('report.validation.captcha_required'),
         ]);
+
+        try {
+            (new RecaptchaValidator())->validateOrFail(
+                $validated['recaptcha_response'] ?? null,
+                request()->ip() ?? ''
+            );
+        } catch (ValidationException $e) {
+            $this->addError('recaptcha_response', $e->errors()['recaptcha_response'][0] ?? $e->getMessage());
+
+            return;
+        }
 
         if ($this->latitude === null || $this->longitude === null) {
             $this->addError('location', __('report.validation.location_required'));
@@ -137,7 +153,7 @@ new class extends Component
 
         try {
             Report::validateGeofence($this->latitude, $this->longitude);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->addError('location', $e->getMessage());
             return;
         }
@@ -171,7 +187,7 @@ new class extends Component
         event(new ReportCreated($report));
 
         $this->submitted = true;
-        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude']);
+        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'recaptcha_response']);
     }
 
     public function getCategoriesProperty()
@@ -300,8 +316,9 @@ new class extends Component
                 <p class="text-amber-100 text-sm mt-1">{{ __('report.subtitle') }}</p>
             </div>
 
-            <form wire:submit="submit" class="p-5 space-y-5">
+            <form wire:submit="submit" class="p-5 space-y-5" x-on:submit="window.nidviteSyncRecaptchaToken && window.nidviteSyncRecaptchaToken()">
                 <x-honeypot :livewireModel="'honeypotData'" />
+                <input type="hidden" id="recaptcha-response" wire:model="recaptcha_response">
 
                 {{-- Email --}}
                 <div>
@@ -473,6 +490,15 @@ new class extends Component
                 </div>
 
                 {{-- Submit --}}
+                @if (config('captcha.sitekey'))
+                    <div>
+                        <div class="g-recaptcha" data-sitekey="{{ config('captcha.sitekey') }}" data-callback="onReportRecaptchaSuccess" data-expired-callback="onReportRecaptchaExpired"></div>
+                        @error('recaptcha_response') <span class="mt-1.5 text-sm text-red-600 block">{{ $message }}</span> @enderror
+                    </div>
+                @else
+                    <p class="text-sm text-red-600">{{ __('report.validation.captcha_unavailable') }}</p>
+                @endif
+
                 <div class="pt-2">
                     <button type="submit"
                         class="w-full flex justify-center items-center px-6 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-lg text-white bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 btn-touch"

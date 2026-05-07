@@ -47,5 +47,11 @@ return [
     'validation' => [
         'location_required' => 'Please allow geolocation or specify the location.',
         'outside_montreal' => 'This location appears to be outside Montreal. Please report issues located within Montreal only.',
+        'captcha_required' => 'Please confirm the reCAPTCHA before submitting your report.',
+        'captcha_invalid' => 'reCAPTCHA verification failed. Please try again.',
+        'captcha_unavailable' => 'reCAPTCHA is unavailable right now.',
+        'rate_limit_ip' => 'Too many reports from this IP address. Please try again later.',
+        'rate_limit_device' => 'Too many reports from this device. Please try again later.',
+        'rate_limit_device_missing' => 'Unable to verify this device for submission. Please retry.',
     ],
 ];

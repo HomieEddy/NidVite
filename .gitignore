@@ -26,3 +26,7 @@ AGENTS.md
 graphify-out/
 .graphify_*
 .graphify_python
+
+# GSD AI
+.github/
+.opencode/
