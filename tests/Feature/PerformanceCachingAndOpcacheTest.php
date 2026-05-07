@@ -10,6 +10,10 @@ use Spatie\ResponseCache\Middlewares\CacheResponse;
 
 uses(RefreshDatabase::class);
 
+beforeEach(function () {
+    config(['broadcasting.default' => 'log']);
+});
+
 it('caches only welcome and public map pages', function () {
     $routes = app('router')->getRoutes();
 
@@ -39,5 +43,7 @@ it('clears response cache when a report is created', function () {
 it('registers and executes the opcache clear command', function () {
     expect(Artisan::all())->toHaveKey('ops:opcache-clear');
 
-    $this->artisan('ops:opcache-clear')->assertExitCode(0);
+    $expectedExitCode = function_exists('opcache_get_status') && opcache_get_status() !== false ? 0 : 1;
+
+    $this->artisan('ops:opcache-clear')->assertExitCode($expectedExitCode);
 });

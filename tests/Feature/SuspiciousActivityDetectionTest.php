@@ -7,6 +7,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
+beforeEach(function () {
+    config(['broadcasting.default' => 'log']);
+});
+
 it('logs rapid repeat submissions as suspicious activity', function () {
     $fingerprint = str_repeat('a', 64);
 
