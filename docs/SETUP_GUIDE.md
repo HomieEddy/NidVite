@@ -72,6 +72,9 @@ DB_PASSWORD=password
 
 QUEUE_CONNECTION=database
 CACHE_DRIVER=database
+RESPONSE_CACHE_ENABLED=true
+RESPONSE_CACHE_DRIVER=database
+RESPONSE_CACHE_LIFETIME=300
 
 SESSION_SECURE_COOKIE=false
 SESSION_HTTP_ONLY=true
@@ -93,6 +96,12 @@ REVERB_APP_SECRET=your-app-secret
 REVERB_HOST=localhost
 REVERB_PORT=8080
 REVERB_SCHEME=http
+
+SUSPICIOUS_RAPID_REPEAT_WINDOW_MINUTES=5
+SUSPICIOUS_RAPID_REPEAT_THRESHOLD=3
+SUSPICIOUS_GEO_WINDOW_MINUTES=30
+SUSPICIOUS_GEO_MAX_TRAVEL_MINUTES=10
+SUSPICIOUS_GEO_MIN_DISTANCE_METERS=5000
 ```
 
 ---
@@ -152,6 +161,12 @@ In a separate terminal:
 
 Processes background jobs: status change emails, media conversions.
 
+Post deploy, clear OPcache:
+
+```bash
+./vendor/bin/sail artisan ops:opcache-clear
+```
+
 ---
 
 ## Step 9: Verify Everything Works
@@ -174,6 +189,7 @@ Processes background jobs: status change emails, media conversions.
 | `/carte` | Public map of all reports |
 | `/locale/en` or `/locale/fr` | Switch language |
 | `/admin` | Filament admin dashboard |
+| `/admin/suspicious-activity` | Suspicious activity dashboard |
 | `/admin/login` | Admin login page |
 
 ---
@@ -223,6 +239,8 @@ Processes background jobs: status change emails, media conversions.
 | `./vendor/bin/sail npm run build` | Build for production |
 | `./vendor/bin/sail artisan reverb:start` | Start WebSocket server |
 | `./vendor/bin/sail artisan queue:work` | Process background jobs |
+| `./vendor/bin/sail artisan responsecache:clear` | Clear response cache manually |
+| `./vendor/bin/sail artisan ops:opcache-clear` | Clear PHP OPcache after deploy |
 
 ---
 

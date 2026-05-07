@@ -13,6 +13,26 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
+Artisan::command('ops:opcache-clear', function () {
+    if (! function_exists('opcache_reset')) {
+        $this->warn('OPcache extension is not enabled for this PHP runtime.');
+
+        return 0;
+    }
+
+    $result = opcache_reset();
+
+    if ($result) {
+        $this->info('OPcache reset completed successfully.');
+
+        return 0;
+    }
+
+    $this->error('OPcache reset failed. Check PHP OPcache configuration.');
+
+    return 1;
+})->purpose('Clear PHP OPcache after deployment');
+
 Artisan::command('security:check-headers', function () {
     $issues = [];
 

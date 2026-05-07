@@ -17,4 +17,22 @@ return [
             'date' => 'Date range',
         ],
     ],
+
+    'suspicious_activity' => [
+        'navigation_label' => 'Suspicious Activity',
+        'heading' => 'Suspicious Activity',
+        'empty_heading' => 'No suspicious activity found',
+        'columns' => [
+            'date' => 'Date',
+            'severity' => 'Severity',
+            'type' => 'Type',
+            'reason' => 'Reason',
+            'report' => 'Report UUID',
+        ],
+        'filters' => [
+            'type' => 'Type',
+            'severity' => 'Severity',
+            'date' => 'Date range',
+        ],
+    ],
 ];

@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Events\ReportCreated;
 use App\Health\Checks\MailConfigurationCheck;
+use App\Listeners\DetectSuspiciousReportActivity;
 use App\Listeners\EnforceAdminConcurrentSessionLimit;
+use App\Listeners\InvalidatePublicResponseCache;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -30,6 +33,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Event::listen(Login::class, EnforceAdminConcurrentSessionLimit::class);
+        Event::listen(ReportCreated::class, InvalidatePublicResponseCache::class);
+        Event::listen(ReportCreated::class, DetectSuspiciousReportActivity::class);
 
         Health::checks([
             DatabaseCheck::new()->connectionName(config('database.default', 'pgsql')),
