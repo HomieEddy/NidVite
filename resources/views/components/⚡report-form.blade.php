@@ -196,7 +196,7 @@ new class extends Component
     }
 } ?>
 
-<div class="max-w-3xl mx-auto px-4 py-4" x-data="{
+<div class="relative max-w-3xl mx-auto px-4 py-4 overflow-hidden" x-data="{
     map: null,
     marker: null,
     mapReady: false,
@@ -288,31 +288,33 @@ new class extends Component
             .catch(function() { this.geocoding = false; }.bind(this));
     }
 }" x-init="$nextTick(() => { setTimeout(() => initMap(), 100); })">
+    <div class="pointer-events-none absolute -top-24 -left-16 h-52 w-52 rounded-full bg-amber-300/25 blur-3xl"></div>
+    <div class="pointer-events-none absolute top-20 -right-16 h-60 w-60 rounded-full bg-teal-300/20 blur-3xl"></div>
     @if ($submitted)
         {{-- Success State --}}
-        <div class="citizen-card p-8 text-center animate-fade-in">
+        <div class="citizen-card p-8 text-center animate-fade-in relative">
             <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6">
                 <svg class="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ __('report.success_title') }}</h2>
-            <p class="text-gray-600 mb-2">{{ __('report.success_message') }}</p>
+            <h2 class="text-2xl font-extrabold font-display text-gray-900 mb-2">{{ __('report.success_title') }}</h2>
+            <p class="text-gray-700 mb-2">{{ __('report.success_message') }}</p>
             <p class="text-sm text-gray-500 mb-8">{{ __('report.success_tracking') }}</p>
             <div class="flex flex-col gap-3">
-                <button wire:click="$set('submitted', false)" class="w-full inline-flex items-center justify-center px-6 py-3.5 border border-transparent text-base font-semibold rounded-xl text-white bg-amber-600 hover:bg-amber-700 active:scale-[0.98] transition-all duration-200 btn-touch">
+                <button wire:click="$set('submitted', false)" class="w-full inline-flex items-center justify-center px-6 py-3.5 border border-transparent text-base font-semibold rounded-xl text-white bg-linear-to-r from-amber-700 to-orange-500 hover:from-amber-800 hover:to-orange-600 active:scale-[0.98] transition-all duration-200 btn-touch interactive-lift">
                     {{ __('report.new_report') }}
                 </button>
-                <a href="/" class="w-full inline-flex items-center justify-center px-6 py-3.5 border-2 border-gray-200 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 active:scale-[0.98] transition-all duration-200 btn-touch">
+                <a href="/" class="w-full inline-flex items-center justify-center px-6 py-3.5 border-2 border-amber-100 text-base font-medium rounded-xl text-gray-700 bg-white/90 hover:bg-white active:scale-[0.98] transition-all duration-200 btn-touch interactive-lift">
                     {{ app()->getLocale() === 'fr' ? 'Retour à l\'accueil' : 'Back to home' }}
                 </a>
             </div>
         </div>
     @else
         {{-- Form Card --}}
-        <div class="citizen-card overflow-hidden animate-slide-up">
-            <div class="bg-gradient-to-r from-amber-600 to-amber-500 px-5 py-5">
-                <h1 class="text-xl font-bold text-white">{{ __('report.title') }}</h1>
+        <div class="citizen-card overflow-hidden animate-slide-up relative">
+            <div class="bg-linear-to-r from-amber-700 via-amber-600 to-orange-500 px-5 py-5">
+                <h1 class="text-xl font-extrabold font-display text-white">{{ __('report.title') }}</h1>
                 <p class="text-amber-100 text-sm mt-1">{{ __('report.subtitle') }}</p>
             </div>
 
@@ -328,7 +330,7 @@ new class extends Component
                     </label>
                     <p class="text-xs text-gray-500 mb-2">{{ __('report.email_help') }}</p>
                     <input type="email" wire:model="reporter_email"
-                        class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3"
+                        class="block w-full rounded-xl border-amber-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 bg-white/90"
                         placeholder="exemple@email.com">
                     @error('reporter_email') <span class="mt-1.5 text-sm text-red-600">{{ $message }}</span> @enderror
                 </div>
@@ -339,8 +341,8 @@ new class extends Component
                         {{ __('report.category') }}
                         <span class="text-red-500">*</span>
                     </label>
-                    <div class="flex items-center px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 text-base">
-                        <svg class="w-5 h-5 mr-2 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center px-4 py-3 rounded-xl border border-amber-100 bg-amber-50/70 text-gray-700 text-base">
+                        <svg class="w-5 h-5 mr-2 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" stroke-width="2"/>
                             <circle cx="12" cy="12" r="3" fill="currentColor"/>
                         </svg>
@@ -359,7 +361,7 @@ new class extends Component
                     </label>
                     <p class="text-xs text-gray-500 mb-2">{{ __('report.description_help') }}</p>
                     <textarea wire:model="description" rows="4"
-                        class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 resize-none"
+                        class="block w-full rounded-xl border-amber-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 resize-none bg-white/90"
                         placeholder="Décrivez le problème en détail..."></textarea>
                     @error('description') <span class="mt-1.5 text-sm text-red-600">{{ $message }}</span> @enderror
                 </div>
@@ -372,7 +374,7 @@ new class extends Component
                     </label>
                     <p class="text-xs text-gray-500 mb-2">{{ __('report.address_help') }}</p>
                     <input type="text" wire:model="address" x-ref="addressInput" x-on:blur="geocodeAddress()"
-                        class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3"
+                        class="block w-full rounded-xl border-amber-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 bg-white/90"
                         placeholder="123 rue Example">
                     @error('address') <span class="mt-1.5 text-sm text-red-600">{{ $message }}</span> @enderror
                 </div>
@@ -383,7 +385,7 @@ new class extends Component
                         <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ __('report.neighborhood') }}</label>
                         <span class="text-xs text-gray-400">({{ __('report.optional') }})</span>
                         <input type="text" wire:model="neighborhood" list="neighborhoods-list" autocomplete="off"
-                            class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3">
+                            class="mt-1 block w-full rounded-xl border-amber-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 bg-white/90">
                         <datalist id="neighborhoods-list">
                             @foreach ($this->neighborhoods as $name)
                                 <option value="{{ $name }}">
@@ -394,7 +396,7 @@ new class extends Component
                         <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ __('report.borough') }}</label>
                         <span class="text-xs text-gray-400">({{ __('report.optional') }})</span>
                         <input type="text" wire:model="borough" list="boroughs-list" autocomplete="off"
-                            class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3">
+                            class="mt-1 block w-full rounded-xl border-amber-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 bg-white/90">
                         <datalist id="boroughs-list">
                             @foreach ($this->boroughs as $name)
                                 <option value="{{ $name }}">
@@ -404,9 +406,9 @@ new class extends Component
                 </div>
 
                 {{-- Location --}}
-                <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                <div class="bg-amber-50/80 rounded-xl p-4 border border-amber-200">
                     <div class="flex items-start space-x-3">
-                        <svg class="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-amber-700 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
@@ -425,10 +427,10 @@ new class extends Component
                                     <span class="text-xs text-gray-500">{{ number_format($latitude, 5) }}, {{ number_format($longitude, 5) }}</span>
                                 </div>
                             @endif
-                            <div id="form-map" class="w-full h-52 rounded-xl border border-gray-200 mb-3" wire:ignore></div>
+                            <div id="form-map" class="w-full h-52 rounded-xl border border-amber-100 mb-3" wire:ignore></div>
 
                             <button type="button" x-on:click="captureLocation()"
-                                class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-semibold rounded-xl shadow-sm text-white bg-amber-600 hover:bg-amber-700 active:scale-[0.98] transition-all duration-200 btn-touch">
+                                class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-semibold rounded-xl shadow-sm text-white bg-linear-to-r from-amber-700 to-orange-500 hover:from-amber-800 hover:to-orange-600 active:scale-[0.98] transition-all duration-200 btn-touch interactive-lift">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -452,7 +454,7 @@ new class extends Component
                     @if (count($photoPreviews) > 0)
                         <div class="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-3">
                             @foreach ($photoPreviews as $index => $preview)
-                                <div class="relative aspect-square rounded-xl overflow-hidden border border-gray-200">
+                                <div class="relative aspect-square rounded-xl overflow-hidden border border-amber-100 bg-white">
                                     <img src="{{ $preview }}" class="w-full h-full object-cover" alt="Preview {{ $index + 1 }}">
                                     <button type="button" wire:click="removePhoto({{ $index }})"
                                         class="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition btn-touch">
@@ -466,12 +468,12 @@ new class extends Component
                     @endif
 
                     @if (count($photos) < 5)
-                        <label class="flex justify-center w-full h-28 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-xl appearance-none cursor-pointer hover:border-amber-500 focus:outline-none">
+                        <label class="flex justify-center w-full h-28 px-4 transition bg-white/90 border-2 border-amber-200 border-dashed rounded-xl appearance-none cursor-pointer hover:border-amber-500 focus:outline-none interactive-lift">
                             <span class="flex items-center space-x-2">
-                                <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                 </svg>
-                                <span class="font-medium text-gray-600">{{ __('report.photos') }}</span>
+                                <span class="font-semibold text-gray-700">{{ __('report.photos') }}</span>
                             </span>
                             <input type="file" wire:model="photos" multiple accept="image/*" class="hidden">
                         </label>
@@ -501,7 +503,7 @@ new class extends Component
 
                 <div class="pt-2">
                     <button type="submit"
-                        class="w-full flex justify-center items-center px-6 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-lg text-white bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 btn-touch"
+                        class="w-full flex justify-center items-center px-6 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-lg text-white bg-linear-to-r from-amber-700 to-orange-500 hover:from-amber-800 hover:to-orange-600 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 btn-touch interactive-lift"
                         wire:loading.attr="disabled"
                         wire:target="submit">
                         <span wire:loading.remove wire:target="submit">{{ __('report.submit') }}</span>

@@ -7,6 +7,7 @@ use App\Filament\Widgets\ReportsChart;
 use App\Filament\Widgets\ReportsMap;
 use App\Filament\Widgets\ReportsOverview;
 use App\Http\Middleware\EnforceAdminSessionTimeout;
+use App\Http\Middleware\SetLocale;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -52,6 +53,7 @@ class AdminPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                SetLocale::class,
                 AuthenticateSession::class,
                 EnforceAdminSessionTimeout::class,
                 ShareErrorsFromSession::class,
@@ -66,6 +68,10 @@ class AdminPanelProvider extends PanelProvider
             ->multiFactorAuthentication([
                 AppAuthentication::make()->recoverable()->brandName('NidVite'),
             ])
+            ->renderHook(
+                'panels::global-search.after',
+                fn (): string => Blade::render('@include("filament.components.language-toggle")'),
+            )
             ->renderHook(
                 'panels::body.start',
                 fn (): string => Blade::render('@include("vendor.filament.reverb-scripts")'),

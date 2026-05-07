@@ -18,17 +18,18 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 
 class ReportsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
-            ->emptyStateHeading('No reports found')
-            ->emptyStateDescription('Reports will appear here once citizens submit them.')
+            ->emptyStateHeading(__('filament.admin.resources.reports.empty_state.heading'))
+            ->emptyStateDescription(__('filament.admin.resources.reports.empty_state.description'))
             ->emptyStateActions([
                 Action::make('create')
-                    ->label('Create Report')
+                    ->label(__('filament.admin.resources.reports.actions.create'))
                     ->url(ReportResource::getUrl('create'))
                     ->icon('heroicon-m-plus')
                     ->visible(fn (): bool => auth()->user()?->can('create', Report::class) ?? false),
@@ -69,20 +70,20 @@ class ReportsTable
                     })
                     ->sortable(),
                 TextColumn::make('location')
-                    ->label('Map')
+                    ->label(__('filament.admin.resources.reports.fields.map'))
                     ->icon('heroicon-m-map-pin')
                     ->color('amber')
-                    ->formatStateUsing(fn () => 'View on Map')
+                    ->formatStateUsing(fn () => __('filament.admin.resources.reports.actions.view_on_map'))
                     ->action(
                         Action::make('viewLocation')
-                            ->label('View on Map')
-                            ->modalHeading('Report Location')
+                            ->label(__('filament.admin.resources.reports.actions.view_on_map'))
+                            ->modalHeading(__('filament.admin.resources.reports.actions.report_location'))
                             ->modalSubmitAction(false)
-                            ->modalCancelActionLabel('Close')
+                            ->modalCancelActionLabel(__('filament.admin.resources.reports.actions.close'))
                             ->modalContent(function ($record): View {
                                 $location = null;
                                 if ($record->location !== null) {
-                                    $location = \DB::selectOne(
+                                    $location = DB::selectOne(
                                         'SELECT ST_Y(location::geometry) as lat, ST_X(location::geometry) as lng FROM reports WHERE id = ?',
                                         [$record->id]
                                     );
@@ -94,7 +95,7 @@ class ReportsTable
                                 ]);
                             })
                     )
-                    ->tooltip('Click to view on map'),
+                    ->tooltip(__('filament.admin.resources.reports.tooltips.map')),
                 IconColumn::make('geofence_passed')
                     ->boolean()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -104,38 +105,40 @@ class ReportsTable
             ])
             ->filters([
                 SelectFilter::make('status')
+                    ->label(__('filament.admin.resources.reports.filters.status'))
                     ->options([
-                        'received' => 'Received',
-                        'verified' => 'Verified',
-                        'scheduled' => 'Scheduled',
-                        'in_progress' => 'In Progress',
-                        'repaired' => 'Repaired',
-                        'rejected' => 'Rejected',
+                        'received' => __('filament.admin.resources.reports.statuses.received'),
+                        'verified' => __('filament.admin.resources.reports.statuses.verified'),
+                        'scheduled' => __('filament.admin.resources.reports.statuses.scheduled'),
+                        'in_progress' => __('filament.admin.resources.reports.statuses.in_progress'),
+                        'repaired' => __('filament.admin.resources.reports.statuses.repaired'),
+                        'rejected' => __('filament.admin.resources.reports.statuses.rejected'),
                     ])
                     ->multiple(),
                 SelectFilter::make('priority')
+                    ->label(__('filament.admin.resources.reports.filters.priority'))
                     ->options([
-                        'low' => 'Low',
-                        'normal' => 'Normal',
-                        'high' => 'High',
-                        'critical' => 'Critical',
+                        'low' => __('filament.admin.resources.reports.priorities.low'),
+                        'normal' => __('filament.admin.resources.reports.priorities.normal'),
+                        'high' => __('filament.admin.resources.reports.priorities.high'),
+                        'critical' => __('filament.admin.resources.reports.priorities.critical'),
                     ])
                     ->multiple(),
                 TrashedFilter::make(),
             ])
             ->groups([
                 Group::make('status')
-                    ->label('Status')
-                    ->getTitleFromRecordUsing(fn ($record) => ucfirst($record->status)),
+                    ->label(__('filament.admin.resources.reports.groups.status'))
+                    ->getTitleFromRecordUsing(fn ($record) => __('filament.admin.resources.reports.statuses.'.$record->status)),
                 Group::make('neighborhood')
-                    ->label('Neighborhood'),
+                    ->label(__('filament.admin.resources.reports.groups.neighborhood')),
                 Group::make('borough')
-                    ->label('Borough'),
+                    ->label(__('filament.admin.resources.reports.groups.borough')),
                 Group::make('priority')
-                    ->label('Priority')
-                    ->getTitleFromRecordUsing(fn ($record) => ucfirst($record->priority)),
+                    ->label(__('filament.admin.resources.reports.groups.priority'))
+                    ->getTitleFromRecordUsing(fn ($record) => __('filament.admin.resources.reports.priorities.'.$record->priority)),
                 Group::make('created_at')
-                    ->label('Date')
+                    ->label(__('filament.admin.resources.reports.groups.date'))
                     ->getTitleFromRecordUsing(fn ($record) => $record->created_at->format('M Y')),
             ])
             ->defaultGroup('status')

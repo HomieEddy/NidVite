@@ -14,7 +14,7 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
     
     @laravelPWA
     @livewireStyles
@@ -37,27 +37,27 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
-                <span class="text-lg font-bold tracking-tight">{{ config('app.name') }}</span>
+                <span class="text-lg font-extrabold tracking-tight font-display">{{ config('app.name') }}</span>
             </a>
 
             {{-- Desktop nav links --}}
-            <div class="hidden md:flex items-center space-x-1">
+            <nav class="hidden md:flex items-center space-x-1" aria-label="{{ __('Navigation principale') }}">
                 <a href="/"
-                   class="px-3 py-1.5 rounded-lg text-sm font-medium transition btn-touch inline-flex items-center justify-center
+                   class="px-3 py-1.5 rounded-lg text-sm font-semibold transition btn-touch inline-flex items-center justify-center interactive-lift
                    {{ request()->is('/') ? 'bg-white/20 text-white' : 'text-amber-100 hover:text-white hover:bg-white/10' }}">
                     {{ __('Accueil') }}
                 </a>
                 <a href="{{ route('report.create') }}"
-                   class="px-3 py-1.5 rounded-lg text-sm font-medium transition btn-touch inline-flex items-center justify-center
+                   class="px-3 py-1.5 rounded-lg text-sm font-semibold transition btn-touch inline-flex items-center justify-center interactive-lift
                    {{ request()->routeIs('report.create') ? 'bg-white/20 text-white' : 'text-amber-100 hover:text-white hover:bg-white/10' }}">
                     {{ __('Signaler') }}
                 </a>
                 <a href="{{ route('map.public') }}"
-                   class="px-3 py-1.5 rounded-lg text-sm font-medium transition btn-touch inline-flex items-center justify-center
+                   class="px-3 py-1.5 rounded-lg text-sm font-semibold transition btn-touch inline-flex items-center justify-center interactive-lift
                    {{ request()->routeIs('map.public') ? 'bg-white/20 text-white' : 'text-amber-100 hover:text-white hover:bg-white/10' }}">
                     {{ __('Carte') }}
                 </a>
-            </div>
+            </nav>
             
             <div class="flex items-center space-x-1 shrink-0">
                 <a href="{{ route('locale.switch', 'fr') }}" 
@@ -80,11 +80,11 @@
     </main>
     
     {{-- Bottom Navigation (mobile only) --}}
-    <nav class="sticky bottom-0 z-[1001] bg-white border-t border-gray-200 safe-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:hidden">
+    <nav class="sticky bottom-0 z-1001 citizen-glass-nav safe-bottom shadow-[0_-4px_16px_-1px_rgba(0,0,0,0.1)] md:hidden" aria-label="{{ __('Navigation mobile') }}">
         <div class="max-w-3xl mx-auto px-2">
             <div class="flex items-center justify-around">
                 <a href="{{ route('report.create') }}" 
-                   class="flex flex-col items-center justify-center py-2 px-3 text-xs font-medium transition btn-touch
+                   class="flex flex-col items-center justify-center py-2 px-3 text-xs font-semibold transition btn-touch interactive-lift
                    {{ request()->routeIs('report.create') ? 'text-amber-600' : 'text-gray-500 hover:text-gray-700' }}">
                     <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -93,7 +93,7 @@
                 </a>
                 
                 <a href="{{ route('map.public') }}" 
-                   class="flex flex-col items-center justify-center py-2 px-3 text-xs font-medium transition btn-touch
+                         class="flex flex-col items-center justify-center py-2 px-3 text-xs font-semibold transition btn-touch interactive-lift
                    {{ request()->routeIs('map.public') ? 'text-amber-600' : 'text-gray-500 hover:text-gray-700' }}">
                     <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0121 18.382V7.618a1 1 0 01-.553-.894L15 7m0 13V7"/>
@@ -102,7 +102,7 @@
                 </a>
                 
                 <a href="/" 
-                   class="flex flex-col items-center justify-center py-2 px-3 text-xs font-medium transition btn-touch
+                         class="flex flex-col items-center justify-center py-2 px-3 text-xs font-semibold transition btn-touch interactive-lift
                    {{ request()->is('/') ? 'text-amber-600' : 'text-gray-500 hover:text-gray-700' }}">
                     <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>

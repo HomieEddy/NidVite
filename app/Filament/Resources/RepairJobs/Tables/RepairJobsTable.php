@@ -7,8 +7,9 @@ use App\Models\RepairJob;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Grouping\Group;
@@ -19,11 +20,11 @@ class RepairJobsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->emptyStateHeading('No repair jobs found')
-            ->emptyStateDescription('Repair jobs will appear here once scheduled.')
+            ->emptyStateHeading(__('filament.admin.resources.repair_jobs.empty_state.heading'))
+            ->emptyStateDescription(__('filament.admin.resources.repair_jobs.empty_state.description'))
             ->emptyStateActions([
                 Action::make('create')
-                    ->label('Create Repair Job')
+                    ->label(__('filament.admin.resources.repair_jobs.actions.create'))
                     ->url(RepairJobResource::getUrl('create'))
                     ->icon('heroicon-m-plus')
                     ->visible(fn (): bool => auth()->user()?->can('create', RepairJob::class) ?? false),
@@ -54,7 +55,7 @@ class RepairJobsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('creator.name')
-                    ->label('Created By')
+                    ->label(__('filament.admin.resources.repair_jobs.fields.created_by'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('estimated_cost')
@@ -71,27 +72,64 @@ class RepairJobsTable
             ->filters([
                 SelectFilter::make('status')
                     ->options([
-                        'planned' => 'Planned',
-                        'in_progress' => 'In Progress',
-                        'completed' => 'Completed',
-                        'cancelled' => 'Cancelled',
+                        'planned' => __('filament.admin.resources.repair_jobs.statuses.planned'),
+                        'in_progress' => __('filament.admin.resources.repair_jobs.statuses.in_progress'),
+                        'completed' => __('filament.admin.resources.repair_jobs.statuses.completed'),
+                        'cancelled' => __('filament.admin.resources.repair_jobs.statuses.cancelled'),
                     ])
                     ->multiple(),
             ])
             ->groups([
                 Group::make('status')
-                    ->label('Status')
-                    ->getTitleFromRecordUsing(fn ($record) => ucfirst($record->status)),
+                    ->label(__('filament.admin.resources.repair_jobs.fields.status'))
+                    ->getTitleFromRecordUsing(fn ($record) => __('filament.admin.resources.repair_jobs.statuses.'.$record->status)),
                 Group::make('creator.name')
-                    ->label('Created By'),
+                    ->label(__('filament.admin.resources.repair_jobs.fields.created_by')),
                 Group::make('scheduled_at')
-                    ->label('Scheduled Month')
-                    ->getTitleFromRecordUsing(fn ($record) => $record->scheduled_at?->format('M Y') ?? 'Not scheduled'),
+                    ->label(__('filament.admin.resources.repair_jobs.fields.scheduled_month'))
+                    ->getTitleFromRecordUsing(fn ($record) => $record->scheduled_at?->format('M Y') ?? __('filament.admin.resources.repair_jobs.helper.not_scheduled')),
             ])
             ->defaultGroup('status')
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                ViewAction::make()
+                    ->record(fn (RepairJob $record): RepairJob => $record->load('reports'))
+                    ->schema([
+                        TextInput::make('title')
+                            ->label(__('filament.admin.resources.repair_jobs.fields.title')),
+                        TextInput::make('status')
+                            ->label(__('filament.admin.resources.repair_jobs.fields.status')),
+                        TextInput::make('scheduled_at')
+                            ->label(__('filament.admin.resources.repair_jobs.fields.scheduled_at')),
+                        Repeater::make('reports')
+                            ->label(__('filament.admin.resources.repair_jobs.fields.linked_reports'))
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->defaultItems(0)
+                            ->schema([
+                                TextInput::make('uuid')
+                                    ->label(__('filament.admin.resources.repair_jobs.fields.report_uuid')),
+                                TextInput::make('address')
+                                    ->label(__('filament.admin.resources.repair_jobs.fields.address')),
+                                TextInput::make('status')
+                                    ->label(__('filament.admin.resources.repair_jobs.fields.status')),
+                            ])
+                            ->columns(3),
+                    ])
+                    ->fillForm(fn (RepairJob $record): array => [
+                        'title' => $record->title,
+                        'status' => __('filament.admin.resources.repair_jobs.statuses.'.$record->status),
+                        'scheduled_at' => optional($record->scheduled_at)->format('M j, Y H:i') ?? __('filament.admin.resources.repair_jobs.fields.status_fallback'),
+                        'reports' => $record->reports
+                            ->map(fn ($report): array => [
+                                'uuid' => $report->uuid,
+                                'address' => $report->address ?? __('filament.admin.resources.repair_jobs.fields.address_fallback'),
+                                'status' => __('filament.admin.resources.reports.statuses.'.$report->status),
+                            ])
+                            ->values()
+                            ->all(),
+                    ])
+                    ->modalWidth('6xl'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

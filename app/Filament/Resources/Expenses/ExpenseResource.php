@@ -20,6 +20,21 @@ class ExpenseResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.admin.resources.expenses.navigation');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('filament.admin.resources.expenses.singular');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.admin.resources.expenses.plural');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return ExpenseForm::configure($schema);

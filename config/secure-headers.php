@@ -19,6 +19,10 @@ return [
 
     'referrer-policy' => 'strict-origin-when-cross-origin',
 
+    'permissions-policy' => [
+        'enable' => false,
+    ],
+
     'hsts' => [
         'enable' => (bool) env('SECURE_HEADERS_HSTS_ENABLE', true),
         'max-age' => (int) env('SECURE_HEADERS_HSTS_MAX_AGE', 31536000),
@@ -36,9 +40,12 @@ return [
 
         'script-src' => [
             'self' => true,
+            'unsafe-inline' => true,
+            'unsafe-eval' => true,
             'allow' => [
                 'https://www.google.com/recaptcha/',
                 'https://www.gstatic.com/recaptcha/',
+                'https://www.recaptcha.net/recaptcha/',
             ],
         ],
 
@@ -47,6 +54,7 @@ return [
             'unsafe-inline' => true,
             'allow' => [
                 'https://fonts.bunny.net',
+                'https://fonts.googleapis.com',
             ],
         ],
 
@@ -59,6 +67,7 @@ return [
             'self' => true,
             'allow' => [
                 'https://fonts.bunny.net',
+                'https://fonts.gstatic.com',
             ],
         ],
 
@@ -66,13 +75,19 @@ return [
             'self' => true,
             'allow' => [
                 'https://www.google.com/recaptcha/',
+                'https://www.gstatic.com/recaptcha/',
+                'https://www.recaptcha.net/recaptcha/',
             ],
         ],
 
         'frame-src' => [
             'self' => true,
+            'schemes' => ['https'],
             'allow' => [
                 'https://www.google.com/recaptcha/',
+                'https://www.gstatic.com/recaptcha/',
+                'https://www.recaptcha.net/recaptcha/',
+                'https://www.openstreetmap.org/',
             ],
         ],
 

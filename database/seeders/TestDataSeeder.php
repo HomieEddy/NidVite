@@ -9,83 +9,164 @@ use App\Models\Report;
 use App\Models\ReportCategory;
 use App\Models\Role;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Models\Vendor;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
-/**
- * Generates realistic demo data for testing the admin dashboard.
- *
- * Run this AFTER the base seeders (RoleSeeder, ReportCategorySeeder, etc.):
- *   php artisan db:seed --class=TestDataSeeder
- *
- * Creates:
- *   - 5 staff users (one per role)
- *   - 80 reports across all statuses with realistic Montreal locations
- *   - 15 repair jobs linked to reports
- *   - 40 expenses across categories
- *   - 10 materials in inventory
- */
 class TestDataSeeder extends Seeder
 {
-    /** @var array<array{float, float}> Realistic Montreal Island coordinates [lat, lng] */
-    private array $montrealLocations = [
-        [45.5017, -73.5673], // Downtown
-        [45.5088, -73.5540], // Old Montreal
-        [45.5242, -73.5810], // Plateau-Mont-Royal
-        [45.5390, -73.5950], // Mile End
+    private const TOTAL_REPORTS = 200;
+
+    private const REJECTED_REPORTS = 10;
+
+    /** @var array<array{float, float}> */
+    private array $montrealCenters = [
+        [45.5017, -73.5673], // Ville-Marie
+        [45.5242, -73.5810], // Plateau
         [45.5510, -73.6100], // Rosemont
         [45.5600, -73.5850], // Villeray
         [45.5300, -73.6200], // Outremont
-        [45.4750, -73.6150], // Notre-Dame-de-Grace
+        [45.4750, -73.6150], // NDG
         [45.4650, -73.6000], // Cote-des-Neiges
-        [45.4800, -73.5700], // Westmount
-        [45.5200, -73.5500], // Village
-        [45.5400, -73.5400], // Gay Village
-        [45.4950, -73.6300], // Hampstead
-        [45.4700, -73.6400], // Cote-Saint-Luc
         [45.5800, -73.5600], // Ahuntsic
-        [45.5900, -73.5400], // Cartierville
-        [45.5100, -73.6400], // Montreal West
-        [45.5250, -73.6600], // Snowdon
-        [45.5450, -73.6200], // Parc-Extension
-        [45.5550, -73.6350], // Ville Saint-Laurent
+        [45.5550, -73.6350], // Saint-Laurent
+        [45.5100, -73.6400], // Snowdon
+    ];
+
+    private array $streets = [
+        'Rue Sainte-Catherine',
+        'Boulevard Saint-Laurent',
+        'Rue Sherbrooke',
+        'Boulevard Rene-Levesque',
+        'Rue Ontario',
+        'Rue Saint-Denis',
+        'Rue Jean-Talon',
+        'Avenue Laurier',
+    ];
+
+    private array $boroughs = [
+        'Ville-Marie',
+        'Le Plateau-Mont-Royal',
+        'Rosemont-La Petite-Patrie',
+        'Villeray-Saint-Michel-Parc-Extension',
+        'Cote-des-Neiges-Notre-Dame-de-Grace',
+        'Ahuntsic-Cartierville',
     ];
 
     public function run(): void
     {
-        $this->command->info('Creating test staff users...');
+        $this->truncateTestData();
+
         $users = $this->createStaffUsers();
 
-        $this->command->info('Creating test materials...');
-        $this->createMaterials();
+        $potholeCategory = ReportCategory::firstOrCreate(
+            ['slug' => 'pothole'],
+            [
+                'label_en' => 'Pothole',
+                'label_fr' => 'Nid-de-poule',
+                'icon' => 'heroicon-o-exclamation-triangle',
+                'color' => '#d97706',
+                'is_active' => true,
+                'sort_order' => 1,
+            ]
+        );
 
-        $this->command->info('Creating test reports...');
-        $reports = $this->createReports();
+        $asphaltBags = Material::updateOrCreate(
+            ['sku' => 'ASP-001'],
+            [
+                'name' => 'Asphalt bags',
+                'description' => 'Asphalt bags for pothole repairs',
+                'unit' => 'bag',
+                'current_stock' => 10000,
+                'reserved_stock' => 0,
+                'min_stock_alert' => 500,
+                'avg_purchase_price' => 15.50,
+                'last_purchase_price' => 15.50,
+                'location' => 'Main warehouse',
+                'is_active' => true,
+            ]
+        );
 
-        $this->command->info('Creating test repair jobs...');
-        $repairJobs = $this->createRepairJobs($users, $reports);
+        $vendors = $this->seedVendors();
 
-        $this->command->info('Creating test expenses...');
-        $this->createExpenses($repairJobs, $users);
+        $reports = $this->seedReports($potholeCategory->id);
+        $jobs = $this->seedJobsForReports($reports, (int) $users['manager']->id, (int) $users['service_worker']->id);
+        $this->seedAsphaltExpenses($jobs, $asphaltBags, $vendors, (int) $users['accountant']->id);
 
-        $this->command->info('Test data seeded successfully!');
-        $this->command->info('');
-        $this->command->info('Admin login: admin@nidvite.ca / changeme-strong-password-2026');
-        $this->command->info("Reports: {$reports->count()}");
-        $this->command->info("Repair Jobs: {$repairJobs->count()}");
+        $validReports = self::TOTAL_REPORTS - self::REJECTED_REPORTS;
+
+        $this->command?->info('TestDataSeeder completed.');
+        $this->command?->info('Reports: '.$reports->count()." ({$validReports} valid + ".self::REJECTED_REPORTS.' rejected)');
+        $this->command?->info('Jobs: '.$jobs->count());
+        $this->command?->info('Expenses: '.$jobs->count().' (asphalt bags only)');
     }
 
     /**
-     * Create one user per role for testing RBAC.
-     *
+     * @return Collection<int, Vendor>
+     */
+    private function seedVendors(): Collection
+    {
+        $vendorRows = [
+            [
+                'name' => 'Montreal Asphalt Supply',
+                'contact_name' => 'Luc Bergeron',
+                'email' => 'sales@mtlasphalt.ca',
+                'phone' => '514-555-0101',
+                'address' => '1200 Rue Wellington, Montreal, QC',
+                'website' => 'https://mtlasphalt.ca',
+            ],
+            [
+                'name' => 'Nordic Road Materials',
+                'contact_name' => 'Emma Cote',
+                'email' => 'orders@nordicroad.ca',
+                'phone' => '514-555-0102',
+                'address' => '875 Boulevard Industriel, Montreal, QC',
+                'website' => 'https://nordicroad.ca',
+            ],
+            [
+                'name' => 'Quebec Paving Depot',
+                'contact_name' => 'Marc Gagnon',
+                'email' => 'info@qcpaving.ca',
+                'phone' => '514-555-0103',
+                'address' => '4100 Rue Notre-Dame O, Montreal, QC',
+                'website' => 'https://qcpaving.ca',
+            ],
+        ];
+
+        $vendors = collect();
+
+        foreach ($vendorRows as $row) {
+            $vendors->push(
+                Vendor::updateOrCreate(
+                    ['name' => $row['name']],
+                    [
+                        'contact_name' => $row['contact_name'],
+                        'email' => $row['email'],
+                        'phone' => $row['phone'],
+                        'address' => $row['address'],
+                        'website' => $row['website'],
+                        'is_active' => true,
+                    ]
+                )
+            );
+        }
+
+        return $vendors;
+    }
+
+    private function truncateTestData(): void
+    {
+        DB::statement('TRUNCATE TABLE job_materials, job_workers, job_reports, expenses, repair_jobs, reports RESTART IDENTITY CASCADE');
+    }
+
+    /**
      * @return array<string, User>
      */
     private function createStaffUsers(): array
     {
-        $roles = Role::all()->keyBy('slug');
-        $users = [];
+        $roles = Role::query()->get()->keyBy('slug');
 
         $staff = [
             'manager' => ['name' => 'Marie Gestionnaire', 'email' => 'manager@nidvite.test'],
@@ -94,13 +175,20 @@ class TestDataSeeder extends Seeder
             'viewer' => ['name' => 'Sophie Lectrice', 'email' => 'viewer@nidvite.test'],
         ];
 
+        $users = [];
+
         foreach ($staff as $slug => $data) {
+            $role = $roles->get($slug);
+            if (! $role) {
+                throw new \RuntimeException("Missing role with slug '{$slug}'. Run RoleSeeder first.");
+            }
+
             $users[$slug] = User::firstOrCreate(
                 ['email' => $data['email']],
                 [
                     'name' => $data['name'],
                     'password' => bcrypt('password'),
-                    'role_id' => $roles[$slug]->id,
+                    'role_id' => $role->id,
                     'locale' => 'fr',
                     'is_active' => true,
                 ]
@@ -110,81 +198,60 @@ class TestDataSeeder extends Seeder
         return $users;
     }
 
-    private function createMaterials(): void
-    {
-        $materials = [
-            ['sku' => 'ASP-001', 'name' => 'Asphalt bags', 'unit' => 'bag', 'current_stock' => 200, 'min_stock_alert' => 50, 'avg_purchase_price' => 15.50],
-        ];
-
-        foreach ($materials as $data) {
-            Material::firstOrCreate(
-                ['sku' => $data['sku']],
-                array_merge($data, [
-                    'description' => "Material for road works - {$data['name']}",
-                    'reserved_stock' => 0,
-                    'last_purchase_price' => $data['avg_purchase_price'],
-                    'location' => 'Main warehouse',
-                    'is_active' => true,
-                ])
-            );
-        }
-    }
-
     /**
      * @return Collection<int, Report>
      */
-    private function createReports(): Collection
+    private function seedReports(int $potholeCategoryId): Collection
     {
-        $potholeCategory = ReportCategory::where('slug', 'pothole')->first();
+        $validReports = self::TOTAL_REPORTS - self::REJECTED_REPORTS;
 
-        if (! $potholeCategory) {
-            $this->command->warn('Pothole category not found. Skipping report creation.');
-
-            return collect();
-        }
-
-        $statuses = [
-            'received' => 25,
-            'verified' => 15,
-            'scheduled' => 12,
-            'in_progress' => 10,
-            'repaired' => 15,
-            'rejected' => 3,
+        $distribution = [
+            'repaired' => (int) floor($validReports * 0.60),
+            'scheduled' => (int) floor($validReports * 0.30),
+            'received' => (int) ($validReports - floor($validReports * 0.60) - floor($validReports * 0.30)),
+            'rejected' => self::REJECTED_REPORTS,
         ];
 
         $reports = collect();
-        $now = now();
 
-        foreach ($statuses as $status => $count) {
+        foreach ($distribution as $status => $count) {
             for ($i = 0; $i < $count; $i++) {
-                $location = $this->montrealLocations[array_rand($this->montrealLocations)];
-                $createdAt = $now->copy()->subDays(rand(0, 60))->subHours(rand(0, 23));
+                $createdAt = now()->subDays(rand(0, 29))->subMinutes(rand(0, 1439));
+                $location = $this->randomMontrealLocation();
 
-                $report = Report::create([
-                    'reporter_email' => $this->generateMontrealEmail(),
-                    'preferred_locale' => rand(0, 10) > 3 ? 'fr' : 'en',
+                $reportId = DB::table('reports')->insertGetId([
+                    'uuid' => (string) Str::uuid(),
+                    'reporter_email' => 'citizen'.rand(1000, 999999).'@example.com',
+                    'preferred_locale' => rand(0, 1) ? 'fr' : 'en',
                     'status' => $status,
-                    'priority' => $this->randomPriority(),
-                    'category_id' => $potholeCategory->id,
-                    'description' => $this->generateReportDescription(),
-                    'address' => $this->generateMontrealAddress(),
-                    'neighborhood' => $this->generateNeighborhood($location),
-                    'borough' => $this->generateBorough($location),
+                    'priority' => 'normal',
+                    'category_id' => $potholeCategoryId,
+                    'description' => 'Pothole reported on road surface.',
+                    'address' => rand(100, 9999).' '.$this->streets[array_rand($this->streets)],
+                    'neighborhood' => 'Montreal',
+                    'borough' => $this->boroughs[array_rand($this->boroughs)],
                     'geofence_passed' => true,
                     'is_spam' => false,
+                    'first_scheduled_at' => in_array($status, ['scheduled', 'repaired'], true)
+                        ? $createdAt->copy()->addHours(rand(6, 72))
+                        : null,
+                    'first_started_at' => $status === 'repaired'
+                        ? $createdAt->copy()->addHours(rand(12, 96))
+                        : null,
+                    'completed_at' => $status === 'repaired'
+                        ? $createdAt->copy()->addHours(rand(24, 168))
+                        : null,
+                    'rejection_reason' => $status === 'rejected' ? 'out_of_scope' : null,
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);
 
-                // Set PostGIS location
                 DB::statement(
                     'UPDATE reports SET location = ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography WHERE id = ?',
-                    [$location[1], $location[0], $report->id]
+                    [$location[1], $location[0], $reportId]
                 );
 
-                // Set status-specific timestamps
-                $this->setStatusTimestamps($report, $status, $createdAt);
-
+                $report = Report::query()->findOrFail($reportId);
                 $reports->push($report);
             }
         }
@@ -193,83 +260,69 @@ class TestDataSeeder extends Seeder
     }
 
     /**
-     * @param  array<string, User>  $users
+     * Generate a realistic location spread across Montreal.
+     *
+     * @return array{float, float} [lat, lng]
+     */
+    private function randomMontrealLocation(): array
+    {
+        $center = $this->montrealCenters[array_rand($this->montrealCenters)];
+
+        // About 100m to 1400m offset around a borough center.
+        $offsetLat = random_int(-120, 120) / 10000;
+        $offsetLng = random_int(-170, 170) / 10000;
+
+        $lat = $center[0] + $offsetLat;
+        $lng = $center[1] + $offsetLng;
+
+        // Keep points within a broad Montreal bounding box.
+        $lat = max(45.40, min(45.70, $lat));
+        $lng = max(-73.95, min(-73.45, $lng));
+
+        return [round($lat, 6), round($lng, 6)];
+    }
+
+    /**
      * @param  Collection<int, Report>  $reports
      * @return Collection<int, RepairJob>
      */
-    private function createRepairJobs(array $users, Collection $reports): Collection
+    private function seedJobsForReports(Collection $reports, int $managerId, int $workerId): Collection
     {
-        $repairReports = $reports->whereIn('status', ['scheduled', 'in_progress', 'repaired']);
         $jobs = collect();
 
-        $jobTitles = [
-            'Réparation nid-de-poule - Rue Sainte-Catherine',
-            'Refonte trottoir - Boulevard Saint-Laurent',
-            'Remplacement lampadaire - Avenue du Parc',
-            'Réparation chaussée - Rue Sherbrooke',
-            'Travaux d\'asphaltage - Boulevard René-Lévesque',
-            'Réparation trottoir - Rue Ontario',
-            'Remplacement regard - Avenue Papineau',
-            'Réparation surface - Boulevard Décarie',
-            'Travaux de voirie - Rue Saint-Denis',
-            'Réparation d\'urgence - Chemin de la Côte-des-Neiges',
-            'Refonte intersection - Rue Saint-Hubert',
-            'Remplacement conduite - Avenue Van Horne',
-            'Réparation chaussée - Boulevard Côte-Vertu',
-            'Travaux trottoir - Rue Jean-Talon',
-            'Réparation nid-de-poule - Avenue Laurier',
-        ];
+        foreach ($reports as $report) {
+            if ($report->status === 'rejected') {
+                continue;
+            }
 
-        $managerId = $users['manager']->id ?? null;
-        $workerId = $users['service_worker']->id ?? null;
+            $jobStatus = match ($report->status) {
+                'repaired' => 'completed',
+                'scheduled' => 'planned',
+                default => 'planned',
+            };
 
-        foreach ($repairReports->take(15) as $index => $report) {
-            $scheduledAt = $report->first_scheduled_at ?? $report->created_at->copy()->addDays(rand(1, 7));
-            $status = $report->status === 'repaired' ? 'completed' : ($report->status === 'in_progress' ? 'in_progress' : 'planned');
-            $startedAt = in_array($status, ['in_progress', 'completed'], true)
-                ? $scheduledAt->copy()->addDays(rand(0, 2))
+            $scheduledAt = $report->first_scheduled_at ?? $report->created_at->copy()->addDays(rand(1, 5));
+            $startedAt = $jobStatus === 'completed'
+                ? ($report->first_started_at ?? $scheduledAt->copy()->addHours(rand(4, 24)))
                 : null;
-            $completedAt = $status === 'completed'
-                ? $startedAt?->copy()->addDays(rand(1, 5))
-                : null;
-
-            $estimatedCost = rand(500, 5000) + (rand(0, 99) / 100);
-            $actualCost = $status === 'completed'
-                ? $estimatedCost * (rand(80, 130) / 100)
+            $completedAt = $jobStatus === 'completed'
+                ? ($report->completed_at ?? $startedAt?->copy()->addHours(rand(6, 48)))
                 : null;
 
             $job = RepairJob::create([
-                'title' => $jobTitles[$index] ?? "Travaux - {$report->address}",
-                'description' => "Intervention sur signalement #{$report->uuid}. {$report->description}",
+                'title' => 'Pothole repair '.$report->uuid,
+                'description' => 'Job created from report '.$report->uuid,
                 'scheduled_at' => $scheduledAt,
                 'started_at' => $startedAt,
                 'completed_at' => $completedAt,
-                'status' => $status,
+                'status' => $jobStatus,
                 'created_by' => $managerId,
-                'estimated_cost' => $estimatedCost,
-                'actual_cost' => $actualCost,
+                'estimated_cost' => 150.00,
+                'actual_cost' => $jobStatus === 'completed' ? 150.00 : null,
             ]);
 
-            // Link report to job
-            DB::table('job_reports')->insert([
-                'repair_job_id' => $job->id,
-                'report_id' => $report->id,
-                'cost_allocation_percentage' => 100,
-                'created_at' => $scheduledAt,
-                'updated_at' => $scheduledAt,
-            ]);
-
-            // Assign worker
-            if ($workerId !== null) {
-                DB::table('job_workers')->insert([
-                    'repair_job_id' => $job->id,
-                    'user_id' => $workerId,
-                    'role_in_job' => 'lead',
-                    'hours_worked' => $status === 'completed' ? rand(4, 40) : rand(1, 20),
-                    'created_at' => $startedAt ?? $scheduledAt,
-                    'updated_at' => $startedAt ?? $scheduledAt,
-                ]);
-            }
+            $job->reports()->attach($report->id, ['cost_allocation_percentage' => 100]);
+            $job->users()->attach($workerId, ['role_in_job' => 'lead', 'hours_worked' => $jobStatus === 'completed' ? 3 : 1]);
 
             $jobs->push($job);
         }
@@ -278,229 +331,49 @@ class TestDataSeeder extends Seeder
     }
 
     /**
-     * @param  Collection<int, RepairJob>  $repairJobs
-     * @param  array<string, User>  $users
+     * @param  Collection<int, RepairJob>  $jobs
      */
-    private function createExpenses(Collection $repairJobs, array $users): void
+    private function seedAsphaltExpenses(Collection $jobs, Material $asphaltBags, Collection $vendors, int $accountantId): void
     {
-        $materials = Material::all();
-        $accountantId = $users['accountant']->id ?? null;
+        foreach ($jobs as $job) {
+            $vendor = $vendors->random();
+            $quantity = $job->status === 'completed' ? rand(4, 12) : rand(1, 4);
+            $unitCost = 15.50;
+            $subtotal = $quantity * $unitCost;
+            $taxRate = 0.14975;
+            $taxAmount = round($subtotal * $taxRate, 2);
+            $total = round($subtotal + $taxAmount, 2);
 
-        $descriptions = [
-            'Achat d\'asphalte chaud',
-            'Ciment Portland',
-            'Granulat pour base',
-            'Scellant bitumineux',
-            'Sable de jointoiement',
-            'Heures de main-d\'œuvre - Équipe A',
-            'Heures supplémentaires weekend',
-            'Diesel pour camion benne',
-            'Essence pour équipement',
-            'Location compacteur vibrant',
-            'Transport matériaux',
-            'Livraison urgent',
-            'Repas d\'équipe',
-            'Frais de stationnement',
-            'Petits outillages',
-        ];
+            Expense::create([
+                'repair_job_id' => $job->id,
+                'material_id' => $asphaltBags->id,
+                'description' => 'Asphalt bags',
+                'quantity' => $quantity,
+                'unit' => 'bag',
+                'unit_cost' => $unitCost,
+                'subtotal' => round($subtotal, 2),
+                'tax_rate' => $taxRate,
+                'tax_amount' => $taxAmount,
+                'total' => $total,
+                'vendor_id' => $vendor->id,
+                'vendor' => $vendor->name,
+                'incurred_at' => $job->completed_at ?? $job->scheduled_at ?? now(),
+                'created_by' => $accountantId,
+            ]);
 
-        $units = ['tonne', 'sac', 'seau', 'mètre', 'heure', 'litre', 'jour', 'km', 'unité'];
-
-        $vendors = [
-            'Béton Provincial', 'Ciment Québec', 'Matériaux Rive-Sud',
-            'Quincaillerie Monkland', 'Fournitures JTM', 'Location d\'équipement Laval',
-            'Pétrole Plus', 'Transport Martin', 'Quincaillerie Centre-ville',
-            'Fournitures Industrielles MTL',
-        ];
-
-        // Create expenses for completed jobs
-        foreach ($repairJobs->where('status', 'completed') as $job) {
-            $expenseCount = rand(2, 5);
-            $jobTotal = 0;
-
-            for ($i = 0; $i < $expenseCount; $i++) {
-                $quantity = rand(1, 20);
-                $unitCost = rand(50, 500) + (rand(0, 99) / 100);
-                $subtotal = $quantity * $unitCost;
-                $taxRate = 0.14975;
-                $taxAmount = $subtotal * $taxRate;
-                $total = $subtotal + $taxAmount;
-                $jobTotal += $total;
-
-                $materialId = $materials->isNotEmpty() && rand(0, 10) > 6
-                    ? $materials->random()->id
-                    : null;
-
-                $incurredAt = $job->started_at?->copy()->addDays(rand(0, 3)) ?? now()->subDays(rand(1, 30));
-
-                Expense::create([
+            DB::table('job_materials')->updateOrInsert(
+                [
                     'repair_job_id' => $job->id,
-                    'material_id' => $materialId,
-                    'description' => $descriptions[array_rand($descriptions)],
-                    'quantity' => $quantity,
-                    'unit' => $units[array_rand($units)],
-                    'unit_cost' => $unitCost,
-                    'subtotal' => round($subtotal, 2),
-                    'tax_rate' => $taxRate,
-                    'tax_amount' => round($taxAmount, 2),
-                    'total' => round($total, 2),
-                    'vendor' => $vendors[array_rand($vendors)],
-                    'incurred_at' => $incurredAt,
-                    'created_by' => $accountantId,
-                ]);
-            }
-
-            // Update job actual cost to match expenses
-            $job->update(['actual_cost' => round($jobTotal, 2)]);
-        }
-
-        // Note: expenses table requires repair_job_id (NOT NULL), so all expenses are job-linked
-    }
-
-    private function generateMontrealEmail(): string
-    {
-        $domains = ['gmail.com', 'hotmail.com', 'yahoo.ca', 'videotron.ca', 'bell.net', 'umontreal.ca', 'concordia.ca'];
-        $firstNames = ['Jean', 'Marie', 'Pierre', 'Sophie', 'Michel', 'Isabelle', 'Francois', 'Catherine', 'Andre', 'Nathalie'];
-        $lastNames = ['Tremblay', 'Gagnon', 'Roy', 'Cote', 'Bouchard', 'Gauthier', 'Morin', 'Lavoie', 'Fortin', 'Bergeron'];
-
-        return strtolower($firstNames[array_rand($firstNames)].'.'.$lastNames[array_rand($lastNames)].rand(1, 999)).'@'.$domains[array_rand($domains)];
-    }
-
-    private function randomPriority(): string
-    {
-        $weights = ['low' => 30, 'normal' => 50, 'high' => 15, 'critical' => 5];
-        $rand = rand(1, 100);
-        $cumulative = 0;
-
-        foreach ($weights as $priority => $weight) {
-            $cumulative += $weight;
-            if ($rand <= $cumulative) {
-                return $priority;
-            }
-        }
-
-        return 'normal';
-    }
-
-    private function generateReportDescription(): string
-    {
-        $descriptions = [
-            'Grand nid-de-poule sur la chaussée, dangereux pour les cyclistes.',
-            'Trottoir très endommagé avec des fissures profondes.',
-            'Lampadaire éteint depuis plusieurs jours, rue mal éclairée.',
-            'Nid-de-poule près d\'un arrêt d\'autobus, risque d\'accident.',
-            'Peinture de ligne effacée, confusion pour les automobilistes.',
-            'Égout bouché qui déborde lors des pluies.',
-            'Fissure importante dans l\'asphalte qui s\'agrandit.',
-            'Bordure de trottoir brisée, accès difficile pour fauteuils roulants.',
-            'Signalisation routière inclinée après la tempête.',
-            'Affaissement de la chaussée près d\'une entrée de garage.',
-            'Graffiti sur mur public à retirer.',
-            'Débris de verre sur la piste cyclable.',
-            'Trou dans l\'asphalte de plus de 1 mètre de diamètre.',
-            'Panneau de signalisation arraché par le vent.',
-            'Accumulation d\'eau stagnante après chaque pluie.',
-        ];
-
-        return $descriptions[array_rand($descriptions)];
-    }
-
-    private function generateMontrealAddress(): string
-    {
-        $streetNumbers = range(100, 9999, rand(50, 200));
-        $streets = [
-            'Rue Sainte-Catherine', 'Boulevard Saint-Laurent', 'Avenue du Parc',
-            'Rue Sherbrooke', 'Boulevard René-Lévesque', 'Rue Ontario',
-            'Avenue Papineau', 'Boulevard Décarie', 'Rue Saint-Denis',
-            'Chemin de la Côte-des-Neiges', 'Rue Saint-Hubert', 'Avenue Van Horne',
-            'Boulevard Côte-Vertu', 'Rue Jean-Talon', 'Avenue Laurier',
-            'Boulevard Saint-Joseph', 'Rue Rachel', 'Avenue Mont-Royal',
-            'Rue Masson', 'Boulevard Crémazie',
-        ];
-
-        return $streetNumbers[array_rand($streetNumbers)].' '.$streets[array_rand($streets)];
-    }
-
-    /**
-     * @param  array{float, float}  $location
-     */
-    private function generateNeighborhood(array $location): string
-    {
-        $neighborhoods = [
-            'Downtown' => [[45.49, 45.52], [-73.59, -73.55]],
-            'Plateau-Mont-Royal' => [[45.51, 45.54], [-73.60, -73.56]],
-            'Rosemont' => [[45.54, 45.57], [-73.62, -73.58]],
-            'Villeray' => [[45.55, 45.58], [-73.62, -73.58]],
-            'NDG' => [[45.46, 45.49], [-73.64, -73.60]],
-            'Côte-des-Neiges' => [[45.47, 45.50], [-73.63, -73.59]],
-            'Westmount' => [[45.47, 45.49], [-73.60, -73.57]],
-            'Ahuntsic' => [[45.57, 45.60], [-73.68, -73.63]],
-            'Ville Saint-Laurent' => [[45.50, 45.53], [-73.70, -73.66]],
-            'Hochelaga' => [[45.53, 45.56], [-73.56, -73.53]],
-        ];
-
-        foreach ($neighborhoods as $name => $bounds) {
-            if ($location[0] >= $bounds[0][0] && $location[0] <= $bounds[0][1]
-                && $location[1] >= $bounds[1][0] && $location[1] <= $bounds[1][1]) {
-                return $name;
-            }
-        }
-
-        return 'Montreal';
-    }
-
-    /**
-     * @param  array{float, float}  $location
-     */
-    private function generateBorough(array $location): string
-    {
-        $boroughs = [
-            'Ville-Marie' => [[45.49, 45.52], [-73.57, -73.54]],
-            'Le Plateau-Mont-Royal' => [[45.51, 45.54], [-73.60, -73.56]],
-            'Rosemont–La Petite-Patrie' => [[45.53, 45.56], [-73.62, -73.58]],
-            'Côte-des-Neiges–Notre-Dame-de-Grâce' => [[45.46, 45.50], [-73.65, -73.59]],
-            'Villeray–Saint-Michel–Parc-Extension' => [[45.53, 45.57], [-73.65, -73.60]],
-            'Ahuntsic-Cartierville' => [[45.55, 45.60], [-73.70, -73.63]],
-            'Saint-Laurent' => [[45.49, 45.52], [-73.72, -73.66]],
-        ];
-
-        foreach ($boroughs as $name => $bounds) {
-            if ($location[0] >= $bounds[0][0] && $location[0] <= $bounds[0][1]
-                && $location[1] >= $bounds[1][0] && $location[1] <= $bounds[1][1]) {
-                return $name;
-            }
-        }
-
-        return 'Montreal';
-    }
-
-    private function setStatusTimestamps(Report $report, string $status, Carbon $createdAt): void
-    {
-        $updates = [];
-
-        switch ($status) {
-            case 'verified':
-                $updates['first_scheduled_at'] = $createdAt->copy()->addHours(rand(1, 24));
-                break;
-            case 'scheduled':
-                $updates['first_scheduled_at'] = $createdAt->copy()->addHours(rand(1, 48));
-                break;
-            case 'in_progress':
-                $updates['first_scheduled_at'] = $createdAt->copy()->addHours(rand(1, 48));
-                $updates['first_started_at'] = $createdAt->copy()->addDays(rand(1, 5));
-                break;
-            case 'repaired':
-                $updates['first_scheduled_at'] = $createdAt->copy()->addHours(rand(1, 48));
-                $updates['first_started_at'] = $createdAt->copy()->addDays(rand(1, 5));
-                $updates['completed_at'] = $createdAt->copy()->addDays(rand(5, 20));
-                break;
-            case 'rejected':
-                $updates['rejection_reason'] = ['false_report', 'out_of_scope', 'duplicate', 'insufficient_info'][array_rand(['false_report', 'out_of_scope', 'duplicate', 'insufficient_info'])];
-                break;
-        }
-
-        if (! empty($updates)) {
-            $report->update($updates);
+                    'material_id' => $asphaltBags->id,
+                ],
+                [
+                    'quantity_planned' => $quantity,
+                    'quantity_actual' => $job->status === 'completed' ? $quantity : null,
+                    'unit_cost_at_time' => $unitCost,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
         }
     }
 }
