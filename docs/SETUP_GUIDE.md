@@ -1,6 +1,8 @@
 # Environment Setup Guide
 
-This guide will get a new developer running NidVite locally within 15 minutes.
+> Last updated: 2026-05-06 — Audited against actual codebase
+
+Get NidVite running locally within 15 minutes.
 
 **Prerequisites:** Docker Desktop installed and running.
 
@@ -12,49 +14,23 @@ This guide will get a new developer running NidVite locally within 15 minutes.
 git clone git@github.com:your-org/nid-vite.git
 cd nid-vite
 
-# Install PHP dependencies
 composer install
-
-# Install Node dependencies
 npm install
-
-# Copy environment file
 cp .env.example .env
-
-# Generate application key
 php artisan key:generate
 ```
 
 ---
 
-## Step 2: Configure Sail with PostGIS
+## Step 2: Start Sail
 
-Laravel Sail's default `docker-compose.yml` uses a standard PostgreSQL image. We must override it to use PostGIS.
-
-### 2a. Publish Sail's Docker files
-
-```bash
-php artisan sail:publish
-```
-
-### 2b. Modify `docker-compose.yml`
-
-Find the `pgsql` service and replace the image:
-
-```yaml
-services:
-  pgsql:
-    image: 'postgis/postgis:15-3.4'
-    # ... keep existing ports, volumes, environment, healthcheck
-```
-
-### 2c. Start Sail
+The `docker-compose.yml` is already configured with PostGIS 15-3.4, Redis, and Mailpit.
 
 ```bash
 ./vendor/bin/sail up -d
 ```
 
-Wait for the containers to be healthy. You can check with:
+Wait for containers to be healthy:
 
 ```bash
 ./vendor/bin/sail ps
@@ -64,17 +40,8 @@ Wait for the containers to be healthy. You can check with:
 
 ## Step 3: Enable PostGIS Extension
 
-Connect to the database and enable the extension:
-
 ```bash
-./vendor/bin/sail psql
-```
-
-Then run:
-
-```sql
-CREATE EXTENSION IF NOT EXISTS postgis;
-\q
+./vendor/bin/sail psql -c "CREATE EXTENSION IF NOT EXISTS postgis;"
 ```
 
 Verify:
@@ -84,23 +51,18 @@ Verify:
 >>> DB::select("SELECT PostGIS_Version()")
 ```
 
-You should see a version string like `3.4.2`.
-
 ---
 
 ## Step 4: Configure `.env`
 
-Edit `.env` with the following values:
+Key values (see `.env.example` for full list):
 
 ```env
-# Application
 APP_NAME=NidVite
 APP_ENV=local
-APP_KEY=base64:xxx
 APP_DEBUG=true
 APP_URL=http://localhost
 
-# Database (Sail defaults)
 DB_CONNECTION=pgsql
 DB_HOST=pgsql
 DB_PORT=5432
@@ -108,46 +70,23 @@ DB_DATABASE=nid_vite
 DB_USERNAME=sail
 DB_PASSWORD=password
 
-# Queue (database driver for MVP)
 QUEUE_CONNECTION=database
-
-# Cache (database driver for MVP)
 CACHE_DRIVER=database
 
-# Session Security
-SESSION_SECURE_COOKIE=false       # Set to true in production (HTTPS only)
-SESSION_HTTP_ONLY=true            # Prevent JavaScript access
-SESSION_SAME_SITE=strict          # CSRF protection
-SESSION_LIFETIME=15               # 15 minutes idle timeout
+SESSION_SECURE_COOKIE=false
+SESSION_HTTP_ONLY=true
+SESSION_SAME_SITE=strict
 
-# Mail (get your API key from https://resend.com)
 MAIL_MAILER=resend
 RESEND_API_KEY=re_xxxxxxxx
 MAIL_FROM_ADDRESS="updates@nidvite.ca"
 MAIL_FROM_NAME="NidVite"
 
-# File Storage (local for dev)
 FILESYSTEM_DISK=local
 
-# reCAPTCHA (get keys from https://www.google.com/recaptcha/admin)
 NOCAPTCHA_SECRET=your-secret-key
 NOCAPTCHA_SITEKEY=your-site-key
 
-# MapTiler (get a free key from https://cloud.maptiler.com)
-MAPTILER_API_KEY=your-maptiler-key
-
-# Cloudflare R2 (production only)
-R2_ACCESS_KEY_ID=your-r2-key
-R2_SECRET_ACCESS_KEY=your-r2-secret
-R2_BUCKET=nidvite-media
-R2_ENDPOINT=https://your-account.r2.cloudflarestorage.com
-R2_URL=https://media.nidvite.ca
-
-# Sentry (production only)
-SENTRY_LARAVEL_DSN=your-sentry-dsn
-SENTRY_TRACES_SAMPLE_RATE=0.1
-
-# Reverb (real-time WebSockets)
 REVERB_APP_ID=your-app-id
 REVERB_APP_KEY=your-app-key
 REVERB_APP_SECRET=your-app-secret
@@ -163,20 +102,25 @@ REVERB_SCHEME=http
 ```bash
 ./vendor/bin/sail artisan migrate
 
-# Seed roles and permissions
-./vendor/bin/sail artisan db:seed --class=RolePermissionSeeder
+# Seed roles (admin, manager, service_worker, accountant, viewer)
+./vendor/bin/sail artisan db:seed --class=RoleSeeder
 
-# Seed expense categories
-./vendor/bin/sail artisan db:seed --class=ExpenseCategorySeeder
-
-# Seed report categories
+# Seed report categories (pothole, graffiti, broken_light, sidewalk, other)
 ./vendor/bin/sail artisan db:seed --class=ReportCategorySeeder
 
-# Seed the Montreal boundary (downloads GeoJSON from open data)
+# Seed Montreal boundary polygon for geofencing
 ./vendor/bin/sail artisan db:seed --class=MontrealBoundarySeeder
+
+# Create admin user (email: admin@nidvite.test, password: password)
+./vendor/bin/sail artisan db:seed --class=AdminUserSeeder
+
+# Optional: seed test data for development
+./vendor/bin/sail artisan db:seed --class=TestDataSeeder
 ```
 
-**Note:** If the Montreal Open Data portal is unavailable, the seeder will fall back to a simplified bounding box stored in `database/seeders/data/montreal_fallback.geojson`.
+**Note:** `MontrealBoundarySeeder` downloads GeoJSON from Montreal Open Data. If unavailable, it falls back to a simplified bounding box.
+
+**Note:** The `ExpenseCategorySeeder` and `RolePermissionSeeder` referenced in older docs do NOT exist. Expense categories were replaced by the Vendor system. Permissions use simple role-based checks, not a separate permissions table.
 
 ---
 
@@ -188,18 +132,7 @@ REVERB_SCHEME=http
 
 ---
 
-## Step 7: Create the Admin Account
-
-```bash
-./vendor/bin/sail artisan tinker
->>> \App\Models\User::create(['name'=>'Admin','email'=>'admin@nidvite.test','password'=>bcrypt('password'),'role_id'=>1])
-```
-
-**Note:** Role ID 1 is `admin` (seeded in Step 5).
-
----
-
-## Step 8: Configure Reverb (Real-time)
+## Step 7: Start Reverb (Real-time)
 
 In a separate terminal:
 
@@ -207,11 +140,9 @@ In a separate terminal:
 ./vendor/bin/sail artisan reverb:start
 ```
 
-This starts the WebSocket server for real-time dashboard updates.
-
 ---
 
-## Step 9: Start Queue Worker
+## Step 8: Start Queue Worker
 
 In a separate terminal:
 
@@ -219,16 +150,31 @@ In a separate terminal:
 ./vendor/bin/sail artisan queue:work
 ```
 
-This processes background jobs: emails, clustering, geocoding, notifications.
+Processes background jobs: status change emails, media conversions.
 
 ---
 
-## Step 10: Verify Everything Works
+## Step 9: Verify Everything Works
 
-1. **PWA**: Visit `http://localhost`. You should see the report form.
-2. **Dashboard**: Visit `http://localhost/admin`. Log in with credentials from Step 7.
-3. **PostGIS**: Submit a test report. The map pin should appear only if the location is within Montreal.
-4. **Real-time**: Open dashboard in two browsers. Submit a report from one — the other should show a notification badge.
+1. **PWA**: Visit `http://localhost/signaler` — report form should load
+2. **Dashboard**: Visit `http://localhost/admin` — log in with admin@nidvite.test / password
+3. **PostGIS**: Submit a test report with a Montreal location — it should pass geofencing
+4. **Real-time**: Open dashboard in two browsers — new reports should trigger a notification
+5. **Map**: Visit `http://localhost/carte` — public map with report markers
+
+---
+
+## Key URLs
+
+| URL | Purpose |
+|-----|---------|
+| `/` | Citizen homepage with stats |
+| `/signaler` | Report submission form |
+| `/suivi/{uuid}` | Track a report by UUID |
+| `/carte` | Public map of all reports |
+| `/locale/en` or `/locale/fr` | Switch language |
+| `/admin` | Filament admin dashboard |
+| `/admin/login` | Admin login page |
 
 ---
 
@@ -237,7 +183,6 @@ This processes background jobs: emails, clustering, geocoding, notifications.
 ### PostGIS extension fails to create
 
 ```bash
-# Restart the database container to ensure a clean state
 ./vendor/bin/sail down
 ./vendor/bin/sail up -d
 ./vendor/bin/sail psql -c "CREATE EXTENSION IF NOT EXISTS postgis;"
@@ -253,17 +198,14 @@ This processes background jobs: emails, clustering, geocoding, notifications.
 ### Queue worker not running (emails not sending)
 
 ```bash
-# In a separate terminal
 ./vendor/bin/sail artisan queue:work
 ```
 
 ### Reverb connection refused
 
 ```bash
-# Ensure Reverb is running
 ./vendor/bin/sail artisan reverb:start
-
-# Check REVERB_PORT in .env matches
+# Check REVERB_PORT in .env matches docker-compose.yml
 ```
 
 ---
@@ -272,7 +214,7 @@ This processes background jobs: emails, clustering, geocoding, notifications.
 
 | Command | Purpose |
 |---------|---------|
-| `./vendor/bin/sail up -d` | Start containers in background |
+| `./vendor/bin/sail up -d` | Start containers |
 | `./vendor/bin/sail down` | Stop containers |
 | `./vendor/bin/sail artisan ...` | Run Artisan commands |
 | `./vendor/bin/sail test` | Run Pest tests |
@@ -284,4 +226,4 @@ This processes background jobs: emails, clustering, geocoding, notifications.
 
 ---
 
-*This guide is a living document. Propose changes via PR if you find a smoother setup path.*
+*Updated 2026-05-06 — Reflects actual seeder names and project routes.*
