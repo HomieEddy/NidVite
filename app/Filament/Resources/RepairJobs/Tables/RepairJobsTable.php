@@ -7,12 +7,11 @@ use App\Models\RepairJob;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Contracts\View\View;
 
 class RepairJobsTable
 {
@@ -90,8 +89,17 @@ class RepairJobsTable
             ])
             ->defaultGroup('status')
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                Action::make('view')
+                    ->label('View')
+                    ->icon('heroicon-m-eye')
+                    ->modalHeading('View Repair Job')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalContent(function (RepairJob $record): View {
+                        return view('filament.modals.repair-job-view', [
+                            'job' => $record->load(['reports.category']),
+                        ]);
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
