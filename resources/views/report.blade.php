@@ -24,32 +24,6 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 @if (config('captcha.sitekey'))
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <script>
-        window.nidviteSyncRecaptchaToken = function () {
-            const tokenField = document.querySelector('textarea[name="g-recaptcha-response"]');
-            const livewireField = document.getElementById('recaptcha-response');
-
-            if (!livewireField) {
-                return;
-            }
-
-            livewireField.value = tokenField ? tokenField.value : '';
-            livewireField.dispatchEvent(new Event('input', { bubbles: true }));
-        };
-
-        window.onReportRecaptchaSuccess = function (token) {
-            const livewireField = document.getElementById('recaptcha-response');
-            if (!livewireField) {
-                return;
-            }
-
-            livewireField.value = token || '';
-            livewireField.dispatchEvent(new Event('input', { bubbles: true }));
-        };
-
-        window.onReportRecaptchaExpired = function () {
-            window.onReportRecaptchaSuccess('');
-        };
-    </script>
+    @vite('resources/js/recaptcha-report.js')
 @endif
 @endpush

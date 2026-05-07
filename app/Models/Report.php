@@ -33,7 +33,7 @@ class Report extends Model implements HasMedia
 
             $fingerprint = request()->attributes->get('device_fingerprint_hash');
             if (is_string($fingerprint) && $fingerprint !== '') {
-                $report->device_fingerprint_hash ??= $fingerprint;
+                $report->device_fingerprint_hash = $fingerprint;
             }
         });
     }
@@ -49,7 +49,6 @@ class Report extends Model implements HasMedia
         'priority',
         'category_id',
         'description',
-        'device_fingerprint_hash',
         'geofence_passed',
         'is_spam',
         'rejection_reason',

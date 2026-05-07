@@ -9,6 +9,7 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/echo.js',
                 'resources/js/reverb-listener.js',
+                'resources/js/recaptcha-report.js',
             ],
             refresh: true,
         }),
