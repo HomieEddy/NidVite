@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\EnforceAdminSessionTimeout;
 use App\Filament\Widgets\ReportsByNeighborhood;
 use App\Filament\Widgets\ReportsChart;
 use App\Filament\Widgets\ReportsMap;
@@ -52,6 +53,7 @@ class AdminPanelProvider extends PanelProvider
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 AuthenticateSession::class,
+                EnforceAdminSessionTimeout::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
