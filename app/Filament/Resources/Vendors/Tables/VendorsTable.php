@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Vendors\Tables;
 
 use App\Filament\Resources\Vendors\VendorResource;
+use App\Models\Vendor;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -12,6 +13,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class VendorsTable
 {
@@ -24,6 +26,7 @@ class VendorsTable
                 Action::make('create')
                     ->label('Create Vendor')
                     ->url(VendorResource::getUrl('create'))
+                    ->visible(fn (): bool => Auth::user()?->can('create', Vendor::class) ?? false)
                     ->icon('heroicon-m-plus'),
             ])
             ->columns([
