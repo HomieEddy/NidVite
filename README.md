@@ -33,63 +33,41 @@ NidVite is a bilingual (FR/EN) web application that lets Montreal citizens repor
 
 ## The Happy Path
 
-```
-Citizen                          NidVite                           Entrepreneur
-  │                                │                                  │
-  │  1. Opens /signaler (PWA)     │                                  │
-  │──────────────────────────────>│                                  │
-  │                                │                                  │
-  │  2. Fills form: category,    │                                  │
-  │     description, email (FR/EN)│                                  │
-  │                                │                                  │
-  │  3. Taps "Use my location"   │                                  │
-  │──────────────────────────────>│  PostGIS ST_Contains check       │
-  │                                │  ── In Montreal? ──> proceed     │
-  │                                │  ── Outside? ──> rejected        │
-  │                                │                                  │
-  │  4. Takes 1-5 photos         │                                  │
-  │──────────────────────────────>│  EXIF stripped, stored via       │
-  │                                │  Spatie Media Library             │
-  │                                │                                  │
-  │  5. Submits (honeypot +      │                                  │
-  │     reCAPTCHA guard)          │                                  │
-  │──────────────────────────────>│  Report created (status: received)│
-  │                                │  UUID generated                   │
-  │                                │  Event broadcast ──────────────>  │
-  │  6. Gets tracking URL         │                       Dashboard  │
-  │     /suivi/{uuid}             │                       notification│
-  │<──────────────────────────────│                       pops up     │
-  │                                │                                  │
-  │                                │  7. Manager opens /admin         │
-  │                                │<─────────────────────────────────│
-  │                                │                                  │
-  │                                │  8. Verifies report, changes     │
-  │                                │     status → verified             │
-  │                                │<─────────────────────────────────│
-  │                                │                                  │
-  │  Email: "Your report is      │                                  │
-  │  being reviewed" (FR or EN)   │                                  │
-  │<──────────────────────────────│                                  │
-  │                                │                                  │
-  │                                │  9. Creates RepairJob, assigns   │
-  │                                │     ServiceWorker, adds materials │
-  │                                │     status → scheduled            │
-  │                                │<─────────────────────────────────│
-  │                                │                                  │
-  │                                │  10. Worker marks in_progress,  │
-  │                                │      completes repair             │
-  │                                │      status → repaired            │
-  │                                │<─────────────────────────────────│
-  │                                │                                  │
-  │  Email: "Your report has      │                                  │
-  │  been repaired!" + tracking   │                                  │
-  │  link                         │  Expenses logged with GST+QST    │
-  │<──────────────────────────────│  Materials stock decremented      │
-  │                                │                                  │
-  │  11. Visits /suivi/{uuid}    │                                  │
-  │      Sees timeline + map pin │                                  │
-  │──────────────────────────────>│                                  │
-  │                                │                                  │
+```mermaid
+sequenceDiagram
+    participant C as 🧑 Citizen
+    participant N as ⚙️ NidVite
+    participant E as 👷 Entrepreneur
+
+    C->>N: 1. Opens /signaler (PWA)
+    C->>N: 2. Fills form: category, description, email (FR/EN)
+    C->>N: 3. Taps "Use my location"
+    N->>N: PostGIS ST_Contains check vs Montreal boundary
+    alt Outside Montreal
+        N-->>C: Location rejected — must be within Montreal
+    end
+    C->>N: 4. Takes 1-5 photos
+    N->>N: EXIF stripped, stored via Spatie Media Library
+    C->>N: 5. Submits (honeypot + reCAPTCHA guard)
+    N->>N: Report created (status: received), UUID generated
+    N->>E: 🔔 Real-time notification via Reverb WebSocket
+    N-->>C: 6. Tracking URL /suivi/{uuid}
+
+    E->>N: 7. Opens /admin dashboard
+    E->>N: 8. Verifies report → status: verified
+    N-->>C: 📧 Email: "Your report is being reviewed" (FR/EN)
+
+    E->>N: 9. Creates RepairJob, assigns ServiceWorker, adds materials
+    E->>N: status → scheduled
+
+    E->>N: 10. Worker marks in_progress, completes repair
+    E->>N: status → repaired
+    N->>N: Expenses logged with GST + QST
+    N->>N: Materials stock decremented
+    N-->>C: 📧 Email: "Your report has been repaired!" + tracking link
+
+    C->>N: 11. Visits /suivi/{uuid}
+    N-->>C: Timeline + map pin showing repair location
 ```
 
 Every status transition (received→verified→scheduled→in_progress→repaired) sends a localized email to the citizen and fires a real-time notification to the dashboard. Any transition can also go to `rejected` with a mandatory reason — the citizen gets an email explaining why.
