@@ -69,7 +69,7 @@ return [
         'only_on_failure' => false,
 
         'mail' => [
-            'to' => env('HEALTH_NOTIFY_EMAIL', env('MAIL_FROM_ADDRESS', 'ops@nidvite.ca')),
+            'to' => env('HEALTH_NOTIFY_EMAIL') ?: env('MAIL_FROM_ADDRESS', 'ops@nidvite.ca'),
 
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
