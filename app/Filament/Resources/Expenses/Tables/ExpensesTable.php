@@ -33,7 +33,7 @@ class ExpensesTable
                     ->label('Repair Job')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('vendor.name')
+                TextColumn::make('vendorRelation.name')
                     ->label('Vendor')
                     ->searchable()
                     ->sortable(),
@@ -69,13 +69,13 @@ class ExpensesTable
             ])
             ->filters([
                 SelectFilter::make('vendor_id')
-                    ->relationship('vendor', 'name')
+                    ->relationship('vendorRelation', 'name')
                     ->searchable()
                     ->preload()
                     ->multiple(),
             ])
             ->groups([
-                Group::make('vendor.name')
+                Group::make('vendorRelation.name')
                     ->label('Vendor'),
                 Group::make('repairJob.title')
                     ->label('Repair Job'),
@@ -83,7 +83,7 @@ class ExpensesTable
                     ->label('Month')
                     ->getTitleFromRecordUsing(fn ($record) => $record->incurred_at?->format('M Y') ?? 'Unknown'),
             ])
-            ->defaultGroup('vendor.name')
+            ->defaultGroup('vendorRelation.name')
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),

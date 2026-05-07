@@ -46,9 +46,9 @@ class Expense extends Model
         return $this->belongsTo(Material::class);
     }
 
-    public function vendor(): BelongsTo
+    public function vendorRelation(): BelongsTo
     {
-        return $this->belongsTo(Vendor::class);
+        return $this->belongsTo(Vendor::class, 'vendor_id');
     }
 
     public function creator(): BelongsTo

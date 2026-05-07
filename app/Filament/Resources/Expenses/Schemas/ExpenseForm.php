@@ -19,7 +19,7 @@ class ExpenseForm
                 Select::make('material_id')
                     ->relationship('material', 'name'),
                 Select::make('vendor_id')
-                    ->relationship('vendor', 'name')
+                    ->relationship('vendorRelation', 'name')
                     ->searchable()
                     ->preload(),
                 TextInput::make('description')
