@@ -95,13 +95,27 @@ function initPublicMapPage() {
 		})
 		.then(function (data) {
 			var bounds = L.latLngBounds();
+			var coordinateUsage = {};
 
 			data.features.forEach(function (feature) {
 				var coords = feature.geometry.coordinates;
 				var props = feature.properties;
 				var color = statusColors[props.status] || '#6b7280';
+				var lng = coords[0];
+				var lat = coords[1];
+				var key = lat.toFixed(6) + ',' + lng.toFixed(6);
+				var index = coordinateUsage[key] || 0;
+				coordinateUsage[key] = index + 1;
 
-				var marker = L.circleMarker([coords[1], coords[0]], {
+				if (index > 0) {
+					// Spread stacked reports in a tiny ring so each marker is clickable.
+					var angle = index * 0.9;
+					var distance = 0.00008 * Math.ceil(index / 6);
+					lat += Math.cos(angle) * distance;
+					lng += Math.sin(angle) * distance;
+				}
+
+				var marker = L.circleMarker([lat, lng], {
 					radius: 8,
 					fillColor: color,
 					color: '#fff',
@@ -139,7 +153,7 @@ function initPublicMapPage() {
 				popupEl.appendChild(linkEl);
 
 				marker.bindPopup(popupEl);
-				bounds.extend([coords[1], coords[0]]);
+				bounds.extend([lat, lng]);
 			});
 
 			if (data.features.length > 0) {
