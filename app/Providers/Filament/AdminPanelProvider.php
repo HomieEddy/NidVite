@@ -6,6 +6,7 @@ use App\Filament\Widgets\ReportsByNeighborhood;
 use App\Filament\Widgets\ReportsChart;
 use App\Filament\Widgets\ReportsMap;
 use App\Filament\Widgets\ReportsOverview;
+use App\Http\Middleware\EnforceAdminSessionTimeout;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -52,6 +53,7 @@ class AdminPanelProvider extends PanelProvider
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 AuthenticateSession::class,
+                EnforceAdminSessionTimeout::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
