@@ -20,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(SecureHeadersMiddleware::class);
         $middleware->append(RemovePermissionsPolicyHeader::class);
 
-        $middleware->web([
+        $middleware->web(append: [
             SetLocale::class,
             GenerateDeviceFingerprint::class,
             ThrottleReportSubmission::class,

@@ -6,7 +6,6 @@ use App\Http\Controllers\SignedMediaController;
 use App\Models\Report;
 use Illuminate\Support\Facades\Route;
 use Spatie\Health\Http\Controllers\HealthCheckJsonResultsController;
-use Spatie\ResponseCache\Middlewares\CacheResponse;
 
 Route::get('/', function () {
     $totalReported = Report::count();
@@ -26,7 +25,7 @@ Route::get('/', function () {
     }
 
     return view('welcome', compact('totalReported', 'totalFixed', 'totalPending', 'velocity'));
-})->middleware(CacheResponse::class);
+});
 
 Route::get('/signaler', function () {
     return view('report');
@@ -37,8 +36,7 @@ Route::get('/suivi/{uuid}', [ReportTrackingController::class, 'show'])
     ->whereUuid('uuid');
 
 Route::get('/carte', [MapController::class, 'index'])
-    ->name('map.public')
-    ->middleware(CacheResponse::class);
+    ->name('map.public');
 
 Route::get('/api/reports/geojson', [MapController::class, 'geojson'])
     ->name('api.reports.geojson');
