@@ -47,5 +47,11 @@ return [
     'validation' => [
         'location_required' => 'Veuillez autoriser la geolocalisation ou preciser l\'emplacement.',
         'outside_montreal' => 'Cet emplacement semble etre en dehors de Montreal. Veuillez signaler uniquement les problemes situes sur le territoire de Montreal.',
+        'captcha_required' => 'Veuillez confirmer le reCAPTCHA avant d\'envoyer le signalement.',
+        'captcha_invalid' => 'La verification reCAPTCHA a echoue. Veuillez reessayer.',
+        'captcha_unavailable' => 'Le reCAPTCHA est indisponible pour le moment.',
+        'rate_limit_ip' => 'Trop de signalements depuis cette adresse IP. Reessayez plus tard.',
+        'rate_limit_device' => 'Trop de signalements depuis cet appareil. Reessayez plus tard.',
+        'rate_limit_device_missing' => 'Impossible de verifier l\'appareil pour ce signalement. Reessayez.',
     ],
 ];
