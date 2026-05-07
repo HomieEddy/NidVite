@@ -3,7 +3,6 @@
 use App\Http\Middleware\GenerateDeviceFingerprint;
 use App\Http\Middleware\ThrottleReportSubmission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
@@ -87,4 +86,3 @@ it('blocks eleventh report submission from same device across rotating ips', fun
             'message' => __('report.validation.rate_limit_device'),
         ]);
 });
-

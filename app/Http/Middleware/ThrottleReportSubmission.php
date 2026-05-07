@@ -94,4 +94,3 @@ class ThrottleReportSubmission
         ], 429);
     }
 }
-

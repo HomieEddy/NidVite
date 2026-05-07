@@ -86,4 +86,3 @@ it('keeps fingerprint null for non-http model creation paths', function () {
 
     expect($report->device_fingerprint_hash)->toBeNull();
 });
-

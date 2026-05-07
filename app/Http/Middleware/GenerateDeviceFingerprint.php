@@ -37,4 +37,3 @@ class GenerateDeviceFingerprint
         return preg_replace('/\s+/', ' ', $normalized) ?? $normalized;
     }
 }
-
