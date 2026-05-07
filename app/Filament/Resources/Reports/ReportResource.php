@@ -23,6 +23,21 @@ class ReportResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.admin.resources.reports.navigation');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('filament.admin.resources.reports.singular');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.admin.resources.reports.plural');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return ReportForm::configure($schema);

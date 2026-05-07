@@ -20,11 +20,11 @@ class VendorsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->emptyStateHeading('No vendors found')
-            ->emptyStateDescription('Vendors will appear here once added.')
+            ->emptyStateHeading(__('filament.admin.resources.vendors.empty_state.heading'))
+            ->emptyStateDescription(__('filament.admin.resources.vendors.empty_state.description'))
             ->emptyStateActions([
                 Action::make('create')
-                    ->label('Create Vendor')
+                    ->label(__('filament.admin.resources.vendors.actions.create'))
                     ->url(VendorResource::getUrl('create'))
                     ->visible(fn (): bool => Auth::user()?->can('create', Vendor::class) ?? false)
                     ->icon('heroicon-m-plus'),
@@ -60,8 +60,10 @@ class VendorsTable
             ])
             ->groups([
                 Group::make('is_active')
-                    ->label('Active')
-                    ->getTitleFromRecordUsing(fn ($record) => $record->is_active ? 'Active' : 'Inactive'),
+                    ->label(__('filament.admin.resources.vendors.fields.active'))
+                    ->getTitleFromRecordUsing(fn ($record) => $record->is_active
+                        ? __('filament.admin.resources.vendors.status.active')
+                        : __('filament.admin.resources.vendors.status.inactive')),
             ])
             ->recordActions([
                 ViewAction::make(),

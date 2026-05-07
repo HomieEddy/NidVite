@@ -20,6 +20,21 @@ class RepairJobResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWrench;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.admin.resources.repair_jobs.navigation');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('filament.admin.resources.repair_jobs.singular');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.admin.resources.repair_jobs.plural');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return RepairJobForm::configure($schema);

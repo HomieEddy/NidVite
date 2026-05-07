@@ -19,26 +19,26 @@ class ExpensesTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->emptyStateHeading('No expenses found')
-            ->emptyStateDescription('Expenses will appear here once recorded.')
+            ->emptyStateHeading(__('filament.admin.resources.expenses.empty_state.heading'))
+            ->emptyStateDescription(__('filament.admin.resources.expenses.empty_state.description'))
             ->emptyStateActions([
                 Action::make('create')
-                    ->label('Create Expense')
+                    ->label(__('filament.admin.resources.expenses.actions.create'))
                     ->url(ExpenseResource::getUrl('create'))
                     ->icon('heroicon-m-plus')
                     ->visible(fn (): bool => auth()->user()?->can('create', Expense::class) ?? false),
             ])
             ->columns([
                 TextColumn::make('repairJob.title')
-                    ->label('Repair Job')
+                    ->label(__('filament.admin.resources.expenses.fields.repair_job'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('vendorRelation.name')
-                    ->label('Vendor')
+                    ->label(__('filament.admin.resources.expenses.fields.vendor'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('material.name')
-                    ->label('Material')
+                    ->label(__('filament.admin.resources.expenses.fields.material'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('description')
@@ -59,7 +59,7 @@ class ExpensesTable
                     ->dateTime('M j, Y')
                     ->sortable(),
                 TextColumn::make('creator.name')
-                    ->label('Created By')
+                    ->label(__('filament.admin.resources.expenses.fields.created_by'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('created_at')
@@ -76,12 +76,12 @@ class ExpensesTable
             ])
             ->groups([
                 Group::make('vendorRelation.name')
-                    ->label('Vendor'),
+                    ->label(__('filament.admin.resources.expenses.fields.vendor')),
                 Group::make('repairJob.title')
-                    ->label('Repair Job'),
+                    ->label(__('filament.admin.resources.expenses.fields.repair_job')),
                 Group::make('incurred_at')
-                    ->label('Month')
-                    ->getTitleFromRecordUsing(fn ($record) => $record->incurred_at?->format('M Y') ?? 'Unknown'),
+                    ->label(__('filament.admin.resources.expenses.fields.month'))
+                    ->getTitleFromRecordUsing(fn ($record) => $record->incurred_at?->format('M Y') ?? __('filament.admin.resources.expenses.fields.unknown')),
             ])
             ->defaultGroup('vendorRelation.name')
             ->recordActions([

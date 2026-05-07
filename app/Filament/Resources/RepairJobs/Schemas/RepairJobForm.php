@@ -17,12 +17,13 @@ class RepairJobForm
         return $schema
             ->components([
                 TextInput::make('uuid')
-                    ->label('UUID')
+                    ->label(__('filament.admin.resources.repair_jobs.fields.uuid'))
                     ->required(),
                 TextInput::make('title')
+                    ->label(__('filament.admin.fields_common.title'))
                     ->required(),
                 Select::make('reports')
-                    ->label('Reports')
+                    ->label(__('filament.admin.resources.repair_jobs.fields.reports'))
                     ->relationship(
                         'reports',
                         'uuid',
@@ -50,22 +51,30 @@ class RepairJobForm
                     ->preload()
                     ->required(fn (string $operation): bool => $operation === 'create')
                     ->minItems(fn (string $operation): ?int => $operation === 'create' ? 1 : null)
-                    ->helperText('Select at least one received report to assign to this job.'),
+                    ->helperText(__('filament.admin.resources.repair_jobs.helper.select_received_reports')),
                 Textarea::make('description')
+                    ->label(__('filament.admin.fields_common.description'))
                     ->columnSpanFull(),
-                DateTimePicker::make('scheduled_at'),
-                DateTimePicker::make('started_at'),
-                DateTimePicker::make('completed_at'),
+                DateTimePicker::make('scheduled_at')
+                    ->label(__('filament.admin.fields_common.scheduled_at')),
+                DateTimePicker::make('started_at')
+                    ->label(__('filament.admin.fields_common.started_at')),
+                DateTimePicker::make('completed_at')
+                    ->label(__('filament.admin.fields_common.completed_at')),
                 TextInput::make('status')
+                    ->label(__('filament.admin.fields_common.status'))
                     ->required()
                     ->default('planned'),
                 TextInput::make('created_by')
+                    ->label(__('filament.admin.fields_common.created_by'))
                     ->required()
                     ->numeric(),
                 TextInput::make('estimated_cost')
+                    ->label(__('filament.admin.fields_common.estimated_cost'))
                     ->numeric()
                     ->prefix('$'),
                 TextInput::make('actual_cost')
+                    ->label(__('filament.admin.fields_common.actual_cost'))
                     ->numeric()
                     ->prefix('$'),
             ]);
