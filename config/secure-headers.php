@@ -82,10 +82,12 @@ return [
 
         'frame-src' => [
             'self' => true,
+            'schemes' => ['https'],
             'allow' => [
                 'https://www.google.com/recaptcha/',
                 'https://www.gstatic.com/recaptcha/',
                 'https://www.recaptcha.net/recaptcha/',
+                'https://www.openstreetmap.org/',
             ],
         ],
 

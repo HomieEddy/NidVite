@@ -14,6 +14,10 @@ class MapController extends Controller
      */
     public function index(Request $request): View
     {
+        if ($request->boolean('embed')) {
+            return view('map-embed');
+        }
+
         return view('map', [
             'embedded' => $request->boolean('embed'),
         ]);

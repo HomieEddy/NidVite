@@ -9,16 +9,17 @@
     </div>
 
     @if($location)
-        <iframe
-            src="https://www.openstreetmap.org/export/embed.html?bbox={{ $location->lng - 0.01 }}%2C{{ $location->lat - 0.01 }}%2C{{ $location->lng + 0.01 }}%2C{{ $location->lat + 0.01 }}&layer=mapnik&marker={{ $location->lat }}%2C{{ $location->lng }}"
-            width="100%"
-            height="300"
-            style="border: 1px solid #e5e7eb; border-radius: 0.5rem;"
-            loading="lazy"
-        ></iframe>
-        <p style="margin-top: 8px; text-align: right;">
-            <a href="https://www.openstreetmap.org/?mlat={{ $location->lat }}&mlon={{ $location->lng }}#map=15/{{ $location->lat }}/{{ $location->lng }}" target="_blank" style="font-size: 0.75rem; color: #d97706; text-decoration: none;">View Larger Map</a>
-        </p>
+        <div style="padding: 14px; border: 1px solid #e5e7eb; border-radius: 0.5rem; background: #f9fafb;">
+            <p style="margin: 0 0 6px; font-size: 0.875rem; color: #111827;">
+                <strong>Coordinates:</strong> {{ number_format($location->lat, 6) }}, {{ number_format($location->lng, 6) }}
+            </p>
+            <p style="margin: 0; font-size: 0.75rem; color: #6b7280;">
+                Open the location in a new tab to view the full interactive map.
+            </p>
+            <p style="margin: 10px 0 0;">
+                <a href="https://www.openstreetmap.org/?mlat={{ $location->lat }}&mlon={{ $location->lng }}#map=15/{{ $location->lat }}/{{ $location->lng }}" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #d97706; text-decoration: none; font-weight: 600;">Open in OpenStreetMap</a>
+            </p>
+        </div>
     @else
         <div style="height: 200px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 0.5rem;">
             <p style="color: #6b7280; font-size: 0.875rem;">No location available for this report.</p>
