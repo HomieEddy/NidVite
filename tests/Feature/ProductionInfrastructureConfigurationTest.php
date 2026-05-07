@@ -4,6 +4,7 @@ use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 it('configures an r2 disk for private object storage', function () {
     $r2 = config('filesystems.disks.r2');
@@ -32,14 +33,11 @@ it('generates valid signed report photo URLs', function () {
     {
         public function getMedia(string $collectionName = 'default', array|callable $filters = []): MediaCollection
         {
+            $media = new Media;
+            $media->id = 123;
+
             return new MediaCollection([
-                new class
-                {
-                    public function getKey(): int
-                    {
-                        return 123;
-                    }
-                },
+                $media,
             ]);
         }
     };
