@@ -17,4 +17,22 @@ return [
             'date' => 'Periode',
         ],
     ],
+
+    'suspicious_activity' => [
+        'navigation_label' => 'Activite suspecte',
+        'heading' => 'Activite suspecte',
+        'empty_heading' => 'Aucune activite suspecte trouvee',
+        'columns' => [
+            'date' => 'Date',
+            'severity' => 'Severite',
+            'type' => 'Type',
+            'reason' => 'Raison',
+            'report' => 'UUID du signalement',
+        ],
+        'filters' => [
+            'type' => 'Type',
+            'severity' => 'Severite',
+            'date' => 'Periode',
+        ],
+    ],
 ];

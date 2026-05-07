@@ -117,6 +117,11 @@ class Report extends Model implements HasMedia
         return $this->hasMany(JobReport::class);
     }
 
+    public function suspiciousActivities(): HasMany
+    {
+        return $this->hasMany(SuspiciousActivity::class);
+    }
+
     /**
      * Set the PostGIS geography location from lat/lng.
      */
