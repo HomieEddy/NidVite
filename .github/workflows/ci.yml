@@ -61,6 +61,9 @@ jobs:
       - name: Generate app key
         run: php artisan key:generate
 
+      - name: Validate secure headers configuration
+        run: php artisan security:check-headers
+
       - name: Wait for PostgreSQL
         run: |
           until pg_isready -h localhost -p 5432 -U sail; do
