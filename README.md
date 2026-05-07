@@ -1,66 +1,150 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# NidVite
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Frictionless pothole reporting bridge for Montreal citizens and repair entrepreneurs.
 
-## About Laravel
+## About
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+NidVite is a bilingual (FR/EN) web application that lets Montreal citizens report infrastructure issues (potholes, graffiti, broken lights, sidewalk damage) without creating an account, and gives repair entrepreneurs a Filament dashboard to manage, track, and repair those reports.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Backend:** Laravel 11, PHP 8.2+
+- **Database:** PostgreSQL 15 + PostGIS 3.4 (spatial queries, geofencing)
+- **Admin:** Filament v5 (RBAC, 5 roles, 2FA)
+- **Frontend:** Livewire 3, Alpine.js, Tailwind CSS
+- **Real-time:** Laravel Reverb (WebSocket notifications)
+- **Auth:** Laravel Fortify (2FA TOTP + passkeys)
+- **Mail:** Resend (transactional emails)
+- **PWA:** Service worker + manifest via laravelpwa
+- **Testing:** Pest 2, PHPStan Level 5, Laravel Pint
+- **Deployment:** Railway
 
-## Learning Laravel
+## Key Features
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Zero-auth reporting** — Citizens submit reports with just an email
+- **Geofencing** — Only Montreal locations accepted (PostGIS boundary check)
+- **Photo uploads** — Up to 5 photos per report with EXIF stripping
+- **State machine** — Reports: Received → Verified → Scheduled → In Progress → Repaired / Rejected
+- **Real-time dashboard** — New report notifications via WebSocket
+- **Bilingual** — French-first with English toggle
+- **PWA** — Installable on mobile with offline support
+- **Public map** — Leaflet map showing all reports with color-coded markers
+- **Job & expense tracking** — Repair jobs, vendors, materials, expenses with Quebec tax (GST+QST)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## The Happy Path
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```
+Citizen                          NidVite                           Entrepreneur
+  │                                │                                  │
+  │  1. Opens /signaler (PWA)     │                                  │
+  │──────────────────────────────>│                                  │
+  │                                │                                  │
+  │  2. Fills form: category,    │                                  │
+  │     description, email (FR/EN)│                                  │
+  │                                │                                  │
+  │  3. Taps "Use my location"   │                                  │
+  │──────────────────────────────>│  PostGIS ST_Contains check       │
+  │                                │  ── In Montreal? ──> proceed     │
+  │                                │  ── Outside? ──> rejected        │
+  │                                │                                  │
+  │  4. Takes 1-5 photos         │                                  │
+  │──────────────────────────────>│  EXIF stripped, stored via       │
+  │                                │  Spatie Media Library             │
+  │                                │                                  │
+  │  5. Submits (honeypot +      │                                  │
+  │     reCAPTCHA guard)          │                                  │
+  │──────────────────────────────>│  Report created (status: received)│
+  │                                │  UUID generated                   │
+  │                                │  Event broadcast ──────────────>  │
+  │  6. Gets tracking URL         │                       Dashboard  │
+  │     /suivi/{uuid}             │                       notification│
+  │<──────────────────────────────│                       pops up     │
+  │                                │                                  │
+  │                                │  7. Manager opens /admin         │
+  │                                │<─────────────────────────────────│
+  │                                │                                  │
+  │                                │  8. Verifies report, changes     │
+  │                                │     status → verified             │
+  │                                │<─────────────────────────────────│
+  │                                │                                  │
+  │  Email: "Your report is      │                                  │
+  │  being reviewed" (FR or EN)   │                                  │
+  │<──────────────────────────────│                                  │
+  │                                │                                  │
+  │                                │  9. Creates RepairJob, assigns   │
+  │                                │     ServiceWorker, adds materials │
+  │                                │     status → scheduled            │
+  │                                │<─────────────────────────────────│
+  │                                │                                  │
+  │                                │  10. Worker marks in_progress,  │
+  │                                │      completes repair             │
+  │                                │      status → repaired            │
+  │                                │<─────────────────────────────────│
+  │                                │                                  │
+  │  Email: "Your report has      │                                  │
+  │  been repaired!" + tracking   │                                  │
+  │  link                         │  Expenses logged with GST+QST    │
+  │<──────────────────────────────│  Materials stock decremented      │
+  │                                │                                  │
+  │  11. Visits /suivi/{uuid}    │                                  │
+  │      Sees timeline + map pin │                                  │
+  │──────────────────────────────>│                                  │
+  │                                │                                  │
+```
 
-## Laravel Sponsors
+Every status transition (received→verified→scheduled→in_progress→repaired) sends a localized email to the citizen and fires a real-time notification to the dashboard. Any transition can also go to `rejected` with a mandatory reason — the citizen gets an email explaining why.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## Architecture Decisions
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### Security
 
-## Contributing
+- **Fortify + 2FA**: Admin dashboard requires TOTP two-factor auth with QR code setup and recovery codes. No admin can log in without 2FA enabled. Passkey/WebAuthn support is also wired up.
+- **RBAC with 5 roles**: Admin, Manager, Service Worker, Accountant, Viewer — each with distinct Filament resource permissions enforced via Policies. Viewer can only read; Accountant can only touch expenses; Service Workers can create/edit repair jobs but not delete; only Admin can delete or manage users.
+- **Fortify action classes**: All auth flows (registration, password reset, profile update) go through hardened action classes, not default scaffolding.
+- **Session isolation**: Admin sessions are separate from any citizen-facing session. The citizen side has zero auth — no session spillage possible.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Bot & Spam Protection (Layered)
 
-## Code of Conduct
+- **Layer 1 — Honeypot**: `spatie/laravel-honeypot` injects invisible fields. Bots that fill them get silently rejected. Zero UX friction for humans.
+- **Layer 2 — reCAPTCHA v2 Invisible**: Google reCAPTCHA runs in the background. Only triggers a challenge if the user seems suspicious. Installed and wired; enforcement pending.
+- **Layer 3 — PostGIS Geofencing**: `MontrealBoundary::contains()` runs `ST_Contains` against the official City of Montreal boundary polygon. Reports outside Montreal are rejected at the server level — no amount of spoofing bypasses this because the server re-validates coordinates.
+- **Layer 4 — EXIF Stripping**: All uploaded photos have EXIF metadata removed server-side via `ExifStripper` (Intervention Image). Prevents accidental location/personal data leaks from citizen photos. Also neutralizes any steganographic payloads.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Data Integrity
 
-## Security Vulnerabilities
+- **State Machine**: `ReportStatus` enum enforces strict transition rules. Invalid transitions (e.g., jumping from `received` directly to `repaired`) throw `InvalidArgumentException`. The state machine is tested with 17 dedicated tests covering every valid and invalid path.
+- **UUID public identifiers**: Reports use UUIDs for public URLs (`/suivi/{uuid}`), never sequential IDs. Prevents enumeration attacks — you can't guess another report's tracking URL.
+- **Spatie ActivityLog**: Every Report status change, priority change, admin note, and rejection reason is logged with the user who made the change and the timestamp. Full audit trail, no silent mutations.
+- **Soft Deletes**: Reports use `SoftDeletes` — deletions are reversible. Only Admin can force-delete.
+- **Queued emails**: `ReportStatusUpdated` implements `ShouldQueue` on the database driver. If email delivery fails, the job retries without blocking the status transition. No data loss.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Regional Law Compliance (Quebec / Canada)
+
+- **Quebec Law 25 (Bill 64)**: Quebec's privacy law requires consent for collecting personal data, data minimization, and the right to access/delete. NidVite's design:
+  - Citizens provide only an email — no name, no phone, no account. Minimal PII by design.
+  - `preferred_locale` is set per-report, not tied to a user profile. No cross-report profiling.
+  - EXIF is stripped from photos before storage — no geolocation metadata retained in images.
+  - Data retention policy designed: reports auto-expire after 2 years, IP hashes purged after 30 days, device fingerprints after 90 days.
+- **French-first (Charter of the French Language)**: Quebec's Bill 96 requires French as the default language for software used in Quebec. NidVite defaults to French (`app.locale = 'fr'`, `fallback_locale = 'fr'`). All citizen-facing strings, emails, and PWA content are French by default with an English toggle available.
+- **GST + QST tax handling**: Quebec has a dual tax system (5% GST + 9.975% QST). Expenses track both taxes separately and compute `total = amount + gst + qst` at the model level, ensuring accurate reporting for Revenu Québec.
+- **Montreal Open Data (CC-BY)**: The city boundary polygon used for geofencing is sourced from Montreal's official open data portal under a Creative Commons Attribution license, complying with municipal data usage terms.
+
+---
+
+## Documentation
+
+- [Setup Guide](docs/SETUP_GUIDE.md)
+- [Tech Stack](docs/engineering/TECH_STACK.md)
+- [Project Structure](docs/engineering/PROJECT_STRUCTURE.md)
+- [Database Schema](docs/database/SCHEMA_OVERVIEW.md)
+- [Coding Manifesto](docs/engineering/CODING_MANIFESTO.md)
+- [Integration Specs](docs/integrations/INTEGRATION_SPECS.md)
+- [Security & Privacy](docs/security/SECURITY_PRIVACY.md)
+- [Monitoring](docs/engineering/MONITORING_PACKAGES.md)
+- [Roadmap](.planning/ROADMAP.md)
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Proprietary. All rights reserved.
