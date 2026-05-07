@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Report;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ReportTrackingController extends Controller
@@ -11,25 +12,27 @@ class ReportTrackingController extends Controller
     public function show(string $uuid): View
     {
         $report = Report::where('uuid', $uuid)
-            ->with('category')
+            ->with(['category', 'media'])
             ->firstOrFail();
 
         $location = null;
         /** @phpstan-ignore property.notFound */
         if ($report->location !== null) {
-            $location = \DB::selectOne(
+            $location = DB::selectOne(
                 'SELECT ST_Y(location::geometry) as lat, ST_X(location::geometry) as lng FROM reports WHERE id = ?',
                 [$report->id]
             );
         }
 
-        return view('tracking', compact('report', 'location'));
+        $photoUrls = $report->signedPhotoUrls();
+
+        return view('tracking', compact('report', 'location', 'photoUrls'));
     }
 
     public function lookup(string $uuid): JsonResponse
     {
         $report = Report::where('uuid', $uuid)
-            ->with('category')
+            ->with(['category', 'media'])
             ->first();
 
         if (! $report) {
@@ -39,7 +42,7 @@ class ReportTrackingController extends Controller
         $location = null;
         /** @phpstan-ignore property.notFound */
         if ($report->location !== null) {
-            $location = \DB::selectOne(
+            $location = DB::selectOne(
                 'SELECT ST_Y(location::geometry) as lat, ST_X(location::geometry) as lng FROM reports WHERE id = ?',
                 [$report->id]
             );
@@ -60,6 +63,7 @@ class ReportTrackingController extends Controller
             'category' => $report->category ? (app()->getLocale() === 'fr' ? $report->category->label_fr : $report->category->label_en) : null,
             'created_at' => $report->created_at->toIso8601String(),
             'rejection_reason' => $report->rejection_reason,
+            'photos' => $report->signedPhotoUrls(),
             'location' => $location ? ['lat' => (float) $location->lat, 'lng' => (float) $location->lng] : null,
             'progress' => [
                 'current_step' => $currentIndex,

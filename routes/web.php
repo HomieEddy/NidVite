@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\ReportTrackingController;
+use App\Http\Controllers\SignedMediaController;
 use App\Models\Report;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +44,10 @@ Route::get('/api/reports/{uuid}/lookup', [ReportTrackingController::class, 'look
     ->name('api.reports.lookup')
     ->whereUuid('uuid')
     ->middleware('throttle:60,1');
+
+Route::get('/media/{media}', SignedMediaController::class)
+    ->name('media.signed')
+    ->middleware(['signed', 'throttle:60,1']);
 
 Route::get('/locale/{locale}', function (string $locale) {
     if (in_array($locale, ['fr', 'en'], true)) {

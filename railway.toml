@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "php artisan serve --host=0.0.0.0 --port=$PORT"
+startCommand = "sh deploy/railway/web.sh"
 healthcheckPath = "/up"
 healthcheckTimeout = 30
 restartPolicyType = "on-failure"
