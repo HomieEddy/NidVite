@@ -17,3 +17,11 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# GSD planning
+.planning/
+
+# Graphify
+graphify-out/
+.graphify_*
+.graphify_python
