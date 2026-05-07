@@ -95,7 +95,7 @@ class ReportsTable
                                 ]);
                             })
                     )
-                            ->tooltip(__('filament.admin.resources.reports.tooltips.map')),
+                    ->tooltip(__('filament.admin.resources.reports.tooltips.map')),
                 IconColumn::make('geofence_passed')
                     ->boolean()
                     ->toggleable(isToggledHiddenByDefault: true),
