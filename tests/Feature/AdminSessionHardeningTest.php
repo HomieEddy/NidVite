@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnforceAdminSessionTimeout;
 use App\Models\Role;
 use App\Models\User;
-use App\Http\Middleware\EnforceAdminSessionTimeout;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;

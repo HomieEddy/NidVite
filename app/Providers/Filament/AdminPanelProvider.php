@@ -2,11 +2,11 @@
 
 namespace App\Providers\Filament;
 
-use App\Http\Middleware\EnforceAdminSessionTimeout;
 use App\Filament\Widgets\ReportsByNeighborhood;
 use App\Filament\Widgets\ReportsChart;
 use App\Filament\Widgets\ReportsMap;
 use App\Filament\Widgets\ReportsOverview;
+use App\Http\Middleware\EnforceAdminSessionTimeout;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
