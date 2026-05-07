@@ -7,11 +7,13 @@ use App\Models\RepairJob;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
-use Illuminate\Contracts\View\View;
 
 class RepairJobsTable
 {
@@ -89,17 +91,45 @@ class RepairJobsTable
             ])
             ->defaultGroup('status')
             ->recordActions([
-                Action::make('view')
-                    ->label('View')
-                    ->icon('heroicon-m-eye')
-                    ->modalHeading('View Repair Job')
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Close')
-                    ->modalContent(function (RepairJob $record): View {
-                        return view('filament.modals.repair-job-view', [
-                            'job' => $record->load(['reports.category']),
-                        ]);
-                    }),
+                ViewAction::make()
+                    ->record(fn (RepairJob $record): RepairJob => $record->load('reports'))
+                    ->schema([
+                        TextInput::make('title')
+                            ->label('Title'),
+                        TextInput::make('status')
+                            ->label('Status'),
+                        TextInput::make('scheduled_at')
+                            ->label('Scheduled At'),
+                        Repeater::make('reports')
+                            ->label('Linked Reports')
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->defaultItems(0)
+                            ->schema([
+                                TextInput::make('uuid')
+                                    ->label('Report UUID'),
+                                TextInput::make('address')
+                                    ->label('Address'),
+                                TextInput::make('status')
+                                    ->label('Status'),
+                            ])
+                            ->columns(3),
+                    ])
+                    ->fillForm(fn (RepairJob $record): array => [
+                        'title' => $record->title,
+                        'status' => ucfirst(str_replace('_', ' ', $record->status)),
+                        'scheduled_at' => optional($record->scheduled_at)->format('M j, Y H:i') ?? 'N/A',
+                        'reports' => $record->reports
+                            ->map(fn ($report): array => [
+                                'uuid' => $report->uuid,
+                                'address' => $report->address ?? 'Address not specified',
+                                'status' => ucfirst(str_replace('_', ' ', $report->status)),
+                            ])
+                            ->values()
+                            ->all(),
+                    ])
+                    ->modalWidth('6xl'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
