@@ -2,6 +2,8 @@
 
 use App\Models\Report;
 use Bepsvpt\SecureHeaders\SecureHeaders;
+use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\StagingDemoSeeder;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -146,6 +148,26 @@ Artisan::command('ops:check-staging-readiness', function () {
 
     return 0;
 })->purpose('Fail-fast validation for Railway staging parity and safety checks');
+
+Artisan::command('ops:seed-staging-demo {--fresh : Recreate schema before seeding}', function () {
+    if (! app()->environment(['staging', 'testing'])) {
+        $this->error('This command is restricted to staging/testing environments.');
+
+        return 1;
+    }
+
+    if ((bool) $this->option('fresh')) {
+        Artisan::call('migrate:fresh', ['--force' => true]);
+        Artisan::call('db:seed', ['--class' => DatabaseSeeder::class, '--force' => true]);
+    }
+
+    Artisan::call('db:seed', ['--class' => StagingDemoSeeder::class, '--force' => true]);
+
+    $this->line(Artisan::output());
+    $this->info('Staging demo seed completed.');
+
+    return 0;
+})->purpose('Reset and seed staging demo data safely');
 
 Artisan::command('reports:run-retention', function () {
     $ipRetentionDays = (int) config('retention.ip_purge_days', 30);
