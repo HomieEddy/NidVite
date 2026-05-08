@@ -191,6 +191,22 @@ return [
                 'tooltips' => [
                     'map' => 'Cliquez pour voir sur la carte',
                 ],
+                'exports' => [
+                    'title' => 'Export du jeu de donnees des signalements',
+                    'range' => 'Periode : :start a :end',
+                    'empty' => 'Aucun enregistrement pour la periode selectionnee.',
+                    'columns' => [
+                        'tracking_id' => 'ID de suivi',
+                        'status' => 'Statut',
+                        'priority' => 'Priorite',
+                        'address' => 'Adresse',
+                        'neighborhood' => 'Quartier',
+                        'borough' => 'Arrondissement',
+                        'reported_at' => 'Signale le',
+                        'completed_at' => 'Termine le',
+                        'allocated_cost' => 'Cout alloue (CAD)',
+                    ],
+                ],
             ],
             'expenses' => [
                 'navigation' => 'Depenses',

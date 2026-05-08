@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="utf-8">
-    <title>Reports Dataset Export</title>
+    <title>{{ __('filament.admin.resources.reports.exports.title') }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111827; }
         h1 { font-size: 16px; margin: 0 0 8px; }
@@ -13,21 +13,21 @@
     </style>
 </head>
 <body>
-    <h1>Reports Dataset Export</h1>
-    <p>Range: {{ $startDate->toDateString() }} to {{ $endDate->toDateString() }}</p>
+    <h1>{{ __('filament.admin.resources.reports.exports.title') }}</h1>
+    <p>{{ __('filament.admin.resources.reports.exports.range', ['start' => $startDate->toDateString(), 'end' => $endDate->toDateString()]) }}</p>
 
     <table>
         <thead>
             <tr>
-                <th>Tracking ID</th>
-                <th>Status</th>
-                <th>Priority</th>
-                <th>Address</th>
-                <th>Neighborhood</th>
-                <th>Borough</th>
-                <th>Reported At</th>
-                <th>Completed At</th>
-                <th>Allocated Cost (CAD)</th>
+                <th>{{ __('filament.admin.resources.reports.exports.columns.tracking_id') }}</th>
+                <th>{{ __('filament.admin.resources.reports.exports.columns.status') }}</th>
+                <th>{{ __('filament.admin.resources.reports.exports.columns.priority') }}</th>
+                <th>{{ __('filament.admin.resources.reports.exports.columns.address') }}</th>
+                <th>{{ __('filament.admin.resources.reports.exports.columns.neighborhood') }}</th>
+                <th>{{ __('filament.admin.resources.reports.exports.columns.borough') }}</th>
+                <th>{{ __('filament.admin.resources.reports.exports.columns.reported_at') }}</th>
+                <th>{{ __('filament.admin.resources.reports.exports.columns.completed_at') }}</th>
+                <th>{{ __('filament.admin.resources.reports.exports.columns.allocated_cost') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -45,7 +45,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9">No records for selected date range.</td>
+                    <td colspan="9">{{ __('filament.admin.resources.reports.exports.empty') }}</td>
                 </tr>
             @endforelse
         </tbody>
