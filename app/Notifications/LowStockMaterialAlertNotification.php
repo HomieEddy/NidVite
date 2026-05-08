@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Filament\Resources\Materials\MaterialResource;
 use App\Models\Material;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,7 +34,7 @@ class LowStockMaterialAlertNotification extends Notification implements ShouldQu
             'previous_stock' => $this->previousStock,
             'current_stock' => (float) $this->material->current_stock,
             'threshold' => (float) $this->material->min_stock_alert,
-            'url' => url('/admin/materials'),
+            'url' => MaterialResource::getUrl(),
         ];
     }
 
@@ -46,6 +47,6 @@ class LowStockMaterialAlertNotification extends Notification implements ShouldQu
             ->line(__('filament.notifications.low_stock.sku').': '.$this->material->sku)
             ->line(__('filament.notifications.low_stock.current').': '.number_format((float) $this->material->current_stock, 2))
             ->line(__('filament.notifications.low_stock.threshold').': '.number_format((float) $this->material->min_stock_alert, 2))
-            ->action(__('filament.notifications.low_stock.action'), url('/admin/materials'));
+            ->action(__('filament.notifications.low_stock.action'), MaterialResource::getUrl());
     }
 }

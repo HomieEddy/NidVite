@@ -134,7 +134,8 @@ class RepairJobsTable
                     ->modalWidth('6xl'),
                 Action::make('assign_workers')
                     ->label(__('filament.admin.resources.repair_jobs.actions.assign_workers'))
-                    ->visible(fn (): bool => auth()->user()?->isAdmin() || auth()->user()?->isManager())
+                    ->visible(fn (RepairJob $record): bool => auth()->user()?->can('assignWorkers', $record) ?? false)
+                    ->authorize(fn (RepairJob $record): bool => auth()->user()?->can('assignWorkers', $record) ?? false)
                     ->form([
                         Select::make('worker_ids')
                             ->label(__('filament.admin.resources.repair_jobs.fields.workers'))
@@ -152,9 +153,9 @@ class RepairJobsTable
                     }),
                 Action::make('self_assign')
                     ->label(__('filament.admin.resources.repair_jobs.actions.self_assign'))
-                    ->visible(fn (RepairJob $record): bool => auth()->user()?->isServiceWorker()
-                        && in_array($record->status, ['planned', 'in_progress'], true)
+                    ->visible(fn (RepairJob $record): bool => auth()->user()?->can('selfAssign', $record)
                         && ! $record->users()->whereKey(auth()->id())->exists())
+                    ->authorize(fn (RepairJob $record): bool => auth()->user()?->can('selfAssign', $record) ?? false)
                     ->action(function (RepairJob $record): void {
                         $record->selfAssign(auth()->user());
                     }),

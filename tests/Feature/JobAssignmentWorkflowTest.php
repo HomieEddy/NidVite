@@ -85,3 +85,26 @@ it('prevents self-assignment when job is not eligible', function () {
 
     expect($job->users()->whereKey($worker->id)->exists())->toBeFalse();
 });
+
+it('prevents inactive service worker from self-assignment', function () {
+    $manager = User::factory()->create([
+        'role_id' => Role::where('slug', 'manager')->value('id'),
+        'is_active' => true,
+    ]);
+
+    $inactiveWorker = User::factory()->create([
+        'role_id' => Role::where('slug', 'service_worker')->value('id'),
+        'is_active' => false,
+    ]);
+
+    $job = RepairJob::query()->create([
+        'title' => 'Inactive self assign guard',
+        'status' => 'planned',
+        'created_by' => $manager->id,
+    ]);
+
+    expect(fn () => $job->selfAssign($inactiveWorker))
+        ->toThrow(InvalidArgumentException::class, 'Only active service workers can self-assign jobs.');
+
+    expect($job->users()->whereKey($inactiveWorker->id)->exists())->toBeFalse();
+});

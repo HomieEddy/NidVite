@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -48,10 +49,26 @@ class RepairJob extends Model
                     continue;
                 }
 
-                $previousStock = (float) $material->current_stock;
-                $material->current_stock = max(0, $previousStock - $used);
-                $material->reserved_stock = max(0, (float) $material->reserved_stock - $used);
-                $material->save();
+                $result = DB::transaction(function () use ($material, $used): ?array {
+                    $lockedMaterial = Material::query()->whereKey($material->getKey())->lockForUpdate()->first();
+
+                    if (! $lockedMaterial) {
+                        return null;
+                    }
+
+                    $previousStock = (float) $lockedMaterial->current_stock;
+                    $lockedMaterial->current_stock = max(0, $previousStock - $used);
+                    $lockedMaterial->reserved_stock = max(0, (float) $lockedMaterial->reserved_stock - $used);
+                    $lockedMaterial->save();
+
+                    return [$lockedMaterial, $previousStock];
+                });
+
+                if (! $result) {
+                    continue;
+                }
+
+                [$material, $previousStock] = $result;
 
                 $threshold = (float) $material->min_stock_alert;
                 if ($threshold <= 0 || $previousStock < $threshold || (float) $material->current_stock >= $threshold) {
@@ -157,6 +174,10 @@ class RepairJob extends Model
     {
         if (! $user->isServiceWorker()) {
             throw new InvalidArgumentException('Only service workers can self-assign jobs.');
+        }
+
+        if (! $user->is_active) {
+            throw new InvalidArgumentException('Only active service workers can self-assign jobs.');
         }
 
         if (! in_array($this->status, ['planned', 'in_progress'], true)) {
