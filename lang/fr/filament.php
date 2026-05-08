@@ -214,10 +214,13 @@ return [
                 ],
                 'actions' => [
                     'create' => 'Creer une intervention',
+                    'assign_workers' => 'Assigner des travailleurs',
+                    'self_assign' => 'Auto-assigner',
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
                     'reports' => 'Signalements',
+                    'workers' => 'Travailleurs',
                     'title' => 'Titre',
                     'status' => 'Statut',
                     'scheduled_at' => 'Planifie le',

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class RepairJob extends Model
 {
@@ -129,5 +130,43 @@ class RepairJob extends Model
         return $this->belongsToMany(Material::class, 'job_materials')
             ->withPivot(['quantity_planned', 'quantity_actual', 'unit_cost_at_time'])
             ->withTimestamps();
+    }
+
+    public function assignWorkers(array $workerIds): void
+    {
+        $eligibleWorkers = User::query()
+            ->where('is_active', true)
+            ->whereIn('id', $workerIds)
+            ->whereHas('role', fn ($query) => $query->where('slug', 'service_worker'))
+            ->pluck('id')
+            ->all();
+
+        if ($eligibleWorkers === []) {
+            return;
+        }
+
+        $payload = [];
+        foreach ($eligibleWorkers as $workerId) {
+            $payload[$workerId] = ['role_in_job' => 'assistant'];
+        }
+
+        $this->users()->syncWithoutDetaching($payload);
+    }
+
+    public function selfAssign(User $user): void
+    {
+        if (! $user->isServiceWorker()) {
+            throw new InvalidArgumentException('Only service workers can self-assign jobs.');
+        }
+
+        if (! in_array($this->status, ['planned', 'in_progress'], true)) {
+            throw new InvalidArgumentException('This job is not eligible for self-assignment.');
+        }
+
+        if ($this->users()->whereKey($user->id)->exists()) {
+            return;
+        }
+
+        $this->users()->attach($user->id, ['role_in_job' => 'assistant']);
     }
 }

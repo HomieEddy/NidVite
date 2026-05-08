@@ -214,10 +214,13 @@ return [
                 ],
                 'actions' => [
                     'create' => 'Create Repair Job',
+                    'assign_workers' => 'Assign Workers',
+                    'self_assign' => 'Self-Assign',
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
                     'reports' => 'Reports',
+                    'workers' => 'Workers',
                     'title' => 'Title',
                     'status' => 'Status',
                     'scheduled_at' => 'Scheduled At',
