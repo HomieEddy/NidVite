@@ -55,4 +55,9 @@ class Material extends Model
     {
         return $this->hasMany(JobMaterial::class);
     }
+
+    public function getAvailableStockAttribute(): float
+    {
+        return $this->current_stock - $this->reserved_stock;
+    }
 }

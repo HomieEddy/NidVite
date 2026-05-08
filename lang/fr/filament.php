@@ -250,6 +250,25 @@ return [
                     'inactive' => 'Inactif',
                 ],
             ],
+            'materials' => [
+                'navigation' => 'Materiaux',
+                'singular' => 'Materiau',
+                'plural' => 'Materiaux',
+                'empty_state' => [
+                    'heading' => 'Aucun materiau trouve',
+                    'description' => 'Les materiaux apparaitront ici une fois ajoutes.',
+                ],
+                'actions' => [
+                    'create' => 'Creer un materiau',
+                ],
+                'fields' => [
+                    'sku' => 'SKU',
+                    'current_stock' => 'Stock actuel',
+                    'reserved_stock' => 'Stock reserve',
+                    'available_stock' => 'Stock disponible',
+                    'min_stock_alert' => 'Seuil stock bas',
+                ],
+            ],
             'users' => [
                 'navigation' => 'Utilisateurs',
                 'singular' => 'Utilisateur',

@@ -250,6 +250,25 @@ return [
                     'inactive' => 'Inactive',
                 ],
             ],
+            'materials' => [
+                'navigation' => 'Materials',
+                'singular' => 'Material',
+                'plural' => 'Materials',
+                'empty_state' => [
+                    'heading' => 'No materials found',
+                    'description' => 'Materials will appear here once added.',
+                ],
+                'actions' => [
+                    'create' => 'Create Material',
+                ],
+                'fields' => [
+                    'sku' => 'SKU',
+                    'current_stock' => 'Current Stock',
+                    'reserved_stock' => 'Reserved Stock',
+                    'available_stock' => 'Available Stock',
+                    'min_stock_alert' => 'Low Stock Threshold',
+                ],
+            ],
             'users' => [
                 'navigation' => 'Users',
                 'singular' => 'User',
