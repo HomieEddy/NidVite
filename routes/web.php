@@ -9,11 +9,17 @@ use Spatie\Health\Http\Controllers\HealthCheckJsonResultsController;
 use Spatie\ResponseCache\Middlewares\CacheResponse;
 
 Route::get('/', function () {
-    $totalReported = Report::count();
-    $totalFixed = Report::where('status', 'repaired')->count();
-    $totalPending = Report::whereIn('status', ['received', 'verified', 'scheduled', 'in_progress'])->count();
+    $visibleReports = Report::query()
+        ->where('is_spam', false)
+        ->where('status', '!=', 'rejected')
+        ->whereNotNull('location');
 
-    $avgDays = Report::where('status', 'repaired')
+    $totalReported = (clone $visibleReports)->count();
+    $totalFixed = (clone $visibleReports)->where('status', 'repaired')->count();
+    $totalPending = (clone $visibleReports)->whereIn('status', ['received', 'verified', 'scheduled', 'in_progress'])->count();
+
+    $avgDays = (clone $visibleReports)
+        ->where('status', 'repaired')
         ->whereNotNull('completed_at')
         ->whereNotNull('created_at')
         ->selectRaw('AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400) as avg_days')
@@ -26,7 +32,9 @@ Route::get('/', function () {
     }
 
     return view('welcome', compact('totalReported', 'totalFixed', 'totalPending', 'velocity'));
-})->middleware(CacheResponse::class);
+})->when(! app()->environment('staging'), function ($route) {
+    $route->middleware(CacheResponse::class);
+});
 
 Route::get('/signaler', function () {
     return view('report');
@@ -44,7 +52,9 @@ Route::view('/conditions', 'pages.terms')
 
 Route::get('/carte', [MapController::class, 'index'])
     ->name('map.public')
-    ->middleware(CacheResponse::class);
+    ->when(! app()->environment('staging'), function ($route) {
+        $route->middleware(CacheResponse::class);
+    });
 
 Route::get('/api/reports/geojson', [MapController::class, 'geojson'])
     ->name('api.reports.geojson');
