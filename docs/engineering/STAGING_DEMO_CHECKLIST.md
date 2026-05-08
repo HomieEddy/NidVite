@@ -2,6 +2,7 @@
 
 Date: 2026-05-08
 Milestone: v2.0 Phase 14
+Status: Completed historical checklist retained for staging rehearsals
 
 ## 1) Preflight Gate
 
