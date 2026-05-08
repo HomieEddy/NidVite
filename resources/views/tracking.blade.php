@@ -46,7 +46,7 @@
         <div class="space-y-2.5">
             <div class="flex items-center text-sm">
                 <span class="text-gray-500 w-20 shrink-0">{{ __('tracking.Numéro') }}</span>
-                <span class="font-mono text-gray-700 bg-gray-100 px-2 py-0.5 rounded text-xs">{{ $report->uuid }}</span>
+                <span class="font-mono text-gray-700 bg-gray-100 px-2 py-0.5 rounded text-xs">{{ $report->public_tracking_id }}</span>
             </div>
             <div class="flex items-center text-sm">
                 <span class="text-gray-500 w-20 shrink-0">{{ __('tracking.Date') }}</span>

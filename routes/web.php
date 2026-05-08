@@ -32,9 +32,15 @@ Route::get('/signaler', function () {
     return view('report');
 })->name('report.create');
 
-Route::get('/suivi/{uuid}', [ReportTrackingController::class, 'show'])
+Route::get('/suivi/{trackingId}', [ReportTrackingController::class, 'show'])
     ->name('report.tracking')
-    ->whereUuid('uuid');
+    ->where('trackingId', 'MTL[A-Z0-9]{8}');
+
+Route::view('/confidentialite', 'pages.privacy')
+    ->name('legal.privacy');
+
+Route::view('/conditions', 'pages.terms')
+    ->name('legal.terms');
 
 Route::get('/carte', [MapController::class, 'index'])
     ->name('map.public')
@@ -43,9 +49,9 @@ Route::get('/carte', [MapController::class, 'index'])
 Route::get('/api/reports/geojson', [MapController::class, 'geojson'])
     ->name('api.reports.geojson');
 
-Route::get('/api/reports/{uuid}/lookup', [ReportTrackingController::class, 'lookup'])
+Route::get('/api/reports/{trackingId}/lookup', [ReportTrackingController::class, 'lookup'])
     ->name('api.reports.lookup')
-    ->whereUuid('uuid')
+    ->where('trackingId', 'MTL[A-Z0-9]{8}')
     ->middleware('throttle:60,1');
 
 Route::get('/health', HealthCheckJsonResultsController::class)

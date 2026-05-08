@@ -30,6 +30,7 @@ class Report extends Model implements HasMedia
     {
         static::creating(function (Report $report) {
             $report->uuid ??= (string) Str::uuid();
+            $report->public_tracking_id ??= static::generatePublicTrackingId();
             $report->status ??= ReportStatus::Received->value;
             $report->ip_address_raw ??= request()->ip();
 
@@ -42,6 +43,7 @@ class Report extends Model implements HasMedia
 
     protected $fillable = [
         'uuid',
+        'public_tracking_id',
         'reporter_email',
         'preferred_locale',
         'address',
@@ -247,5 +249,14 @@ class Report extends Model implements HasMedia
                 'location' => [__('report.validation.outside_montreal')],
             ]);
         }
+    }
+
+    protected static function generatePublicTrackingId(): string
+    {
+        do {
+            $candidate = 'MTL'.strtoupper(Str::random(8));
+        } while (static::query()->where('public_tracking_id', $candidate)->exists());
+
+        return $candidate;
     }
 }

@@ -9,9 +9,9 @@ use Illuminate\View\View;
 
 class ReportTrackingController extends Controller
 {
-    public function show(string $uuid): View
+    public function show(string $trackingId): View
     {
-        $report = Report::where('uuid', $uuid)
+        $report = Report::where('public_tracking_id', $trackingId)
             ->with(['category', 'media'])
             ->firstOrFail();
 
@@ -29,9 +29,9 @@ class ReportTrackingController extends Controller
         return view('tracking', compact('report', 'location', 'photoUrls'));
     }
 
-    public function lookup(string $uuid): JsonResponse
+    public function lookup(string $trackingId): JsonResponse
     {
-        $report = Report::where('uuid', $uuid)
+        $report = Report::where('public_tracking_id', $trackingId)
             ->with(['category', 'media'])
             ->first();
 
@@ -55,7 +55,7 @@ class ReportTrackingController extends Controller
         }
 
         return response()->json([
-            'uuid' => $report->uuid,
+            'tracking_id' => $report->public_tracking_id,
             'status' => $report->status,
             'status_label' => __("report.status.{$report->status}"),
             'address' => $report->address,

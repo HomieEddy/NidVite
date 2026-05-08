@@ -10,28 +10,28 @@ beforeEach(function () {
     $this->seed(ReportCategorySeeder::class);
 });
 
-it('displays a report tracking page by uuid', function () {
+it('displays a report tracking page by public tracking id', function () {
     $report = Report::factory()->create([
         'status' => 'in_progress',
         'address' => '123 Rue Saint-Catherine, Montréal',
     ]);
 
-    $response = $this->get("/suivi/{$report->uuid}");
+    $response = $this->get("/suivi/{$report->public_tracking_id}");
 
     $response->assertStatus(200)
-        ->assertSee($report->uuid)
+        ->assertSee($report->public_tracking_id)
         ->assertSee('En cours')
         ->assertSee('123 Rue Saint-Catherine, Montréal');
 });
 
-it('returns 404 for invalid uuid', function () {
-    $this->get('/suivi/invalid-uuid')->assertStatus(404);
+it('returns 404 for invalid tracking id', function () {
+    $this->get('/suivi/invalid-tracking-id')->assertStatus(404);
 });
 
 it('shows correct timeline for received report', function () {
     $report = Report::factory()->create(['status' => 'received']);
 
-    $response = $this->get("/suivi/{$report->uuid}");
+    $response = $this->get("/suivi/{$report->public_tracking_id}");
 
     $response->assertStatus(200)
         ->assertSee('Reçu')
@@ -41,7 +41,7 @@ it('shows correct timeline for received report', function () {
 it('shows correct timeline for repaired report', function () {
     $report = Report::factory()->create(['status' => 'repaired']);
 
-    $response = $this->get("/suivi/{$report->uuid}");
+    $response = $this->get("/suivi/{$report->public_tracking_id}");
 
     $response->assertStatus(200)
         ->assertSee('Réparé')
@@ -54,7 +54,7 @@ it('shows rejection message for rejected report', function () {
         'rejection_reason' => 'Out of service area',
     ]);
 
-    $response = $this->get("/suivi/{$report->uuid}");
+    $response = $this->get("/suivi/{$report->public_tracking_id}");
 
     $response->assertStatus(200)
         ->assertSee('Signalement rejeté')
@@ -64,7 +64,7 @@ it('shows rejection message for rejected report', function () {
 it('shows category label when present', function () {
     $report = Report::factory()->create();
 
-    $response = $this->get("/suivi/{$report->uuid}");
+    $response = $this->get("/suivi/{$report->public_tracking_id}");
 
     $response->assertStatus(200)
         ->assertSee($report->category->label_fr);

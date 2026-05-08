@@ -50,6 +50,8 @@ new class extends Component
 
     public bool $submitted = false;
 
+    public ?string $submittedTrackingId = null;
+
     public function mount(): void
     {
         $this->honeypotData = new HoneypotData();
@@ -186,6 +188,7 @@ new class extends Component
 
         event(new ReportCreated($report));
 
+        $this->submittedTrackingId = $report->public_tracking_id;
         $this->submitted = true;
         $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'recaptcha_response']);
     }
@@ -301,6 +304,15 @@ new class extends Component
             <h2 class="text-2xl font-extrabold font-display text-gray-900 mb-2">{{ __('report.success_title') }}</h2>
             <p class="text-gray-700 mb-2">{{ __('report.success_message') }}</p>
             <p class="text-sm text-gray-500 mb-8">{{ __('report.success_tracking') }}</p>
+            @if($submittedTrackingId)
+                <p class="text-sm text-gray-700 mb-4">
+                    <span class="font-semibold">{{ __('tracking.Numéro') }}:</span>
+                    <span class="font-mono bg-gray-100 px-2 py-0.5 rounded">{{ $submittedTrackingId }}</span>
+                </p>
+                <a href="{{ route('report.tracking', $submittedTrackingId) }}" class="mb-3 w-full inline-flex items-center justify-center px-6 py-3.5 border border-amber-200 text-base font-semibold rounded-xl text-amber-700 bg-amber-50 hover:bg-amber-100 active:scale-[0.98] transition-all duration-200 btn-touch interactive-lift">
+                    {{ __('tracking.Suivi') }}
+                </a>
+            @endif
             <div class="flex flex-col gap-3">
                 <button wire:click="$set('submitted', false)" class="w-full inline-flex items-center justify-center px-6 py-3.5 border border-transparent text-base font-semibold rounded-xl text-white bg-linear-to-r from-amber-700 to-orange-500 hover:from-amber-800 hover:to-orange-600 active:scale-[0.98] transition-all duration-200 btn-touch interactive-lift">
                     {{ __('report.new_report') }}

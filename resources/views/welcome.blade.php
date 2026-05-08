@@ -117,7 +117,7 @@
                 <template x-if="report && !loading">
                     <div class="space-y-5">
                         <div class="flex items-center justify-between">
-                            <span class="font-mono text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded" x-text="report.uuid"></span>
+                            <span class="font-mono text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded" x-text="report.tracking_id"></span>
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
                                   :class="{
                                       'bg-gray-100 text-gray-800': report.status === 'received',
@@ -183,7 +183,7 @@
                             </div>
                         </div>
 
-                        <a :href="'/suivi/' + report.uuid" target="_blank"
+                                <a :href="'/suivi/' + report.tracking_id" target="_blank"
                            class="block w-full text-center py-3 text-sm font-medium text-amber-600 hover:text-amber-700 bg-amber-50 rounded-xl hover:bg-amber-100 transition btn-touch">
                             {{ $locale === 'fr' ? 'Voir la page complète' : 'View full page' }} →
                         </a>
