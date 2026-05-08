@@ -149,6 +149,8 @@ return [
                     'view_on_map' => 'Voir sur la carte',
                     'report_location' => 'Localisation du signalement',
                     'close' => 'Fermer',
+                    'export_excel' => 'Exporter Excel',
+                    'export_pdf' => 'Exporter PDF',
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
@@ -158,6 +160,8 @@ return [
                     'borough' => 'Arrondissement',
                     'priority' => 'Priorite',
                     'date' => 'Date',
+                    'start_date' => 'Date de debut',
+                    'end_date' => 'Date de fin',
                 ],
                 'filters' => [
                     'status' => 'Statut',
@@ -186,6 +190,22 @@ return [
                 ],
                 'tooltips' => [
                     'map' => 'Cliquez pour voir sur la carte',
+                ],
+                'exports' => [
+                    'title' => 'Export du jeu de donnees des signalements',
+                    'range' => 'Periode : :start a :end',
+                    'empty' => 'Aucun enregistrement pour la periode selectionnee.',
+                    'columns' => [
+                        'tracking_id' => 'ID de suivi',
+                        'status' => 'Statut',
+                        'priority' => 'Priorite',
+                        'address' => 'Adresse',
+                        'neighborhood' => 'Quartier',
+                        'borough' => 'Arrondissement',
+                        'reported_at' => 'Signale le',
+                        'completed_at' => 'Termine le',
+                        'allocated_cost' => 'Cout alloue (CAD)',
+                    ],
                 ],
             ],
             'expenses' => [

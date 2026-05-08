@@ -149,6 +149,8 @@ return [
                     'view_on_map' => 'View on Map',
                     'report_location' => 'Report Location',
                     'close' => 'Close',
+                    'export_excel' => 'Export Excel',
+                    'export_pdf' => 'Export PDF',
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
@@ -158,6 +160,8 @@ return [
                     'borough' => 'Borough',
                     'priority' => 'Priority',
                     'date' => 'Date',
+                    'start_date' => 'Start Date',
+                    'end_date' => 'End Date',
                 ],
                 'filters' => [
                     'status' => 'Status',
@@ -186,6 +190,22 @@ return [
                 ],
                 'tooltips' => [
                     'map' => 'Click to view on map',
+                ],
+                'exports' => [
+                    'title' => 'Reports dataset export',
+                    'range' => 'Range: :start to :end',
+                    'empty' => 'No records for selected date range.',
+                    'columns' => [
+                        'tracking_id' => 'Tracking ID',
+                        'status' => 'Status',
+                        'priority' => 'Priority',
+                        'address' => 'Address',
+                        'neighborhood' => 'Neighborhood',
+                        'borough' => 'Borough',
+                        'reported_at' => 'Reported At',
+                        'completed_at' => 'Completed At',
+                        'allocated_cost' => 'Allocated Cost (CAD)',
+                    ],
                 ],
             ],
             'expenses' => [
