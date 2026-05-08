@@ -2,6 +2,7 @@
 
 use App\Events\ReportCreated;
 use App\Jobs\SendCriticalAlertEmailJob;
+use App\Listeners\SendCriticalReportAlerts;
 use App\Models\EmailDeliveryLog;
 use App\Models\Report;
 use App\Models\Role;
@@ -27,7 +28,7 @@ it('queues critical alerts for admin and manager only', function () {
 
     $report = Report::factory()->create(['priority' => 'critical']);
 
-    event(new ReportCreated($report));
+    app(SendCriticalReportAlerts::class)->handle(new ReportCreated($report));
 
     expect(EmailDeliveryLog::query()->count())->toBe(2);
 
@@ -41,7 +42,7 @@ it('does not queue critical alerts for non-critical priorities', function () {
 
     $report = Report::factory()->create(['priority' => 'normal']);
 
-    event(new ReportCreated($report));
+    app(SendCriticalReportAlerts::class)->handle(new ReportCreated($report));
 
     expect(EmailDeliveryLog::query()->count())->toBe(0);
     Queue::assertNothingPushed();

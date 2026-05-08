@@ -61,7 +61,7 @@ it('marks log as permanent_failed after retries are exhausted', function () {
     ]);
 
     $job = new SendCriticalAlertEmailJob($report->id, $admin->id, $log->id);
-    $job->failed(new \RuntimeException('simulated bounce'));
+    $job->failed(new RuntimeException('simulated bounce'));
 
     $log->refresh();
 
