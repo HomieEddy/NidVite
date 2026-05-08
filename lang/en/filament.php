@@ -149,6 +149,8 @@ return [
                     'view_on_map' => 'View on Map',
                     'report_location' => 'Report Location',
                     'close' => 'Close',
+                    'export_excel' => 'Export Excel',
+                    'export_pdf' => 'Export PDF',
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
@@ -158,6 +160,8 @@ return [
                     'borough' => 'Borough',
                     'priority' => 'Priority',
                     'date' => 'Date',
+                    'start_date' => 'Start Date',
+                    'end_date' => 'End Date',
                 ],
                 'filters' => [
                     'status' => 'Status',

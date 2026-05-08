@@ -26,9 +26,12 @@ class MapController extends Controller
     /**
      * Return reports as GeoJSON for map display.
      */
-    public function geojson(): JsonResponse
+    public function geojson(Request $request): JsonResponse
     {
-        $reports = Report::where('is_spam', false)
+        $status = $request->query('status');
+        $neighborhood = trim((string) $request->query('neighborhood', ''));
+
+        $reportsQuery = Report::where('is_spam', false)
             ->where('status', '!=', 'rejected')
             ->whereNotNull('location')
             ->select([
@@ -41,8 +44,17 @@ class MapController extends Controller
                 'borough',
                 'category_id',
             ])
-            ->selectRaw('ST_Y(location::geometry) as latitude, ST_X(location::geometry) as longitude')
-            ->get();
+            ->selectRaw('ST_Y(location::geometry) as latitude, ST_X(location::geometry) as longitude');
+
+        if (is_string($status) && in_array($status, ['received', 'verified', 'scheduled', 'in_progress', 'repaired', 'rejected'], true)) {
+            $reportsQuery->where('status', $status);
+        }
+
+        if ($neighborhood !== '') {
+            $reportsQuery->whereRaw('LOWER(neighborhood) LIKE ?', ['%'.mb_strtolower($neighborhood).'%']);
+        }
+
+        $reports = $reportsQuery->get();
 
         return response()->json([
             'type' => 'FeatureCollection',

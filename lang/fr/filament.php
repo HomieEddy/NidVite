@@ -149,6 +149,8 @@ return [
                     'view_on_map' => 'Voir sur la carte',
                     'report_location' => 'Localisation du signalement',
                     'close' => 'Fermer',
+                    'export_excel' => 'Exporter Excel',
+                    'export_pdf' => 'Exporter PDF',
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
@@ -158,6 +160,8 @@ return [
                     'borough' => 'Arrondissement',
                     'priority' => 'Priorite',
                     'date' => 'Date',
+                    'start_date' => 'Date de debut',
+                    'end_date' => 'Date de fin',
                 ],
                 'filters' => [
                     'status' => 'Statut',

@@ -28,4 +28,10 @@ return [
     'cost_cad' => 'Cost (CAD)',
     'last_7_days' => 'Last 7 days',
     'last_90_days' => 'Last 90 days',
+    'map_filter_status' => 'Status',
+    'map_filter_neighborhood' => 'Neighborhood',
+    'map_filter_neighborhood_placeholder' => 'Type neighborhood name',
+    'map_filter_all' => 'All',
+    'map_apply_filters' => 'Apply filters',
+    'map_reset_filters' => 'Reset',
 ];

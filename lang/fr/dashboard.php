@@ -28,4 +28,10 @@ return [
     'cost_cad' => 'Coût (CAD)',
     'last_7_days' => '7 derniers jours',
     'last_90_days' => '90 derniers jours',
+    'map_filter_status' => 'Statut',
+    'map_filter_neighborhood' => 'Quartier',
+    'map_filter_neighborhood_placeholder' => 'Saisissez un quartier',
+    'map_filter_all' => 'Tous',
+    'map_apply_filters' => 'Appliquer les filtres',
+    'map_reset_filters' => 'Réinitialiser',
 ];
