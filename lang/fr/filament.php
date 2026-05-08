@@ -48,6 +48,7 @@ return [
         ],
         'actions' => [
             'mark_read' => 'Marquer comme lue',
+            'mark_all_read' => 'Tout marquer comme lues',
         ],
         'read' => 'Lue',
         'unread' => 'Non lue',

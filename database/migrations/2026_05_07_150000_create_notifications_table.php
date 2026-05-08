@@ -14,7 +14,10 @@ return new class extends Migration
             $table->morphs('notifiable');
             $table->text('data');
             $table->timestamp('read_at')->nullable();
+            $table->timestamp('expires_at')->nullable()->index();
             $table->timestamps();
+
+            $table->index(['notifiable_type', 'notifiable_id', 'read_at'], 'notifications_notifiable_read_at_index');
         });
     }
 

@@ -48,6 +48,7 @@ return [
         ],
         'actions' => [
             'mark_read' => 'Mark as read',
+            'mark_all_read' => 'Mark all as read',
         ],
         'read' => 'Read',
         'unread' => 'Unread',

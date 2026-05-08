@@ -20,7 +20,7 @@ return new class extends Migration
             $table->timestamp('failed_at')->nullable();
             $table->timestamps();
 
-            $table->index(['report_id', 'user_id', 'kind']);
+            $table->unique(['report_id', 'user_id', 'kind']);
             $table->index(['status', 'kind']);
         });
     }

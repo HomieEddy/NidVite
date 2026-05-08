@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class SendCriticalAlertEmailJob implements ShouldQueue
@@ -27,19 +28,35 @@ class SendCriticalAlertEmailJob implements ShouldQueue
 
     public function handle(): void
     {
-        $report = Report::query()->findOrFail($this->reportId);
-        $user = User::query()->findOrFail($this->userId);
+        $report = Report::query()->find($this->reportId);
+        $user = User::query()->find($this->userId);
+        $log = EmailDeliveryLog::query()->find($this->deliveryLogId);
+        if (! $log) {
+            return;
+        }
 
-        $log = EmailDeliveryLog::query()->findOrFail($this->deliveryLogId);
+        if (! $report || ! $user) {
+            $log->last_error = 'Critical alert delivery aborted: missing report or user.';
+            $log->transitionTo('permanent_failed');
+            $log->save();
+
+            Log::warning('Critical alert delivery aborted due to missing resources.', [
+                'report_id' => $this->reportId,
+                'user_id' => $this->userId,
+                'delivery_log_id' => $this->deliveryLogId,
+            ]);
+
+            return;
+        }
+
         $log->attempts = $log->attempts + 1;
-        $log->status = 'sending';
+        $log->transitionTo('sending');
         $log->save();
 
         $user->notify(new CriticalReportAlertNotification($report));
 
-        $log->status = 'delivered';
-        $log->delivered_at = now();
         $log->last_error = null;
+        $log->transitionTo('delivered');
         $log->save();
     }
 
@@ -50,9 +67,8 @@ class SendCriticalAlertEmailJob implements ShouldQueue
             return;
         }
 
-        $log->status = 'permanent_failed';
-        $log->failed_at = now();
         $log->last_error = $exception->getMessage();
+        $log->transitionTo('permanent_failed');
         $log->save();
     }
 }

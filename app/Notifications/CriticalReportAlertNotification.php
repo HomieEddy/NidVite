@@ -28,7 +28,7 @@ class CriticalReportAlertNotification extends Notification implements ShouldQueu
             'status' => $this->report->status,
             'priority' => $this->report->priority,
             'address' => $this->report->address,
-            'message' => __('filament.notifications.critical_report.message'),
+            'message_key' => 'filament.notifications.critical_report.message',
             'url' => route('report.tracking', $this->report->public_tracking_id),
         ];
     }

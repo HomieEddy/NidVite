@@ -22,16 +22,35 @@ beforeEach(function () {
 it('queues critical alerts for admin and manager only', function () {
     Queue::fake();
 
-    User::factory()->create(['role_id' => Role::where('slug', 'admin')->value('id'), 'is_active' => true]);
-    User::factory()->create(['role_id' => Role::where('slug', 'manager')->value('id'), 'is_active' => true]);
-    User::factory()->create(['role_id' => Role::where('slug', 'viewer')->value('id'), 'is_active' => true]);
+    $admin = User::factory()->create(['role_id' => Role::where('slug', 'admin')->value('id'), 'is_active' => true]);
+    $manager = User::factory()->create(['role_id' => Role::where('slug', 'manager')->value('id'), 'is_active' => true]);
+    $viewer = User::factory()->create(['role_id' => Role::where('slug', 'viewer')->value('id'), 'is_active' => true]);
 
     $report = Report::factory()->create(['priority' => 'critical']);
 
     app(SendCriticalReportAlerts::class)->handle(new ReportCreated($report));
 
-    expect(EmailDeliveryLog::query()->count())->toBe(2);
+    expect(EmailDeliveryLog::query()->pluck('user_id')->sort()->values()->all())
+        ->toBe([$admin->id, $manager->id]);
 
+    expect(EmailDeliveryLog::query()->pluck('user_id')->all())
+        ->not->toContain($viewer->id);
+
+    Queue::assertPushed(SendCriticalAlertEmailJob::class, 2);
+});
+
+it('does not duplicate logs or jobs when alert event is handled twice', function () {
+    Queue::fake();
+
+    User::factory()->create(['role_id' => Role::where('slug', 'admin')->value('id'), 'is_active' => true]);
+    User::factory()->create(['role_id' => Role::where('slug', 'manager')->value('id'), 'is_active' => true]);
+
+    $report = Report::factory()->create(['priority' => 'critical']);
+
+    app(SendCriticalReportAlerts::class)->handle(new ReportCreated($report));
+    app(SendCriticalReportAlerts::class)->handle(new ReportCreated($report));
+
+    expect(EmailDeliveryLog::query()->count())->toBe(2);
     Queue::assertPushed(SendCriticalAlertEmailJob::class, 2);
 });
 

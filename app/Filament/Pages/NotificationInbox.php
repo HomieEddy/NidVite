@@ -29,7 +29,7 @@ class NotificationInbox extends Page implements HasTable
     {
         $user = Auth::user();
 
-        return $user?->isAdmin() || $user?->isManager();
+        return $user?->is_active && ($user?->isAdmin() || $user?->isManager());
     }
 
     public static function getNavigationLabel(): string
@@ -53,13 +53,15 @@ class NotificationInbox extends Page implements HasTable
                     ->where('notifiable_id', $user->id)
                     ->latest()
             )
+            ->paginated([15, 25, 50])
             ->columns([
                 TextColumn::make('created_at')
                     ->label(__('filament.notifications.columns.date'))
                     ->dateTime('Y-m-d H:i:s')
                     ->sortable(),
-                TextColumn::make('data.message')
+                TextColumn::make('data.message_key')
                     ->label(__('filament.notifications.columns.message'))
+                    ->formatStateUsing(fn (?string $state) => $state ? __($state) : '-')
                     ->wrap()
                     ->searchable(),
                 TextColumn::make('data.tracking_id')
@@ -74,6 +76,14 @@ class NotificationInbox extends Page implements HasTable
                     ->visible(fn (DatabaseNotification $record) => $record->read_at === null)
                     ->action(function (DatabaseNotification $record): void {
                         $record->markAsRead();
+                    }),
+            ])
+            ->headerActions([
+                Action::make('mark_all_read')
+                    ->label(__('filament.notifications.actions.mark_all_read'))
+                    ->visible(fn (): bool => Auth::user()?->unreadNotifications()->exists() ?? false)
+                    ->action(function (): void {
+                        Auth::user()?->unreadNotifications->markAsRead();
                     }),
             ])
             ->emptyStateHeading(__('filament.notifications.empty_heading'));
