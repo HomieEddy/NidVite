@@ -15,6 +15,13 @@ fi
 
 chmod -R ugo+rw /.composer
 
+# Ensure Laravel runtime directories are writable in local Docker mounts.
+mkdir -p /var/www/html/storage/framework/views \
+    /var/www/html/storage/framework/cache \
+    /var/www/html/storage/framework/sessions \
+    /var/www/html/bootstrap/cache
+chmod -R ug+rwX /var/www/html/storage /var/www/html/bootstrap/cache || true
+
 # Disable Xdebug by default for performance (can be enabled via SAIL_XDEBUG_MODE=develop)
 if [ "${SAIL_XDEBUG_MODE:-off}" = "off" ]; then
     if [ -f /etc/php/8.3/cli/conf.d/20-xdebug.ini ]; then
