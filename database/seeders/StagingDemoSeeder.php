@@ -2,9 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Expense;
-use App\Models\RepairJob;
-use App\Models\Report;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -13,81 +10,101 @@ class StagingDemoSeeder extends Seeder
 {
     public function run(): void
     {
-        // Keep the demo dataset deterministic and reproducible on repeated runs.
-        DB::statement('TRUNCATE TABLE job_reports, expenses, repair_jobs, reports RESTART IDENTITY CASCADE');
+        // Minimal staging demo dataset
+        // Test insert directly without try/catch or validation
 
+        // Staging must contain no reports.
+        DB::table('job_reports')->delete();
+        DB::table('email_delivery_logs')->delete();
+        DB::table('suspicious_activities')->delete();
+        DB::table('reports')->delete();
+
+        // Staging demo should not keep operations data.
+        DB::table('job_workers')->delete();
+        DB::table('job_materials')->delete();
+        DB::table('material_purchases')->delete();
+        DB::table('expenses')->delete();
+        DB::table('repair_jobs')->delete();
+
+        // Reset demo entities for idempotent re-runs.
+        DB::table('montreal_boundary')->delete();
+        DB::table('materials')->delete();
+        DB::table('vendors')->delete();
+        DB::table('users')->delete();
+        DB::table('roles')->delete();
+        DB::table('report_categories')->delete();
+        DB::table('activity_log')->delete();
+        
+        // Create Roles
+        DB::table('roles')->updateOrInsert(
+            ['slug' => 'admin'],
+            ['label_en' => 'Administrator', 'label_fr' => 'Administrateur', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()]
+        );
+        DB::table('roles')->updateOrInsert(
+            ['slug' => 'manager'],
+            ['label_en' => 'Manager', 'label_fr' => 'Gestionnaire', 'sort_order' => 2, 'created_at' => now(), 'updated_at' => now()]
+        );
+        DB::table('roles')->updateOrInsert(
+            ['slug' => 'service_worker'],
+            ['label_en' => 'Service Worker', 'label_fr' => 'Travailleur de service', 'sort_order' => 3, 'created_at' => now(), 'updated_at' => now()]
+        );
+        DB::table('roles')->updateOrInsert(
+            ['slug' => 'accountant'],
+            ['label_en' => 'Accountant', 'label_fr' => 'Comptable', 'sort_order' => 4, 'created_at' => now(), 'updated_at' => now()]
+        );
+        DB::table('roles')->updateOrInsert(
+            ['slug' => 'viewer'],
+            ['label_en' => 'Viewer', 'label_fr' => 'Lecteur', 'sort_order' => 5, 'created_at' => now(), 'updated_at' => now()]
+        );
+
+        // Create Users
         $adminRoleId = DB::table('roles')->where('slug', 'admin')->value('id');
-        if (! is_numeric($adminRoleId)) {
-            $adminRoleId = DB::table('roles')->insertGetId([
-                'slug' => 'admin',
-                'label_en' => 'Administrator',
-                'label_fr' => 'Administrateur',
-                'sort_order' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+        $managerRoleId = DB::table('roles')->where('slug', 'manager')->value('id');
 
-        $operator = User::query()->first() ?? User::factory()->create([
-            'role_id' => (int) $adminRoleId,
-            'is_active' => true,
-            'locale' => 'fr',
+        User::updateOrCreate(
+            ['email' => 'admin@nidvite.ca'],
+            [
+                'name' => 'Administrateur',
+                'password' => 'changeme-strong-password-2026',
+                'role_id' => $adminRoleId,
+                'locale' => 'fr',
+                'is_active' => true,
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'marquize.7@nidvite.ca'],
+            [
+                'name' => 'Saad Tekiout',
+                'password' => 'changeme-strong-password-2026',
+                'role_id' => $managerRoleId,
+                'locale' => 'fr',
+                'is_active' => true,
+            ]
+        );
+
+        // Create Report Categories
+        DB::insert('INSERT INTO report_categories (slug, label_en, label_fr, icon, color, sort_order, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+            'pothole', 'Pothole', 'Nid-de-poule', 'circle-dot', '#EF4444', 1, true, now(), now(),
         ]);
 
-        $received = Report::factory()->count(12)->create([
-            'status' => 'received',
-            'is_spam' => false,
-            'neighborhood' => 'Ville-Marie',
-            'borough' => 'Ville-Marie',
+        // Create Material
+        DB::insert('INSERT INTO materials (sku, name, description, unit, current_stock, reserved_stock, min_stock_alert, avg_purchase_price, last_purchase_price, location, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+            'ASPHALT-BAGS', 'Asphalt Bags', 'Standard asphalt repair bags', 'bag', 100.0, 0.0, 20.0, '45.00', '48.50', 'Warehouse A', true, now(), now(),
         ]);
 
-        $scheduled = Report::factory()->count(8)->create([
-            'status' => 'scheduled',
-            'is_spam' => false,
-            'neighborhood' => 'Le Plateau-Mont-Royal',
-            'borough' => 'Le Plateau-Mont-Royal',
-            'first_scheduled_at' => now()->subDays(2),
+        // Create Vendor
+        DB::insert('INSERT INTO vendors (name, contact_name, email, phone, address, website, notes, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+            'Test Vendor', 'Test Contact', 'test@vendor.local', '+1-555-0100', '123 Test Street, Montreal, QC', 'https://test-vendor.local', 'Dummy vendor', true, now(), now(),
         ]);
 
-        $repaired = Report::factory()->count(10)->create([
-            'status' => 'repaired',
-            'is_spam' => false,
-            'neighborhood' => 'Rosemont-La Petite-Patrie',
-            'borough' => 'Rosemont-La Petite-Patrie',
-            'first_scheduled_at' => now()->subDays(7),
-            'first_started_at' => now()->subDays(6),
-            'completed_at' => now()->subDays(3),
+        // Create Montreal Boundary
+        $polygon = 'POLYGON((-73.95 45.52, -73.92 45.60, -73.85 45.68, -73.75 45.70, -73.65 45.68, -73.55 45.65, -73.48 45.60, -73.45 45.52, -73.48 45.45, -73.55 45.40, -73.65 45.42, -73.75 45.43, -73.85 45.45, -73.92 45.48, -73.95 45.52))';
+        DB::insert('INSERT INTO montreal_boundary (name, boundary, created_at, updated_at) VALUES (?, ST_GeomFromText(?, 4326), ?, ?)', [
+            'Island of Montreal', $polygon, now(), now(),
         ]);
 
-        $allReports = $received->concat($scheduled)->concat($repaired);
-
-        foreach ($allReports as $index => $report) {
-            $lat = 45.50 + (($index % 5) * 0.01);
-            $lng = -73.57 + (($index % 5) * 0.01);
-            $report->setLocation($lat, $lng);
-        }
-
-        foreach ($repaired as $report) {
-            $job = RepairJob::factory()->create([
-                'status' => 'completed',
-                'created_by' => $operator->getKey(),
-                'completed_at' => now()->subDays(2),
-            ]);
-
-            $job->reports()->attach($report->getKey(), [
-                'cost_allocation_percentage' => 100,
-            ]);
-
-            Expense::factory()->create([
-                'repair_job_id' => $job->getKey(),
-                'created_by' => $operator->getKey(),
-                'quantity' => 1,
-                'unit_cost' => 150,
-                'subtotal' => 150,
-                'tax_rate' => 0,
-                'tax_amount' => 0,
-                'total' => 150,
-            ]);
-        }
+        // Keep demo seed deterministic with no audit residue.
+        DB::table('activity_log')->delete();
     }
 }
