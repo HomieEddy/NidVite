@@ -36,6 +36,30 @@ return [
         ],
     ],
 
+    'notifications' => [
+        'navigation_label' => 'Notifications',
+        'heading' => 'Notification Inbox',
+        'empty_heading' => 'No notifications',
+        'columns' => [
+            'date' => 'Date',
+            'message' => 'Message',
+            'tracking_id' => 'Tracking ID',
+            'read_at' => 'State',
+        ],
+        'actions' => [
+            'mark_read' => 'Mark as read',
+        ],
+        'read' => 'Read',
+        'unread' => 'Unread',
+        'critical_report' => [
+            'subject' => 'Critical report alert',
+            'message' => 'A priority report requires your attention.',
+            'address' => 'Address',
+            'priority' => 'Priority',
+            'action' => 'View report',
+        ],
+    ],
+
     'admin' => [
         'language_switcher' => [
             'french' => 'Francais',

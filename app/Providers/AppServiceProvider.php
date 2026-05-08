@@ -7,6 +7,7 @@ use App\Health\Checks\MailConfigurationCheck;
 use App\Listeners\DetectSuspiciousReportActivity;
 use App\Listeners\EnforceAdminConcurrentSessionLimit;
 use App\Listeners\InvalidatePublicResponseCache;
+use App\Listeners\SendCriticalReportAlerts;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -35,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Login::class, EnforceAdminConcurrentSessionLimit::class);
         Event::listen(ReportCreated::class, InvalidatePublicResponseCache::class);
         Event::listen(ReportCreated::class, DetectSuspiciousReportActivity::class);
+        Event::listen(ReportCreated::class, SendCriticalReportAlerts::class);
 
         Health::checks([
             DatabaseCheck::new()->connectionName(config('database.default', 'pgsql')),
