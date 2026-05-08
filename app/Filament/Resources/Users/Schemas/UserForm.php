@@ -16,32 +16,40 @@ class UserForm
         return $schema
             ->components([
                 TextInput::make('name')
+                    ->label(__('filament.admin.fields_common.name'))
                     ->required(),
                 TextInput::make('email')
-                    ->label('Email address')
+                    ->label(__('filament.admin.resources.users.fields.email'))
                     ->email()
                     ->required(),
-                DateTimePicker::make('email_verified_at'),
                 TextInput::make('password')
+                    ->label(__('filament.admin.fields_common.password'))
                     ->password()
                     ->required(),
                 TextInput::make('uuid')
-                    ->label('UUID')
+                    ->label(__('filament.admin.resources.users.fields.uuid'))
                     ->required(),
                 Select::make('role_id')
                     ->relationship('role', 'id')
+                    ->label(__('filament.admin.fields_common.role'))
                     ->required()
                     ->default(5),
                 Textarea::make('two_factor_secret')
+                    ->label(__('filament.admin.fields_common.two_factor_secret'))
                     ->columnSpanFull(),
                 Textarea::make('two_factor_recovery_codes')
+                    ->label(__('filament.admin.fields_common.two_factor_recovery_codes'))
                     ->columnSpanFull(),
-                DateTimePicker::make('two_factor_confirmed_at'),
-                DateTimePicker::make('last_login_at'),
+                DateTimePicker::make('two_factor_confirmed_at')
+                    ->label(__('filament.admin.fields_common.two_factor_confirmed_at')),
+                DateTimePicker::make('last_login_at')
+                    ->label(__('filament.admin.fields_common.last_login_at')),
                 TextInput::make('locale')
+                    ->label(__('filament.admin.fields_common.locale'))
                     ->required()
                     ->default('fr'),
                 Toggle::make('is_active')
+                    ->label(__('filament.admin.fields_common.is_active'))
                     ->required(),
             ]);
     }

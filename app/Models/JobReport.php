@@ -14,8 +14,6 @@ class JobReport extends Model
         'repair_job_id',
         'report_id',
         'cost_allocation_percentage',
-        'cost_override_reason',
-        'repair_notes',
     ];
 
     protected $casts = [

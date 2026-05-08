@@ -61,6 +61,9 @@ jobs:
       - name: Generate app key
         run: php artisan key:generate
 
+      - name: Validate secure headers configuration
+        run: php artisan security:check-headers
+
       - name: Wait for PostgreSQL
         run: |
           until pg_isready -h localhost -p 5432 -U sail; do
@@ -150,6 +153,16 @@ jobs:
         env:
           PGPASSWORD: password
         run: psql -h localhost -p 5432 -U sail -d testing -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install npm dependencies and build
+        run: |
+          npm ci --no-progress
+          npm run build --no-progress
 
       - name: Run tests
         env:

@@ -1,6 +1,6 @@
 # Tech Stack & Dependencies
 
-This document defines the complete technology stack for NidVite. All versions are locked for the MVP phase to prevent drift.
+> Last updated: 2026-05-06 — Audited against composer.json and actual config state
 
 ---
 
@@ -8,9 +8,9 @@ This document defines the complete technology stack for NidVite. All versions ar
 
 | Technology | Version | Justification |
 |------------|---------|---------------|
-| PHP | `>= 8.3` | Required for strict typing, readonly properties, and modern Laravel features. |
-| Laravel | `^11.0` | Latest stable LTS-adjacent release. Filament 3 requires Laravel 10+. |
-| Node.js | `^20.0` | Required for Vite asset building. LTS version. |
+| PHP | `^8.2` | Laravel 11 minimum. Docker uses 8.3. |
+| Laravel | `^11.0` | Latest stable. Required for Filament v5. |
+| Node.js | `^20.0` | Vite asset building. LTS version. |
 
 ---
 
@@ -18,199 +18,161 @@ This document defines the complete technology stack for NidVite. All versions ar
 
 | Technology | Version | Justification |
 |------------|---------|---------------|
-| PostgreSQL | `>= 15` | Required for PostGIS extension. Widely supported by Laravel Sail. |
-| PostGIS | `>= 3.4` | Industry-standard spatial database. Enables `ST_DWithin`, `ST_ClusterDBSCAN`, and true-meter distance calculations via `geography` type. |
+| PostgreSQL | `>= 15` | Required for PostGIS extension. |
+| PostGIS | `>= 3.4` | Spatial queries, `ST_Contains`, `geography` type. |
+| Redis | `alpine` | Reverb scaling + future queue driver. |
 
 ---
 
-## Admin Panel & Media (Required)
+## Admin Panel & Media
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `filament/filament` | `^3.0` | Entrepreneur dashboard with map widgets, tables, and forms. |
-| `filament/spatie-laravel-media-library-plugin` | `^3.0` | Native Filament integration for "Before/After" photo uploads. |
-| `spatie/laravel-medialibrary` | `^11.0` | Photo storage, conversions, and responsive images. Configured for `local` (dev) and `r2` (prod). |
-| `intervention/image` | `^3.0` | EXIF stripping and thumbnail generation. |
+| Package | Installed Version | Config Status | Purpose |
+|---------|-------------------|---------------|---------|
+| `filament/filament` | `^5.6` | Active | Admin panel v5 (not v3 as originally planned) |
+| `spatie/laravel-medialibrary` | `^11.22` | Active (config published) | Photo storage, conversions, EXIF stripping |
+| `intervention/image` | `^3.11` | Active | Image processing, EXIF removal |
+| `pragmarx/google2fa-laravel` | `^3.0` | Active | TOTP 2FA with QR codes |
+| `bacon/bacon-qr-code` | `^3.1` | Active | QR code generation for 2FA setup |
 
----
-
-## Real-time (Required)
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `laravel/reverb` | `^1.0` | WebSocket server for real-time dashboard updates (new reports, notifications). |
+**Not installed:** `filament/spatie-laravel-media-library-plugin` (was in docs but not in composer.json)
 
 ---
 
-## Anti-Spam & Security (Required)
+## Real-time
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `spatie/laravel-honeypot` | `^3.0` | Invisible honeypot field for basic bot protection (ADR-003). |
-| `anhskohbo/no-captcha` | `^3.0` | reCAPTCHA v2 Invisible integration (ADR-003). |
-| `matanyada/laravel-postgis` | `^5.0` | PostGIS-aware Eloquent schema builder and spatial query scopes. |
-| `bepsvpt/secure-headers` | `^7.0` | Enforces security headers (CSP, HSTS, X-Frame-Options) via middleware. |
-| `jenssegers/agent` | `^2.6` | Parse User-Agent strings for device fingerprinting analytics. |
+| Package | Installed Version | Config Status | Purpose |
+|---------|-------------------|---------------|---------|
+| `laravel/reverb` | `^1.10` | Active (config published) | WebSocket server for dashboard notifications |
 
 ---
 
-## Auth & RBAC (Required)
+## Anti-Spam & Security
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `laravel/fortify` | `^1.0` | Auth scaffolding with 2FA, password reset, session management (ADR-008). |
+| Package | Installed Version | Config Status | Purpose |
+|---------|-------------------|---------------|---------|
+| `spatie/laravel-honeypot` | `^4.7` | Active (config published) | Invisible honeypot field |
+| `anhskohbo/no-captcha` | `^3.8` | Active (config published) | reCAPTCHA v2 (installed but not enforced in form validation) |
+| `bepsvpt/secure-headers` | `^9.1` | Installed (not actively configured) | Security headers middleware |
+| `jenssegers/agent` | `^2.6` | Installed | User-agent parsing for device fingerprinting |
 
----
-
-## Mail & Notifications (Required)
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `resend/resend-laravel` | `^0.1` | Official Resend mail driver for Laravel. Handles the Automated Email Loop. |
+**Not installed:** `matanyada/laravel-postgis` (was in docs but not in composer.json — PostGIS queries done natively)
 
 ---
 
-## PWA (Required)
+## Auth & RBAC
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `silviolleite/laravelpwa` | `^2.0` | Service worker, `manifest.json`, and offline support for the citizen-facing PWA. |
+| Package | Installed Version | Config Status | Purpose |
+|---------|-------------------|---------------|---------|
+| `laravel/fortify` | `^1.37` | Active (config published) | Auth scaffolding with 2FA + passkeys |
 
 ---
 
-## Maps (Required)
+## Mail
+
+| Package | Installed Version | Config Status | Purpose |
+|---------|-------------------|---------------|---------|
+| `resend/resend-laravel` | `^1.3` | Active | Resend mail driver for transactional emails |
+
+---
+
+## PWA
+
+| Package | Installed Version | Config Status | Purpose |
+|---------|-------------------|---------------|---------|
+| `silviolleite/laravelpwa` | `^2.0` | Active (config published) | Service worker, manifest, offline support |
+
+---
+
+## Maps
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| MapLibre GL JS | `^4.0` | Open-source map renderer. Used in both the PWA and the Filament dashboard. |
-| MapTiler | Free Tier | Vector tile provider. API key required. Sufficient for MVP traffic. |
+| Leaflet | CDN-loaded | Used in public map page and tracking page |
+| MapLibre GL JS | NOT YET | Planned for Filament dashboard (not currently used) |
+| MapTiler | NOT YET | Planned but not yet integrated |
+
+**Note:** The public map and tracking pages currently use Leaflet via CDN, not MapLibre. The admin map widget is an iframe of the Leaflet page.
 
 ---
 
-## Testing (Required)
+## Testing
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `pestphp/pest` | `^3.0` | Primary TDD framework. Expressive syntax over PHPUnit. |
-| `pestphp/pest-plugin-laravel` | `^3.0` | Pest bindings for Laravel (factories, HTTP testing, etc.). |
-| `pestphp/pest-plugin-livewire` | `^3.0` | Testing Livewire components in isolation. |
-| `pestphp/pest-plugin-faker` | `^3.0` | Fake data generation for tests (coordinates, emails, etc.). |
-| `nunomaduro/larastan` | `^2.0` | Laravel-aware PHPStan (Level 5+). |
+| Package | Installed Version | Config Status | Purpose |
+|---------|-------------------|---------------|---------|
+| `pestphp/pest` | `^2.0` | Active | Test framework (v2, not v3 as originally planned) |
+| `pestphp/pest-plugin-laravel` | `^2.0` | Active | Laravel bindings |
+| `pestphp/pest-plugin-faker` | `^2.0` | Active | Fake data generation |
+| `nunomaduro/larastan` | `^2.0` | Active | PHPStan Level 5 |
 
----
-
-## Audit & Logging (Required)
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `spatie/laravel-activitylog` | `^4.0` | Audit trail for report status changes (who changed what and when). |
+**Not installed:** `pestphp/pest-plugin-livewire` (was in docs but not in composer.json)
 
 ---
 
-## Monitoring & Observability (Required)
+## Audit & Logging
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `sentry/sentry-laravel` | `^4.0` | Production error tracking, performance monitoring, and session replay. Free tier: 5k errors/month. |
-| `spatie/laravel-health` | `^1.0` | System status endpoint (`/health`) for Railway uptime checks. |
-| `spatie/laravel-schedule-monitor` | `^1.0` | Alerts if scheduled tasks (clustering job) fail or don't run on time. |
+| Package | Installed Version | Config Status | Purpose |
+|---------|-------------------|---------------|---------|
+| `spatie/laravel-activitylog` | `^4.12` | Active (config published) | Audit trail on Report changes |
 
 ---
 
-## Performance & Caching (Required)
+## Monitoring & Observability
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `appstract/laravel-opcache` | `^4.0` | OPcache management. Clear stale bytecode after each Railway deploy. |
-| `spatie/laravel-response-cache` | `^7.0` | Cache HTTP responses (e.g., "Track Report" page) to reduce PostGIS queries. |
-| `spatie/laravel-backup` | `^8.0` | Automated database backups to R2. Critical for partition recovery. |
-
----
-
-## Export (Required)
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `maatwebsite/laravel-excel` | `^3.1` | Export expense reports, job sheets, and analytics to Excel/PDF. |
+| Package | Installed Version | Config Status | Purpose |
+|---------|-------------------|---------------|---------|
+| `sentry/sentry-laravel` | `^4.25` | **Installed but NOT configured** | Error tracking (no config/sentry.php) |
+| `spatie/laravel-health` | `^1.39` | **Installed but NOT configured** | Health checks (no config/health.php, no checks) |
+| `spatie/laravel-schedule-monitor` | `^4.3` | **Installed but NOT configured** | Schedule monitoring (no scheduled tasks) |
 
 ---
 
-## Development Tools (Dev-only)
+## Performance & Caching
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `barryvdh/laravel-debugbar` | `^3.0` | Local query profiling, memory usage, and route debugging. Essential for optimizing PostGIS queries. |
-| `laravel/pint` | `^1.0` | Automated code formatting with the `laravel` preset. |
-| `laravel/telescope` | `^5.0` | Local debugging dashboard for requests, exceptions, logs, and mail. **Never enable in production.** |
+| Package | Installed Version | Config Status | Purpose |
+|---------|-------------------|---------------|---------|
+| `spatie/laravel-backup` | `^9.0` | **Installed but NOT configured** | DB backups to R2 (no config/backup.php) |
+
+**Not installed (despite being in docs):**
+- `appstract/laravel-opcache` — NOT in composer.json
+- `spatie/laravel-response-cache` — NOT in composer.json
 
 ---
 
-## Composer Installation Command
+## Export
 
-Run this after `composer create-project` to install all MVP dependencies:
+| Package | Installed Version | Config Status | Purpose |
+|---------|-------------------|---------------|---------|
+| `maatwebsite/laravel-excel` | `^3.1` | **Installed but NOT used** | No export classes created yet |
 
-```bash
-# Core
-composer require filament/filament:"^3.0" \
-    filament/spatie-laravel-media-library-plugin:"^3.0" \
-    spatie/laravel-medialibrary:"^11.0" \
-    intervention/image:"^3.0" \
-    matanyada/laravel-postgis:"^5.0"
+---
 
-# Real-time
-composer require laravel/reverb:"^1.0"
+## Development Tools
 
-# Anti-spam & Security
-composer require spatie/laravel-honeypot:"^3.0" \
-    anhskohbo/no-captcha:"^3.0" \
-    bepsvpt/secure-headers:"^7.0" \
-    jenssegers/agent:"^2.6"
+| Package | Installed Version | Purpose |
+|---------|-------------------|---------|
+| `laravel/sail` | `^1.26` | Docker dev environment |
+| `laravel/telescope` | `^5.0` | Local debug dashboard (config published) |
+| `laravel/pint` | `^1.13` | Code formatting (enforced in CI) |
+| `barryvdh/laravel-debugbar` | `^3.0` | Query profiling (config published) |
 
-# Auth & RBAC
-composer require laravel/fortify:"^1.0"
+---
 
-# Mail
-composer require resend/resend-laravel:"^0.1"
+## Configuration Status Summary
 
-# PWA
-composer require silviolleite/laravelpwa:"^2.0"
-
-# Audit
-composer require spatie/laravel-activitylog:"^4.0"
-
-# Monitoring
-composer require sentry/sentry-laravel:"^4.0" \
-    spatie/laravel-health:"^1.0" \
-    spatie/laravel-schedule-monitor:"^1.0"
-
-# Performance
-composer require appstract/laravel-opcache:"^4.0" \
-    spatie/laravel-response-cache:"^7.0" \
-    spatie/laravel-backup:"^8.0"
-
-# Export
-composer require maatwebsite/laravel-excel:"^3.1"
-
-# Dev
-composer require --dev pestphp/pest:"^3.0" \
-    pestphp/pest-plugin-laravel:"^3.0" \
-    pestphp/pest-plugin-livewire:"^3.0" \
-    pestphp/pest-plugin-faker:"^3.0" \
-    nunomaduro/larastan:"^2.0" \
-    barryvdh/laravel-debugbar:"^3.0" \
-    laravel/pint:"^1.0" \
-    laravel/telescope:"^5.0"
-```
+| Status | Count | Packages |
+|--------|-------|----------|
+| **Active & Configured** | 14 | filament, medialibrary, image, reverb, fortify, honeypot, no-captcha, resend, laravelpwa, activitylog, google2fa, bacon-qr, agent, pest/larastan |
+| **Installed but NOT Configured** | 4 | sentry, health, schedule-monitor, backup |
+| **Installed but NOT Used** | 2 | excel (no export classes), secure-headers (not active) |
+| **In Docs but NOT Installed** | 4 | opcache, response-cache, postgis-eloquent, filament-media-plugin |
 
 ---
 
 ## npm Dependencies
 
 ```bash
-npm install maplibre-gl
+npm install maplibre-gl  # Planned but not yet used (Leaflet used instead)
 ```
-
-MapLibre GL JS is loaded via Vite. The MapTiler API key is injected via a Blade `@env` directive or global `window` variable.
 
 ---
 
@@ -218,17 +180,16 @@ MapLibre GL JS is loaded via Vite. The MapTiler API key is injected via a Blade 
 
 | Category | Rejected Option | Reason |
 |----------|-----------------|--------|
-| Admin Panel | Custom Livewire CRUD | Filament provides map widgets, tables, and forms out-of-the-box. Building raw CRUD would take 2-3x longer. |
-| Maps | Mapbox GL JS | MapLibre is open-source and avoids vendor lock-in. Mapbox requires a paid plan at higher volumes. |
-| Maps | Leaflet | Raster-based. MapLibre provides smoother vector rendering and better clustering performance. |
-| Storage | AWS S3 | Cloudflare R2 has zero egress fees. For a bootstrapped MVP, this is a significant cost advantage. |
-| Queue | Redis | Database queue driver is sufficient for MVP traffic. Redis can be adopted later without code changes. |
-| Anti-Spam | reCAPTCHA v3 | Score-based system is harder to test and reason about during MVP. v2 Invisible is more predictable. |
-| PWA | Hand-rolled SW | `silviolleite/laravelpwa` handles manifest generation and service worker scaffolding, saving ~1 hour of setup. |
-| Real-time | Pusher | Reverb is Laravel-native, free, and integrates seamlessly with Laravel Echo. |
-| Auth | Laravel Breeze | Fortify provides headless auth (API + web) with 2FA built-in. Better for Filament integration. |
-| Export | Custom CSV | `laravel-excel` handles formatting, styling, and multiple sheet exports with minimal code. |
+| Admin Panel | Custom Livewire CRUD | Filament provides widgets, tables, forms out-of-box |
+| Maps (public) | MapLibre GL JS | Leaflet simpler for MVP; MapLibre planned for admin |
+| Storage | AWS S3 | Cloudflare R2 has zero egress fees |
+| Queue | Redis | Database queue sufficient for MVP |
+| Anti-Spam | reCAPTCHA v3 | v2 Invisible more predictable |
+| PWA | Hand-rolled SW | laravelpwa handles manifest + SW scaffolding |
+| Real-time | Pusher | Reverb is Laravel-native and free |
+| Auth | Laravel Breeze | Fortify provides headless auth with 2FA |
+| Export | Custom CSV | laravel-excel handles formatting + multi-sheet |
 
 ---
 
-*This document is a living record. Propose changes via PR with a tech-debt justification.*
+*Updated 2026-05-06 — Reflects actual composer.json and config state.*

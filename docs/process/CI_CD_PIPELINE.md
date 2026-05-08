@@ -13,9 +13,9 @@ This document defines the continuous integration and continuous deployment (CI/C
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
        │                  │                  │                  │
        ▼                  ▼                  ▼                  ▼
-Local testing        Branch: feature/*    GitHub Actions    Production
-(Pest, Pint,         → develop            - Pest tests       Environment
- PHPStan)            Branch: develop      - Laravel Pint
+Local testing        Branch: feat/*       GitHub Actions    Production
+(Pest, Pint,         → main               - Pest tests       Environment
+ PHPStan)            Branch: hotfix/*     - Laravel Pint
                      → main               - PHPStan L5
                                           - CodeRabbit AI
 ```
@@ -45,9 +45,9 @@ Before opening any PR, the developer must run:
 
 ### Stage 2: Pull Request (GitHub)
 
-#### PR to `develop` (Integration Gate)
+#### PR to `main` (Primary Gate)
 
-Triggered by: Opening a PR from `feature/*` or `bugfix/*` → `develop`
+Triggered by: Opening a PR from `feat/*`, `fix/*`, `chore/*`, `test/*`, or `hotfix/*` → `main`
 
 **Automated Checks:**
 1. **GitHub Actions CI** runs:
@@ -65,32 +65,15 @@ Triggered by: Opening a PR from `feature/*` or `bugfix/*` → `develop`
 
 **Merge Requirements:**
 - [ ] All GitHub Actions checks pass (green)
-- [ ] CodeRabbit review completed with no `request_changes`
+- [ ] CodeRabbit review completed
+- [ ] All CodeRabbit `request_changes` feedback fixed and pushed
+- [ ] Re-review requested after fixes (`@coderabbitai review`)
+- [ ] Final CodeRabbit status is green (`SUCCESS`) or skip reason documented
 - [ ] Author self-review completed
 - [ ] PR description includes "How to Test"
 
 **Merge Method**: Squash and Merge
-- Condenses feature commits into a single commit on `develop`
-- Keeps `develop` history clean and readable
-
----
-
-#### PR to `main` (Production Gate)
-
-Triggered by: Opening a PR from `develop` → `main` (or `hotfix/*` → `main`)
-
-**Automated Checks:**
-- Same as Stage 2 (GitHub Actions + CodeRabbit)
-
-**Additional Requirements:**
-- [ ] All checks from `develop` → `main` PR pass
-- [ ] CodeRabbit approved
-- [ ] **1 human review required** (branch protection rule)
-- [ ] No merge conflicts with `main`
-
-**Merge Method**: Merge Commit
-- Preserves the integration history from `develop`
-- Creates a clear release boundary in `main`
+- Condenses branch commits into a single clean commit on `main`
 
 **Branch Protection Rules for `main`:**
 ```
@@ -107,17 +90,49 @@ Triggered by: Opening a PR from `develop` → `main` (or `hotfix/*` → `main`)
 ✓ Allow deletions: No
 ```
 
-**Branch Protection Rules for `develop`:**
+### CodeRabbit Review and Fix Loop (Required)
+
+After opening a PR, run this loop until green:
+
+1. Check review status:
+
+```bash
+gh pr view <branch> --json statusCheckRollup
 ```
-✓ Require a pull request before merging
-  ✓ Dismiss stale PR approvals when new commits are pushed
-✓ Require status checks to pass before merging
-  ✓ GitHub Actions CI (Pest, Pint, PHPStan)
-  ✓ CodeRabbit AI Review
-✓ Require branches to be up to date before merging
-✓ Allow force pushes: No
-✓ Allow deletions: No
+
+2. Read review comments:
+
+```bash
+gh pr view <branch> --json comments
 ```
+
+3. Apply all actionable fixes.
+4. Re-run local quality gates:
+
+```bash
+./vendor/bin/pest
+./vendor/bin/pint
+./vendor/bin/phpstan analyse --level=5
+```
+
+5. Commit and push review fixes:
+
+```bash
+git add .
+git commit -m "fix(review): address CodeRabbit feedback"
+git push
+```
+
+6. Trigger re-review:
+
+```bash
+gh pr comment <pr-number> --body "@coderabbitai review"
+```
+
+7. Merge only when:
+- CodeRabbit status is `SUCCESS` (or documented skip reason)
+- No unresolved `request_changes`
+- CI checks are green
 
 ---
 
@@ -148,16 +163,14 @@ For critical production bugs requiring immediate deployment:
 
 ```
 main ──branch──> hotfix/critical-fix ──PR──> main ──deploy──> Railway
-                        │
-                        └──back-merge──> develop
 ```
 
 1. Branch from `main`: `git checkout main && git checkout -b hotfix/critical-fix`
 2. Apply minimal fix, test locally
 3. Open PR to `main` with `[HOTFIX]` prefix in title
-4. Expedited review (bypass normal queue if needed)
-5. Merge to `main` → auto-deploy
-6. **Immediately** open a second PR to back-merge `main` into `develop`
+4. Complete required CodeRabbit review/fix/re-review loop
+5. Expedited human review if needed
+6. Merge to `main` → auto-deploy
 
 ---
 
@@ -170,9 +183,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main]
   push:
-    branches: [develop, main]
+    branches: [main]
 
 jobs:
   test:
@@ -257,15 +270,14 @@ jobs:
 
 ## CI/CD Checklist
 
-Before merging to `develop`:
+Before merging to `main`:
 - [ ] Local tests pass (`pest`, `pint`, `phpstan`)
 - [ ] PR opened with description + "How to Test"
 - [ ] GitHub Actions CI passes
-- [ ] CodeRabbit AI review approved
+- [ ] CodeRabbit review completed
+- [ ] CodeRabbit feedback fixed and pushed
+- [ ] Re-review requested and final status is green
 - [ ] Self-review completed
-
-Before merging to `main`:
-- [ ] All of the above
 - [ ] 1 human reviewer approved
 - [ ] Branch is up to date with `main`
 - [ ] No breaking migrations without rollback plan

@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -29,16 +30,22 @@ class Report extends Model implements HasMedia
     {
         static::creating(function (Report $report) {
             $report->uuid ??= (string) Str::uuid();
+            $report->public_tracking_id ??= static::generatePublicTrackingId();
             $report->status ??= ReportStatus::Received->value;
+            $report->ip_address_raw ??= request()->ip();
+
+            $fingerprint = request()->attributes->get('device_fingerprint_hash');
+            if (is_string($fingerprint) && $fingerprint !== '') {
+                $report->device_fingerprint_hash = $fingerprint;
+            }
         });
     }
 
     protected $fillable = [
         'uuid',
+        'public_tracking_id',
         'reporter_email',
         'preferred_locale',
-        'email_verified_at',
-        'location_accuracy',
         'address',
         'neighborhood',
         'borough',
@@ -46,14 +53,11 @@ class Report extends Model implements HasMedia
         'priority',
         'category_id',
         'description',
-        'ip_address_hash',
         'ip_address_raw',
-        'user_agent_hash',
+        'archive_path',
+        'archived_at',
         'geofence_passed',
-        'geofence_checked_at',
-        'submission_duration_ms',
         'is_spam',
-        'spam_score',
         'rejection_reason',
         'admin_notes',
         'first_scheduled_at',
@@ -64,16 +68,13 @@ class Report extends Model implements HasMedia
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
         'geofence_passed' => 'boolean',
-        'geofence_checked_at' => 'datetime',
-        'submission_duration_ms' => 'integer',
         'is_spam' => 'boolean',
-        'spam_score' => 'float',
         'first_scheduled_at' => 'datetime',
         'first_started_at' => 'datetime',
         'target_completion_at' => 'datetime',
         'completed_at' => 'datetime',
+        'archived_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
 
@@ -91,6 +92,16 @@ class Report extends Model implements HasMedia
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
     }
 
+    public function signedPhotoUrls(int $ttlMinutes = 5): array
+    {
+        $expiresAt = now()->addMinutes($ttlMinutes);
+
+        return $this->getMedia('report-photos')
+            ->map(fn ($media) => URL::temporarySignedRoute('media.signed', $expiresAt, ['media' => $media->getKey()]))
+            ->values()
+            ->all();
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(ReportCategory::class, 'category_id');
@@ -99,13 +110,18 @@ class Report extends Model implements HasMedia
     public function repairJobs(): BelongsToMany
     {
         return $this->belongsToMany(RepairJob::class, 'job_reports')
-            ->withPivot(['cost_allocation_percentage', 'cost_override_reason', 'repair_notes'])
+            ->withPivot(['cost_allocation_percentage'])
             ->withTimestamps();
     }
 
     public function jobReports(): HasMany
     {
         return $this->hasMany(JobReport::class);
+    }
+
+    public function suspiciousActivities(): HasMany
+    {
+        return $this->hasMany(SuspiciousActivity::class);
     }
 
     /**
@@ -233,5 +249,14 @@ class Report extends Model implements HasMedia
                 'location' => [__('report.validation.outside_montreal')],
             ]);
         }
+    }
+
+    protected static function generatePublicTrackingId(): string
+    {
+        do {
+            $candidate = 'MTL'.strtoupper(Str::random(8));
+        } while (static::query()->where('public_tracking_id', $candidate)->exists());
+
+        return $candidate;
     }
 }

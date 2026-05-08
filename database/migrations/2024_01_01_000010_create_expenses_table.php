@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::create('expenses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('repair_job_id')->constrained('repair_jobs')->cascadeOnDelete();
-            $table->unsignedSmallInteger('category_id');
             $table->foreignId('material_id')->nullable()->constrained('materials')->nullOnDelete();
             $table->string('description', 500);
             $table->float('quantity')->default(1);
@@ -28,7 +27,7 @@ return new class extends Migration
             $table->foreignId('created_by')->constrained('users');
             $table->timestamps();
 
-            $table->foreign('category_id')->references('id')->on('expense_categories');
+            // category_id removed - expenses no longer categorized
         });
     }
 

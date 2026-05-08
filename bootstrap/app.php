@@ -1,9 +1,14 @@
 <?php
 
+use App\Http\Middleware\GenerateDeviceFingerprint;
+use App\Http\Middleware\RemovePermissionsPolicyHeader;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\ThrottleReportSubmission;
+use Bepsvpt\SecureHeaders\SecureHeadersMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Sentry\Laravel\Integration;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,8 +17,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->web(SetLocale::class);
+        $middleware->append(SecureHeadersMiddleware::class);
+        $middleware->append(RemovePermissionsPolicyHeader::class);
+
+        $middleware->web(append: [
+            SetLocale::class,
+            GenerateDeviceFingerprint::class,
+            ThrottleReportSubmission::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        Integration::handles($exceptions);
     })->create();

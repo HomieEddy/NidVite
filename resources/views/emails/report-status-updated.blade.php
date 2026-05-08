@@ -1,7 +1,7 @@
 @php($locale = $locale ?? 'fr')
 
 <x-mail::message>
-# {{ __('email.status_updated.greeting', ['uuid' => $report->uuid], $locale) }}
+# {{ __('email.status_updated.greeting', ['uuid' => $report->public_tracking_id], $locale) }}
 
 {{ __('email.status_updated.body', [
     'old' => __("status.{$oldStatus}", [], $locale),
@@ -13,12 +13,12 @@
 @endif
 
 <x-mail::panel>
-**{{ __('tracking.Numéro', [], $locale) }}:** {{ $report->uuid }}<br>
+**{{ __('tracking.Numéro', [], $locale) }}:** {{ $report->public_tracking_id }}<br>
 **{{ __('tracking.Date', [], $locale) }}:** {{ $report->created_at->translatedFormat('j F Y') }}<br>
 **{{ __('tracking.Statut actuel', [], $locale) }}:** {{ __("status.{$report->status}", [], $locale) }}
 </x-mail::panel>
 
-<x-mail::button :url="route('report.tracking', $report->uuid)">
+<x-mail::button :url="route('report.tracking', $report->public_tracking_id)">
 {{ __('email.status_updated.track_button', [], $locale) }}
 </x-mail::button>
 

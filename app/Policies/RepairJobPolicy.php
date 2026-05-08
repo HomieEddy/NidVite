@@ -41,4 +41,16 @@ class RepairJobPolicy
     {
         return $user->isAdmin();
     }
+
+    public function assignWorkers(User $user, RepairJob $repairJob): bool
+    {
+        return $user->is_active && ($user->isAdmin() || $user->isManager());
+    }
+
+    public function selfAssign(User $user, RepairJob $repairJob): bool
+    {
+        return $user->is_active
+            && $user->isServiceWorker()
+            && in_array($repairJob->status, ['planned', 'in_progress'], true);
+    }
 }

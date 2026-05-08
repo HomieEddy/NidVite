@@ -50,7 +50,7 @@ class ReportsOverview extends StatsOverviewWidget
 
     private function getMoneySpent(): string
     {
-        $total = (float) Expense::sum('amount');
+        $total = (float) Expense::sum('total');
 
         return '$'.number_format($total, 2);
     }

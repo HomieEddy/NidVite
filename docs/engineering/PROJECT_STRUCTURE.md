@@ -1,169 +1,226 @@
 # Project Structure & Conventions
 
-This document defines the directory layout and coding conventions for NidVite. All developers must follow these rules to maintain consistency.
+> Last updated: 2026-05-06 — Audited against actual codebase
 
 ---
 
-## Directory Layout
+## Actual Directory Layout
 
 ```
 app/
-├── Actions/                    # Business logic units (single responsibility)
-│   ├── Reports/
-│   │   ├── CreateReport.php         # Handles zero-auth report creation
-│   │   ├── ValidateGeofence.php     # PostGIS check: is this in Montreal?
-│   │   └── ClusterNearbyReports.php # 5m proximity clustering (queue job logic)
-│   └── Mail/
-│       └── SendJobCompletionEmail.php # Resend email dispatch
+├── Actions/                         # Fortify action classes (not business logic actions)
+│   └── Fortify/
+│       ├── CreateNewUser.php
+│       ├── PasswordValidationRules.php
+│       ├── ResetUserPassword.php
+│       ├── UpdateUserPassword.php
+│       └── UpdateUserProfileInformation.php
+├── Enums/
+│   └── ReportStatus.php            # State machine: received→verified→scheduled→in_progress→repaired/rejected
+├── Events/
+│   └── ReportCreated.php           # Broadcasts on private-admin.reports channel
 ├── Filament/
 │   ├── Resources/
-│   │   └── ReportResource.php       # CRUD + map widget for entrepreneur
+│   │   ├── ReportResource.php      # CRUD with status/priority badges, filters, location modal
+│   │   ├── UserResource.php        # Basic CRUD
+│   │   ├── RepairJobResource.php   # Basic CRUD
+│   │   ├── ExpenseResource.php     # CRUD with vendor selector
+│   │   └── VendorResource.php      # Basic CRUD
 │   └── Widgets/
-│       └── MapWidget.php            # MapLibre embed in dashboard
-├── Livewire/
-│   ├── ReportForm.php               # Citizen: submit a report
-│   ├── PhotoUploader.php            # Citizen: camera/photo handling
-│   └── TrackReport.php              # Citizen: status lookup by UUID
-├── Models/
-│   ├── Report.php                   # Core entity: reports table
-│   └── User.php                     # Entrepreneur login only
-├── Rules/
-│   └── WithinMontrealGeofence.php   # Custom validation rule for PostGIS
-└── Providers/
-    └── AppServiceProvider.php       # Container bindings
+│       ├── ReportsOverview.php     # 4 KPI cards
+│       ├── ReportsChart.php        # 30-day line chart
+│       ├── ReportsByNeighborhood.php  # Top 10 bar chart
+│       └── ReportsMap.php          # Iframe of public map
+├── Http/
+│   ├── Controllers/
+│   │   ├── Controller.php          # Base (empty)
+│   │   ├── MapController.php      # /carte page + GeoJSON API
+│   │   └── ReportTrackingController.php  # /suivi/{uuid} + JSON lookup
+│   └── Middleware/
+│       └── SetLocale.php           # Session-based locale switching
+├── Mail/
+│   └── ReportStatusUpdated.php     # Queued mailable, bilingual via preferred_locale
+├── Models/                         # 13 Eloquent models
+│   ├── User.php                    # Role checks, UUID auto-gen, HasAppAuthentication
+│   ├── Role.php                    # 5 roles: admin, manager, service_worker, accountant, viewer
+│   ├── Report.php                  # State machine, LogsActivity, SoftDeletes, InteractsWithMedia
+│   ├── ReportCategory.php         # Lookup table (pothole, graffiti, etc.)
+│   ├── RepairJob.php              # UUID auto-gen, BelongsToMany reports/workers/materials
+│   ├── Expense.php                # GST+QST tax fields, BelongsTo vendor
+│   ├── Vendor.php                 # Supplier management
+│   ├── Material.php               # current_stock, reserved_stock, min_stock_alert
+│   ├── MaterialPurchase.php       # Purchase logging with stock update tracking
+│   ├── JobReport.php              # Pivot: repair_job + report, cost_allocation_percentage
+│   ├── JobWorker.php              # Pivot: repair_job + user, role_in_job, hours_worked
+│   ├── JobMaterial.php            # Pivot: repair_job + material, quantity_planned/actual
+│   └── MontrealBoundary.php      # Static contains(lat,lng) for geofencing
+├── Policies/
+│   ├── ReportPolicy.php           # Admin/Manager can update; Admin only can delete
+│   ├── UserPolicy.php             # Admin-only access
+│   ├── RepairJobPolicy.php        # Admin/Manager/ServiceWorker can create/update
+│   └── ExpensePolicy.php          # Admin/Accountant can create/update
+├── Providers/
+│   ├── AppServiceProvider.php
+│   ├── AuthServiceProvider.php    # Policy registrations
+│   ├── BroadcastServiceProvider.php
+│   ├── EventServiceProvider.php
+│   ├── Filament/
+│   │   └── AdminPanelProvider.php # Filament v5 panel, 2FA, Reverb scripts hook
+│   └── FortifyServiceProvider.php
+└── Services/
+    └── ExifStripper.php           # Strips EXIF from uploaded images (Imagick + GD)
 
 database/
-├── migrations/                      # All migrations must have down()
-└── seeders/
-    └── MontrealBoundarySeeder.php   # GeoJSON boundary import
+├── migrations/                     # 27 migration files
+│   ├── 0001_01_01_*               # Laravel defaults (users, cache, jobs)
+│   ├── 2024_01_01_*               # Core tables (media, activity_log, roles, reports, etc.)
+│   ├── 2026_05_04_*               # Passkeys, nullable location, telescope
+│   └── 2026_05_06_*               # Cleanup: drop clutter, add vendors, fix constraints
+├── seeders/
+│   ├── AdminUserSeeder.php        # Creates default admin user
+│   ├── DatabaseSeeder.php         # Main seeder
+│   ├── MontrealBoundarySeeder.php # Imports GeoJSON boundary
+│   ├── ReportCategorySeeder.php   # Pothole, graffiti, etc.
+│   ├── RoleSeeder.php             # 5 RBAC roles
+│   └── TestDataSeeder.php         # Development test data
+└── factories/                      # 5 factories: User, Report, ReportCategory, RepairJob, Expense
 
 resources/
 ├── views/
-│   ├── components/                  # Reusable Blade/MaryUI components
-│   ├── livewire/                    # Livewire component views
-│   └── layouts/                     # App layouts (PWA + Dashboard)
-└── js/
-    └── maplibre-config.js           # MapLibre center, zoom, style
+│   ├── welcome.blade.php           # Citizen homepage: stats, tracking modal (Alpine.js)
+│   ├── report.blade.php            # Report form page with <livewire:report-form />
+│   ├── tracking.blade.php          # Report tracking with timeline + Leaflet map
+│   ├── map.blade.php               # Public map: Leaflet + GeoJSON + color markers
+│   ├── layouts/
+│   │   └── citizen.blade.php      # PWA meta, Inter font, FR/EN switch, mobile nav
+│   ├── components/
+│   │   └── ⚡report-form.blade.php # Anonymous Livewire component (inline class)
+│   ├── emails/
+│   │   └── report-status-updated.blade.php  # Markdown email template
+│   └── filament/
+│       ├── widgets/reports-map.blade.php     # Iframe for admin dashboard
+│       └── modals/report-location.blade.php  # Location viewer modal
+├── js/
+│   ├── app.js                      # Main entry
+│   ├── bootstrap.js                # Axios setup
+│   ├── echo.js                     # Laravel Echo + Reverb config
+│   └── reverb-listener.js          # Admin notification listener
+├── css/
+│   └── app.css                     # Tailwind imports
+└── lang/                           # Bilingual translations
+    ├── fr/                         # French (default)
+    │   ├── report.php
+    │   ├── map.php
+    │   ├── tracking.php
+    │   ├── email.php
+    │   └── dashboard.php
+    └── en/                         # English
+        ├── report.php
+        ├── map.php
+        ├── tracking.php
+        ├── email.php
+        └── dashboard.php
 
 routes/
-├── web.php                          # PWA routes (report, track)
-└── admin.php                        # Filament handles its own, but custom admin routes go here
+├── web.php                         # 7 routes: home, /signaler, /suivi/{uuid}, /carte, /locale/{locale}, API endpoints
+├── channels.php                    # 1 channel: private-admin.reports
+└── console.php                     # Default inspire command only
 
 tests/
-├── Feature/                         # Pest feature tests (HTTP, Livewire)
-│   ├── ReportSubmissionTest.php
-│   └── GeofencingTest.php
-├── Unit/                            # Pest unit tests (Actions, Rules)
-│   ├── Actions/
-│   └── Rules/
-└── Browser/                         # Dusk tests (if adopted later)
+├── Pest.php                        # Pest bootstrap
+├── TestCase.php                    # Base test case
+├── Unit/
+│   └── ExampleTest.php             # Default
+└── Feature/
+    ├── ReportStateMachineTest.php  # ~17 tests
+    ├── GeofencingTest.php          # ~5 tests
+    ├── ReportFormTest.php          # ~2 tests
+    ├── ReportTrackingTest.php      # ~5 tests
+    ├── EmailNotificationTest.php   # ~6 tests
+    ├── RbacPolicyTest.php          # ~16 tests
+    ├── ReverbNotificationTest.php  # ~4 tests
+    ├── AdminDashboardTest.php      # ~2 tests
+    ├── ModelsTest.php              # ~6 tests
+    └── ExampleTest.php             # Default
 ```
 
 ---
 
 ## Conventions
 
-### 1. Actions Over Fat Controllers
+### 1. Anonymous Livewire Components
 
-All business logic belongs in `app/Actions/`. Livewire components and controllers are thin orchestrators.
+The report form uses an anonymous Livewire component (inline class in the Blade file) rather than a traditional `app/Livewire/` class. The `app/Livewire/` directory does not exist.
 
-**Bad:**
-```php
-class ReportForm extends Component
-{
-    public function submit()
-    {
-        // 50 lines of PostGIS logic inline
-    }
+```blade
+{{-- resources/views/components/⚡report-form.blade.php --}}
+@php
+new class extends Component {
+    use WithFileUploads, UsesSpamProtection;
+    // ...
 }
+@endphp
 ```
 
-**Good:**
-```php
-class ReportForm extends Component
-{
-    public function submit()
-    {
-        $report = (new CreateReport)->execute($this->state);
-        redirect()->route('track', $report->uuid);
-    }
-}
-```
+### 2. Business Logic in Models
 
-### 2. PostGIS Logic Lives in Actions Only
+Unlike the original convention of using Action classes, business logic currently lives in models and Livewire components. For example:
+- `Report::transitionTo()` handles state machine + email + activity logging
+- `MontrealBoundary::contains()` handles geofence validation
+- The report-form component handles geocoding, EXIF stripping, and media storage inline
 
-Raw spatial queries (`ST_DWithin`, `ST_Within`, `ST_ClusterDBSCAN`) must never appear in controllers, Livewire components, or Blade views. They belong in dedicated Action classes or Eloquent query scopes within the model.
+**Future direction:** Extract complex operations into Action classes as the codebase grows.
+
+### 3. PostGIS Logic in Models and Controllers
+
+Spatial queries are in Eloquent scopes and the MontrealBoundary model. Raw SQL is minimal:
 
 ```php
 // app/Models/Report.php
-public function scopeWithinMontreal($query)
-{
-    return $query->whereRaw('ST_Within(location, (SELECT boundary FROM montreal_boundary LIMIT 1))');
-}
+public function scopeNear($query, $lat, $lng, $radiusKm)
+public function scopeStatus($query, $status)
+
+// app/Models/MontrealBoundary.php
+public static function contains(float $lat, float $lng): bool
 ```
 
-### 3. Filament Resources Follow the Full Lifecycle
+### 4. Filament Resources Follow the Full Lifecycle
 
-Filament `Resource` classes must define:
-- `form()` — with validation rules
-- `table()` — with filters and actions
-- `getPages()` — for custom map views
-- Authorization via `ReportPolicy`
+Filament Resource classes define `form()`, `table()`, and `getPages()`. Authorization via corresponding Policy classes.
 
-### 4. One Model, One Policy
+### 5. One Model, One Policy
 
-Even if the policy is simple, every model must have a corresponding policy.
+Currently implemented for 4 of 13 models. Missing policies: Vendor, Material, MaterialPurchase, ReportCategory, Role.
 
-```php
-// app/Policies/ReportPolicy.php
-public function update(User $user, Report $report): bool
-{
-    return $user->isEntrepreneur();
-}
-```
+### 6. Type Hints Are Mandatory
 
-### 5. Type Hints Are Mandatory
+All methods declare scalar type hints and return types. Enforced by PHPStan Level 5 in CI.
 
-All methods must declare scalar type hints and return types.
+### 7. Media Collections Are Named
 
 ```php
-public function findNearby(Point $location, float $radiusKm): Collection
-{
-    // ...
-}
-```
-
-### 6. Media Collections Are Named
-
-Use semantic collection names on the `Report` model:
-
-```php
+// Report model
 public function registerMediaCollections(): void
 {
-    $this->addMediaCollection('before_photos')
-        ->acceptsMimeTypes(['image/jpeg', 'image/png'])
-        ->maxNumberOfFiles(3);
-
-    $this->addMediaCollection('after_photos')
-        ->acceptsMimeTypes(['image/jpeg', 'image/png'])
-        ->maxNumberOfFiles(3);
+    $this->addMediaCollection('report-photos')
+        ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp'])
+        ->maxNumberOfFiles(5);
 }
 ```
 
-### 7. Migrations Must Be Reversible
+**Note:** Only `report-photos` (before) collection exists. `after_photos` collection is not yet registered.
 
-Every migration must include a `down()` method. This is critical for Railway predeploy safety.
+### 8. Migrations Must Be Reversible
 
-```php
-public function down(): void
-{
-    Schema::dropIfExists('reports');
-}
-```
+Every migration includes a `down()` method. Critical for Railway predeploy safety.
 
-### 8. Tests Mirror the Source Structure
+### 9. Tests Mirror the Source Structure
 
-If a class lives in `app/Actions/Reports/CreateReport.php`, its test lives in `tests/Unit/Actions/Reports/CreateReportTest.php`.
+Feature tests cover: state machine, geofencing, report form, tracking, email, RBAC, Reverb, dashboard, models.
+
+### 10. Bilingual by Default
+
+All user-facing strings use `__()` translation keys. French is the default locale (`app.locale = 'fr'`). Language files exist in `lang/fr/` and `lang/en/`.
 
 ---
 
@@ -171,13 +228,13 @@ If a class lives in `app/Actions/Reports/CreateReport.php`, its test lives in `t
 
 | Layer | Naming Rule | Example |
 |-------|-------------|---------|
-| Actions | `VerbNoun.php` | `CreateReport.php` |
-| Livewire | `NounVerb.php` | `ReportForm.php` |
 | Filament Resources | `NounResource.php` | `ReportResource.php` |
 | Policies | `NounPolicy.php` | `ReportPolicy.php` |
-| Rules | `AdjectiveNoun.php` | `WithinMontrealGeofence.php` |
-| Migrations | Laravel timestamp convention | `2024_01_15_000000_create_reports_table.php` |
-| Test Classes | `ClassNameTest.php` | `CreateReportTest.php` |
+| Migrations | Laravel timestamp convention | `2024_01_01_000000_create_reports_table.php` |
+| Test Classes | `FeatureTest.php` | `ReportStateMachineTest.php` |
+| Mail | `NounVerb.php` | `ReportStatusUpdated.php` |
+| Events | `NounVerb.php` | `ReportCreated.php` |
+| Enums | `NounStatus.php` | `ReportStatus.php` |
 
 ---
 

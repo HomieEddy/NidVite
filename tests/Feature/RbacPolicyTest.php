@@ -5,7 +5,6 @@ use App\Models\RepairJob;
 use App\Models\Report;
 use App\Models\Role;
 use App\Models\User;
-use Database\Seeders\ExpenseCategorySeeder;
 use Database\Seeders\ReportCategorySeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,7 +14,6 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
     $this->seed(ReportCategorySeeder::class);
-    $this->seed(ExpenseCategorySeeder::class);
     $this->roles = Role::all()->keyBy('slug');
 });
 
@@ -106,7 +104,7 @@ describe('RepairJobPolicy', function () {
     it('allows only admin to delete repair jobs', function () {
         $admin = User::factory()->create(['role_id' => $this->roles['admin']->id]);
         $manager = User::factory()->create(['role_id' => $this->roles['manager']->id]);
-        $repairJob = RepairJob::factory()->make();
+        $repairJob = RepairJob::factory()->make(['created_by' => $admin->id]);
 
         expect($admin->can('delete', $repairJob))->toBeTrue()
             ->and($manager->can('delete', $repairJob))->toBeFalse();
@@ -132,7 +130,11 @@ describe('ExpensePolicy', function () {
     it('allows only admin to delete expenses', function () {
         $admin = User::factory()->create(['role_id' => $this->roles['admin']->id]);
         $accountant = User::factory()->create(['role_id' => $this->roles['accountant']->id]);
-        $expense = Expense::factory()->make();
+        $expense = Expense::factory()->make([
+            'repair_job_id' => 1,
+            'category_id' => $this->roles['accountant']->id,
+            'created_by' => $admin->id,
+        ]);
 
         expect($admin->can('delete', $expense))->toBeTrue()
             ->and($accountant->can('delete', $expense))->toBeFalse();

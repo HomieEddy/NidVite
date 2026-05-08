@@ -2,18 +2,20 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Report;
+use App\Models\RepairJob;
 use Filament\Widgets\ChartWidget;
 
 class ReportsChart extends ChartWidget
 {
+    public ?string $filter = '30d';
+
     protected ?string $heading = null;
 
     protected ?string $description = null;
 
     public function __construct()
     {
-        $this->heading = __('dashboard.reports_over_time');
+        $this->heading = __('dashboard.repair_velocity_trend');
         $this->description = __('dashboard.last_30_days');
     }
 
@@ -22,17 +24,41 @@ class ReportsChart extends ChartWidget
         return 'line';
     }
 
+    protected function getFilters(): ?array
+    {
+        return [
+            '7d' => __('dashboard.last_7_days'),
+            '30d' => __('dashboard.last_30_days'),
+            '90d' => __('dashboard.last_90_days'),
+        ];
+    }
+
     protected function getData(): array
     {
-        $start = now()->subDays(29)->startOfDay();
+        $days = match ($this->filter) {
+            '7d' => 7,
+            '90d' => 90,
+            default => 30,
+        };
+
+        $this->description = match ($this->filter) {
+            '7d' => __('dashboard.last_7_days'),
+            '90d' => __('dashboard.last_90_days'),
+            default => __('dashboard.last_30_days'),
+        };
+
+        $start = now()->subDays($days - 1)->startOfDay();
         $end = now()->endOfDay();
 
-        $counts = Report::whereBetween('created_at', [$start, $end])
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+        $counts = RepairJob::query()
+            ->where('status', 'completed')
+            ->whereNotNull('completed_at')
+            ->whereBetween('completed_at', [$start, $end])
+            ->selectRaw('DATE(completed_at) as date, COUNT(*) as count')
             ->groupBy('date')
             ->pluck('count', 'date');
 
-        $data = collect(range(29, 0))
+        $data = collect(range($days - 1, 0))
             ->map(function (int $daysAgo) use ($counts): array {
                 $date = now()->subDays($daysAgo)->format('Y-m-d');
 
@@ -45,7 +71,7 @@ class ReportsChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => __('dashboard.reports'),
+                    'label' => __('dashboard.repairs_completed'),
                     'data' => $data->pluck('count')->toArray(),
                     'borderColor' => '#D97706',
                     'backgroundColor' => 'rgba(217, 119, 6, 0.1)',

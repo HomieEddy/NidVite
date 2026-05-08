@@ -1,19 +1,65 @@
 <?php
 
+use App\Http\Controllers\MapController;
 use App\Http\Controllers\ReportTrackingController;
+use App\Http\Controllers\SignedMediaController;
+use App\Models\Report;
 use Illuminate\Support\Facades\Route;
+use Spatie\Health\Http\Controllers\HealthCheckJsonResultsController;
+use Spatie\ResponseCache\Middlewares\CacheResponse;
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    $totalReported = Report::count();
+    $totalFixed = Report::where('status', 'repaired')->count();
+    $totalPending = Report::whereIn('status', ['received', 'verified', 'scheduled', 'in_progress'])->count();
+
+    $avgDays = Report::where('status', 'repaired')
+        ->whereNotNull('completed_at')
+        ->whereNotNull('created_at')
+        ->selectRaw('AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400) as avg_days')
+        ->value('avg_days');
+
+    if (app()->getLocale() === 'fr') {
+        $velocity = $avgDays ? round($avgDays, 1).' jours' : 'N/D';
+    } else {
+        $velocity = $avgDays ? round($avgDays, 1).' days' : 'N/A';
+    }
+
+    return view('welcome', compact('totalReported', 'totalFixed', 'totalPending', 'velocity'));
+})->middleware(CacheResponse::class);
 
 Route::get('/signaler', function () {
     return view('report');
 })->name('report.create');
 
-Route::get('/suivi/{uuid}', [ReportTrackingController::class, 'show'])
+Route::get('/suivi/{trackingId}', [ReportTrackingController::class, 'show'])
     ->name('report.tracking')
-    ->whereUuid('uuid');
+    ->where('trackingId', 'MTL[A-Z0-9]{8}');
+
+Route::view('/confidentialite', 'pages.privacy')
+    ->name('legal.privacy');
+
+Route::view('/conditions', 'pages.terms')
+    ->name('legal.terms');
+
+Route::get('/carte', [MapController::class, 'index'])
+    ->name('map.public')
+    ->middleware(CacheResponse::class);
+
+Route::get('/api/reports/geojson', [MapController::class, 'geojson'])
+    ->name('api.reports.geojson');
+
+Route::get('/api/reports/{trackingId}/lookup', [ReportTrackingController::class, 'lookup'])
+    ->name('api.reports.lookup')
+    ->where('trackingId', 'MTL[A-Z0-9]{8}')
+    ->middleware('throttle:60,1');
+
+Route::get('/health', HealthCheckJsonResultsController::class)
+    ->name('health.json');
+
+Route::get('/media/{media}', SignedMediaController::class)
+    ->name('media.signed')
+    ->middleware(['signed', 'throttle:60,1']);
 
 Route::get('/locale/{locale}', function (string $locale) {
     if (in_array($locale, ['fr', 'en'], true)) {

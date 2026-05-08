@@ -2,100 +2,148 @@
 
 namespace App\Filament\Resources\Reports\Tables;
 
+use App\Filament\Resources\Reports\ReportResource;
+use App\Models\Report;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 
 class ReportsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            ->emptyStateHeading(__('filament.admin.resources.reports.empty_state.heading'))
+            ->emptyStateDescription(__('filament.admin.resources.reports.empty_state.description'))
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label(__('filament.admin.resources.reports.actions.create'))
+                    ->url(ReportResource::getUrl('create'))
+                    ->icon('heroicon-m-plus')
+                    ->visible(fn (): bool => auth()->user()?->can('create', Report::class) ?? false),
+            ])
             ->columns([
-                TextColumn::make('uuid')
-                    ->label('UUID'),
                 TextColumn::make('reporter_email')
-                    ->searchable(),
-                TextColumn::make('preferred_locale')
-                    ->searchable(),
-                TextColumn::make('email_verified_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('location_accuracy')
-                    ->numeric()
+                    ->searchable()
                     ->sortable(),
                 TextColumn::make('address')
-                    ->searchable(),
+                    ->searchable()
+                    ->limit(40),
                 TextColumn::make('neighborhood')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('borough')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('status')
-                    ->searchable(),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'received' => 'gray',
+                        'verified' => 'info',
+                        'scheduled' => 'warning',
+                        'in_progress' => 'amber',
+                        'repaired' => 'success',
+                        'rejected' => 'danger',
+                        default => 'gray',
+                    })
+                    ->sortable(),
                 TextColumn::make('priority')
-                    ->searchable(),
-                TextColumn::make('category.id')
-                    ->searchable(),
-                TextColumn::make('ip_address_hash')
-                    ->searchable(),
-                TextColumn::make('ip_address_raw')
-                    ->searchable(),
-                TextColumn::make('user_agent_hash')
-                    ->searchable(),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'low' => 'gray',
+                        'normal' => 'info',
+                        'high' => 'warning',
+                        'critical' => 'danger',
+                        default => 'gray',
+                    })
+                    ->sortable(),
+                TextColumn::make('location')
+                    ->label(__('filament.admin.resources.reports.fields.map'))
+                    ->icon('heroicon-m-map-pin')
+                    ->color('amber')
+                    ->formatStateUsing(fn () => __('filament.admin.resources.reports.actions.view_on_map'))
+                    ->action(
+                        Action::make('viewLocation')
+                            ->label(__('filament.admin.resources.reports.actions.view_on_map'))
+                            ->modalHeading(__('filament.admin.resources.reports.actions.report_location'))
+                            ->modalSubmitAction(false)
+                            ->modalCancelActionLabel(__('filament.admin.resources.reports.actions.close'))
+                            ->modalContent(function ($record): View {
+                                $location = null;
+                                if ($record->location !== null) {
+                                    $location = DB::selectOne(
+                                        'SELECT ST_Y(location::geometry) as lat, ST_X(location::geometry) as lng FROM reports WHERE id = ?',
+                                        [$record->id]
+                                    );
+                                }
+
+                                return view('filament.modals.report-location', [
+                                    'report' => $record,
+                                    'location' => $location,
+                                ]);
+                            })
+                    )
+                    ->tooltip(__('filament.admin.resources.reports.tooltips.map')),
                 IconColumn::make('geofence_passed')
-                    ->boolean(),
-                TextColumn::make('geofence_checked_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('submission_duration_ms')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('is_spam')
-                    ->boolean(),
-                TextColumn::make('spam_score')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('rejection_reason')
-                    ->searchable(),
-                TextColumn::make('first_scheduled_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('first_started_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('target_completion_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('completed_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('expires_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('deleted_at')
-                    ->dateTime()
-                    ->sortable()
+                    ->boolean()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('location'),
+                    ->dateTime('M j, Y')
+                    ->sortable(),
             ])
             ->filters([
+                SelectFilter::make('status')
+                    ->label(__('filament.admin.resources.reports.filters.status'))
+                    ->options([
+                        'received' => __('filament.admin.resources.reports.statuses.received'),
+                        'verified' => __('filament.admin.resources.reports.statuses.verified'),
+                        'scheduled' => __('filament.admin.resources.reports.statuses.scheduled'),
+                        'in_progress' => __('filament.admin.resources.reports.statuses.in_progress'),
+                        'repaired' => __('filament.admin.resources.reports.statuses.repaired'),
+                        'rejected' => __('filament.admin.resources.reports.statuses.rejected'),
+                    ])
+                    ->multiple(),
+                SelectFilter::make('priority')
+                    ->label(__('filament.admin.resources.reports.filters.priority'))
+                    ->options([
+                        'low' => __('filament.admin.resources.reports.priorities.low'),
+                        'normal' => __('filament.admin.resources.reports.priorities.normal'),
+                        'high' => __('filament.admin.resources.reports.priorities.high'),
+                        'critical' => __('filament.admin.resources.reports.priorities.critical'),
+                    ])
+                    ->multiple(),
                 TrashedFilter::make(),
             ])
+            ->groups([
+                Group::make('status')
+                    ->label(__('filament.admin.resources.reports.groups.status'))
+                    ->getTitleFromRecordUsing(fn ($record) => __('filament.admin.resources.reports.statuses.'.$record->status)),
+                Group::make('neighborhood')
+                    ->label(__('filament.admin.resources.reports.groups.neighborhood')),
+                Group::make('borough')
+                    ->label(__('filament.admin.resources.reports.groups.borough')),
+                Group::make('priority')
+                    ->label(__('filament.admin.resources.reports.groups.priority'))
+                    ->getTitleFromRecordUsing(fn ($record) => __('filament.admin.resources.reports.priorities.'.$record->priority)),
+                Group::make('created_at')
+                    ->label(__('filament.admin.resources.reports.groups.date'))
+                    ->getTitleFromRecordUsing(fn ($record) => $record->created_at->format('M Y')),
+            ])
+            ->defaultGroup('status')
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([

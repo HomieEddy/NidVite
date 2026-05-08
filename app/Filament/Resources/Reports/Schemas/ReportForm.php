@@ -16,54 +16,60 @@ class ReportForm
         return $schema
             ->components([
                 TextInput::make('uuid')
-                    ->label('UUID')
+                    ->label(__('filament.admin.resources.reports.fields.uuid'))
                     ->required(),
                 TextInput::make('reporter_email')
+                    ->label(__('filament.admin.fields_common.reporter_email'))
                     ->email()
                     ->required(),
                 TextInput::make('preferred_locale')
+                    ->label(__('filament.admin.fields_common.preferred_locale'))
                     ->required()
                     ->default('fr'),
-                DateTimePicker::make('email_verified_at'),
-                TextInput::make('location_accuracy')
-                    ->numeric(),
-                TextInput::make('address'),
-                TextInput::make('neighborhood'),
-                TextInput::make('borough'),
+                TextInput::make('address')
+                    ->label(__('filament.admin.fields_common.address')),
+                TextInput::make('neighborhood')
+                    ->label(__('filament.admin.resources.reports.fields.neighborhood')),
+                TextInput::make('borough')
+                    ->label(__('filament.admin.resources.reports.fields.borough')),
                 TextInput::make('status')
+                    ->label(__('filament.admin.fields_common.status'))
                     ->required()
-                    ->default('pending'),
+                    ->default('received'),
                 TextInput::make('priority')
+                    ->label(__('filament.admin.fields_common.priority'))
                     ->required()
                     ->default('normal'),
                 Select::make('category_id')
-                    ->relationship('category', 'id'),
+                    ->relationship('category', 'id')
+                    ->label(__('filament.admin.fields_common.category')),
                 Textarea::make('description')
+                    ->label(__('filament.admin.fields_common.description'))
                     ->columnSpanFull(),
-                TextInput::make('ip_address_hash')
-                    ->required(),
-                TextInput::make('ip_address_raw'),
-                TextInput::make('user_agent_hash')
-                    ->required(),
                 Toggle::make('geofence_passed')
+                    ->label(__('filament.admin.fields_common.geofence_passed'))
                     ->required(),
-                DateTimePicker::make('geofence_checked_at'),
-                TextInput::make('submission_duration_ms')
-                    ->numeric(),
                 Toggle::make('is_spam')
+                    ->label(__('filament.admin.fields_common.is_spam'))
                     ->required(),
-                TextInput::make('spam_score')
-                    ->numeric(),
-                TextInput::make('rejection_reason'),
+                TextInput::make('rejection_reason')
+                    ->label(__('filament.admin.fields_common.rejection_reason')),
                 Textarea::make('admin_notes')
+                    ->label(__('filament.admin.fields_common.admin_notes'))
                     ->columnSpanFull(),
-                DateTimePicker::make('first_scheduled_at'),
-                DateTimePicker::make('first_started_at'),
-                DateTimePicker::make('target_completion_at'),
-                DateTimePicker::make('completed_at'),
+                DateTimePicker::make('first_scheduled_at')
+                    ->label(__('filament.admin.fields_common.first_scheduled_at')),
+                DateTimePicker::make('first_started_at')
+                    ->label(__('filament.admin.fields_common.first_started_at')),
+                DateTimePicker::make('target_completion_at')
+                    ->label(__('filament.admin.fields_common.target_completion_at')),
+                DateTimePicker::make('completed_at')
+                    ->label(__('filament.admin.fields_common.completed_at')),
                 DateTimePicker::make('expires_at')
+                    ->label(__('filament.admin.fields_common.expires_at'))
                     ->required(),
-                TextInput::make('location'),
+                TextInput::make('location')
+                    ->label(__('filament.admin.fields_common.location')),
             ]);
     }
 }

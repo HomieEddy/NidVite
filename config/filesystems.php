@@ -56,6 +56,32 @@ return [
             'throw' => false,
         ],
 
+        'r2' => [
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID', env('AWS_ACCESS_KEY_ID')),
+            'secret' => env('R2_SECRET_ACCESS_KEY', env('AWS_SECRET_ACCESS_KEY')),
+            'region' => env('R2_DEFAULT_REGION', 'auto'),
+            'bucket' => env('R2_BUCKET', env('AWS_BUCKET')),
+            'url' => env('R2_URL'),
+            'endpoint' => env('R2_ENDPOINT', env('AWS_ENDPOINT')),
+            'use_path_style_endpoint' => env('R2_USE_PATH_STYLE_ENDPOINT', false),
+            'visibility' => 'private',
+            'throw' => false,
+        ],
+
+        'r2-cold' => [
+            'driver' => 's3',
+            'key' => env('R2_COLD_ACCESS_KEY_ID', env('R2_ACCESS_KEY_ID', env('AWS_ACCESS_KEY_ID'))),
+            'secret' => env('R2_COLD_SECRET_ACCESS_KEY', env('R2_SECRET_ACCESS_KEY', env('AWS_SECRET_ACCESS_KEY'))),
+            'region' => env('R2_COLD_DEFAULT_REGION', env('R2_DEFAULT_REGION', 'auto')),
+            'bucket' => env('R2_COLD_BUCKET', env('R2_BUCKET', env('AWS_BUCKET'))),
+            'url' => env('R2_COLD_URL', env('R2_URL')),
+            'endpoint' => env('R2_COLD_ENDPOINT', env('R2_ENDPOINT', env('AWS_ENDPOINT'))),
+            'use_path_style_endpoint' => env('R2_COLD_USE_PATH_STYLE_ENDPOINT', env('R2_USE_PATH_STYLE_ENDPOINT', false)),
+            'visibility' => 'private',
+            'throw' => false,
+        ],
+
     ],
 
     /*

@@ -18,11 +18,8 @@ class UsersTable
                 TextColumn::make('name')
                     ->searchable(),
                 TextColumn::make('email')
-                    ->label('Email address')
+                    ->label(__('filament.admin.resources.users.fields.email'))
                     ->searchable(),
-                TextColumn::make('email_verified_at')
-                    ->dateTime()
-                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -32,7 +29,7 @@ class UsersTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('uuid')
-                    ->label('UUID'),
+                    ->label(__('filament.admin.resources.users.fields.uuid')),
                 TextColumn::make('role.id')
                     ->searchable(),
                 TextColumn::make('two_factor_confirmed_at')

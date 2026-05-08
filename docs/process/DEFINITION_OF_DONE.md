@@ -186,13 +186,18 @@ If the feature introduces a new architectural concept or changes an integration:
 
 ## 12. PR Hygiene
 
-- [ ] Branch follows naming convention (`feature/*`, `bugfix/*`, `hotfix/*`).
-- [ ] Feature branches target `develop`, not `main`.
+- [ ] Branch follows naming convention (`feat/*`, `fix/*`, `chore/*`, `test/*`, `hotfix/*`).
+- [ ] Short-lived branches target `main` via PR (no direct pushes).
 - [ ] Commit messages follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `chore:`).
 - [ ] PR description includes:
   - Summary of changes
   - "How to Test" section with step-by-step instructions
   - Screenshots (if UI changes)
+- [ ] CodeRabbit review loop completed:
+  - `request_changes` items fixed in code
+  - local checks rerun after fixes (`pest`, `pint`, `phpstan`)
+  - re-review requested (`@coderabbitai review`)
+  - final CodeRabbit status is green (or skip reason documented)
 - [ ] Self-review completed on GitHub diff before requesting review.
 
 ---
@@ -217,12 +222,15 @@ Copy this into every PR description:
 ```markdown
 ## Definition of Done
 
-### For PR to `develop` (Integration)
+### For PR to `main`
 - [ ] Critical-path tests written and passing (happy path + 2 failures)
 - [ ] `./vendor/bin/pest` passes
 - [ ] `./vendor/bin/pint` passes
 - [ ] `./vendor/bin/phpstan analyse --level=5` passes
-- [ ] CodeRabbit AI review completed and all comments resolved
+- [ ] CodeRabbit review completed
+- [ ] All CodeRabbit `request_changes` comments fixed
+- [ ] Re-review requested (`@coderabbitai review`)
+- [ ] Final CodeRabbit status is green (or skip reason documented)
 - [ ] Type hints and return types present on new methods
 - [ ] `down()` method present on new migrations
 - [ ] Security compliance items verified (rate limiting, input validation, XSS prevention)
@@ -230,13 +238,9 @@ Copy this into every PR description:
 - [ ] **Translation compliance verified** (no hardcoded strings, both FR/EN updated, French first)
 - [ ] Self-review completed
 - [ ] Documentation updated (if applicable)
-
-### For PR to `main` (Release)
-- [ ] All checks from `develop` branch are green
-- [ ] CodeRabbit approved
 - [ ] 1 human reviewer approved
+- [ ] Branch is up to date with `main`
 - [ ] No breaking changes without rollback plan
-- [ ] `develop` branch is up to date with `main`
 ```
 
 ---

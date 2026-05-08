@@ -1,249 +1,220 @@
-# Additional Laravel Packages & Monitoring
+# Monitoring & Additional Packages
 
-This document catalogs additional packages and monitoring tools that enhance NidVite's observability, security, and developer experience.
-
----
-
-## Monitoring & Observability
-
-### 1. Laravel Telescope (Local Debug)
-
-**Package:** `laravel/telescope` (dev-only)
-
-**Purpose:** Local debugging dashboard for requests, exceptions, logs, database queries, mail, and queue jobs.
-
-**Why:** Essential for optimizing PostGIS queries and debugging the email loop during development. Replaces Debugbar with a more Laravel-native experience.
-
-```bash
-composer require laravel/telescope --dev
-php artisan telescope:install
-```
-
-**Config:** Enable only in local via `TELESCOPE_ENABLED=true` in `.env`. Never enable in production (use Sentry instead).
+> Last updated: 2026-05-06 — Audited against actual composer.json and config state
 
 ---
 
-### 2. Sentry (Production Error Tracking)
+## Status Summary
 
-**Package:** `sentry/sentry-laravel`
+| Package | Installed | Configured | Active |
+|---------|-----------|------------|--------|
+| `sentry/sentry-laravel` | Yes (^4.25) | No | No |
+| `spatie/laravel-health` | Yes (^1.39) | No | No |
+| `spatie/laravel-schedule-monitor` | Yes (^4.3) | No | No |
+| `spatie/laravel-backup` | Yes (^9.0) | No | No |
+| `bepsvpt/secure-headers` | Yes (^9.1) | No | No |
+| `maatwebsite/excel` | Yes (^3.1) | No | No |
+| `laravel/telescope` | Yes (^5.0, dev) | Yes | Dev-only |
+| `barryvdh/laravel-debugbar` | Yes (^3.0, dev) | Yes | Dev-only |
 
-**Purpose:** Real-time error tracking, performance monitoring, and session replay for production.
+**Not installed despite being in docs:**
+- `appstract/laravel-opcache` — NOT in composer.json
+- `spatie/laravel-response-cache` — NOT in composer.json
 
-**Why:** Catch exceptions in the PWA, map widget failures, and PostGIS query errors before users report them. Tracks release health.
+---
 
+## Installed & Configured (Dev Only)
+
+### 1. Laravel Telescope
+
+**Status:** Active, dev-only
+
+**Config:** `config/telescope.php` published, `TELESCOPE_ENABLED=true` in `.env`
+
+**Purpose:** Local debug dashboard for requests, queries, mail, logs.
+
+**Warning:** Never enable in production. Use Sentry instead.
+
+---
+
+### 2. Laravel Debugbar
+
+**Status:** Active, dev-only
+
+**Config:** `config/debugbar.php` published
+
+**Purpose:** Query profiling, memory usage, route debugging.
+
+---
+
+## Installed but NOT Configured
+
+### 3. Sentry (Production Error Tracking)
+
+**Status:** Package installed, NO config published
+
+**To activate:**
 ```bash
-composer require sentry/sentry-laravel
 php artisan sentry:publish --dsn=your-dsn
 ```
 
-**Free Tier:** 5,000 errors/month, 1 billion performance units/month — sufficient for MVP.
+**Free tier:** 5,000 errors/month — sufficient for MVP.
+
+**Missing:** `config/sentry.php`, DSN in `.env`, test exception in `app/Exceptions/Handler.php`
 
 ---
 
-### 3. Flare (Laravel Error Tracking Alternative)
+### 4. Spatie Laravel Health (System Monitoring)
 
-**Package:** `spatie/laravel-ray` (dev) or Flare SaaS
+**Status:** Package installed, NO config published, NO health checks registered
 
-**Purpose:** Beautiful error reporting tailored for Laravel. Shows stack traces with Laravel context (route, middleware, view).
-
-**Why:** Better Laravel-specific context than generic log aggregators. Built by Spatie.
-
-**Note:** Flare is a paid service (€9/month). Use Sentry for MVP, migrate to Flare if Laravel-specific context becomes critical.
-
----
-
-### 4. Laravel Health (System Monitoring)
-
-**Package:** `spatie/laravel-health`
-
-**Purpose:** Endpoint (`/health`) that reports system status: database connectivity, queue size, disk space, SSL certificate validity.
-
-**Why:** Railway can ping this endpoint for uptime monitoring. The entrepreneur dashboard can display a "system status" widget.
-
+**To activate:**
 ```bash
-composer require spatie/laravel-health
 php artisan health:install
 ```
 
----
-
-### 5. Laravel Schedule Monitor
-
-**Package:** `spatie/laravel-schedule-monitor`
-
-**Purpose:** Tracks scheduled tasks (clustering job, cleanup jobs) and alerts if they fail or don't run on time.
-
-**Why:** The pre-computed clustering queue job must run every 5 minutes. If it fails silently, the dashboard shows stale data.
-
-```bash
-composer require spatie/laravel-schedule-monitor
+Then register checks in a health check class:
+```php
+// e.g., DatabaseCheck, RedisCheck, DiskSpaceCheck, QueueCheck
 ```
 
+**Missing:** `config/health.php`, check registrations, `/health` route
+
 ---
 
-## Performance & Caching
+### 5. Spatie Schedule Monitor (Cron Monitoring)
 
-### 6. Laravel OPcache Monitor
+**Status:** Package installed, NO config published, NO scheduled tasks
+
+**To activate:** Requires scheduled tasks to exist first (currently `routes/console.php` only has `inspire`).
+
+**Missing:** `config/schedule-monitor.php`, any actual scheduled commands to monitor
+
+---
+
+### 6. Spatie Laravel Backup (Database Backups)
+
+**Status:** Package installed, NO config published, NO backup schedule
+
+**To activate:**
+```bash
+php artisan vendor:publish --provider="Spatie\Backup\BackupServiceProvider"
+```
+
+Then configure `config/backup.php` with R2 destination and add to scheduler:
+```php
+$schedule->command('backup:clean')->daily()->at('01:00');
+$schedule->command('backup:run')->daily()->at('01:30');
+```
+
+**Missing:** `config/backup.php`, R2 backup disk config, scheduled backup commands
+
+---
+
+### 7. Secure Headers (Security Headers)
+
+**Status:** Package installed, NOT actively enforced
+
+**To activate:** Add middleware to HTTP kernel or route middleware:
+```php
+\Bepsvpt\SecureHeaders\Http\Middleware\ApplySecureHeaders::class,
+```
+
+**Missing:** `config/secure-headers.php` (needs publishing), middleware registration
+
+---
+
+### 8. Laravel Excel (Export)
+
+**Status:** Package installed, NO export classes created
+
+**To use:** Create export classes extending `Maatwebsite\Excel\Concerns\Exportable`:
+```php
+// e.g., ReportsExport, ExpensesExport, JobsExport
+```
+
+**Missing:** Any export class, any Filament export action, R2 disk config for backup destination
+
+---
+
+## NOT Installed (Referenced in Docs)
+
+### 9. Laravel OPcache
 
 **Package:** `appstract/laravel-opcache`
 
-**Purpose:** CLI commands to clear and check OPcache status.
+**Status:** NOT in composer.json
 
-**Why:** After each Railway deploy, OPcache may hold stale bytecode. Include `php artisan opcache:clear` in the predeploy script.
+**Purpose:** Clear stale OPcache bytecode after Railway deploys.
 
+**Action needed:**
 ```bash
 composer require appstract/laravel-opcache
 ```
 
+Add to Railway predeploy: `php artisan opcache:clear`
+
 ---
 
-### 7. Laravel Response Cache
+### 10. Laravel Response Cache
 
 **Package:** `spatie/laravel-response-cache`
 
-**Purpose:** Cache entire HTTP responses (e.g., the PWA status page, map tile metadata).
+**Status:** NOT in composer.json
 
-**Why:** The citizen "Track Report" page is read-heavy and doesn't change often. Cache it for 60 seconds to reduce PostGIS queries.
+**Purpose:** Cache HTTP responses (e.g., tracking page) to reduce PostGIS queries.
 
+**Action needed:**
 ```bash
 composer require spatie/laravel-response-cache
-```
-
-**Caution:** Do not cache the report submission form (POST requests are ignored by default).
-
----
-
-## Security & Hardening
-
-### 8. Laravel Security (Headers & CSP)
-
-**Package:** `bepsvpt/secure-headers`
-
-**Purpose:** Enforces security headers (HSTS, CSP, X-Frame-Options) via middleware.
-
-**Why:** The PWA handles geolocation and photos. CSP prevents XSS attacks from injected scripts.
-
-```bash
-composer require bepsvpt/secure-headers
+php artisan vendor:publish --provider="Spatie\ResponseCache\ResponseCacheServiceProvider"
 ```
 
 ---
 
-### 9. Laravel Purgecss (Frontend Asset Optimization)
+## Monitoring Stack — Target State
 
-**Package:** Built into Laravel Mix / Vite
-
-**Purpose:** Remove unused Tailwind CSS classes from production builds.
-
-**Why:** PWA needs fast first load. PurgeCSS reduces CSS bundle from ~3MB to ~10KB.
-
-**Config:** Already handled by Tailwind's `content` array in `tailwind.config.js`. Ensure all Blade/Livewire views are listed.
-
----
-
-## Geolocation & Validation
-
-### 10. Laravel GeoIP
-
-**Package:** `torann/geoip`
-
-**Purpose:** Determine approximate location from IP address (fallback if GPS is disabled).
-
-**Why:** If a user's browser denies geolocation permission, we can suggest their approximate location based on IP for the geofencing check.
-
-```bash
-composer require torann/geoip
-```
+| Tool | Purpose | Environment | Cost | Status |
+|------|---------|-------------|------|--------|
+| **Laravel Telescope** | Local debugging | Dev only | Free | Active |
+| **Sentry** | Production errors | Production | Free tier | Installed, not configured |
+| **Spatie Health** | System status | All | Free | Installed, not configured |
+| **Spatie Schedule Monitor** | Cron monitoring | Production | Free | Installed, not configured |
+| **Spatie Backup** | DB backups | Production | Free | Installed, not configured |
+| **Railway Metrics** | CPU, memory, disk | Production | Included | Available on Railway |
 
 ---
 
-### 11. Laravel Phone Number Validation
+## Recommended Activation Order
 
-**Package:** `propaganistas/laravel-phone`
-
-**Purpose:** Validate and format international phone numbers.
-
-**Why:** If we add SMS notifications later (Twilio), this ensures valid numbers. Not needed for MVP but useful for Phase 2.
-
+### Before Launch (Phase 6)
 ```bash
-composer require propaganistas/laravel-phone
-```
+# 1. Sentry — critical for catching production errors
+php artisan sentry:publish --dsn=your-dsn
 
----
+# 2. Health checks — Railway needs a /health endpoint
+php artisan health:install
 
-## Queue & Background Jobs
+# 3. Backup — data safety
+php artisan vendor:publish --provider="Spatie\Backup\BackupServiceProvider"
+# Then configure config/backup.php with R2 destination
 
-### 12. Laravel Horizon (Queue Dashboard)
+# 4. Secure headers — security baseline
+php artisan vendor:publish --provider="Bepsvpt\SecureHeaders\SecureHeadersServiceProvider"
+# Then add middleware to kernel
 
-**Package:** `laravel/horizon`
-
-**Purpose:** Real-time queue monitoring dashboard. Shows job throughput, failed jobs, and worker status.
-
-**Why:** Essential once we switch from `database` queue driver to `redis`. Not needed for MVP but critical for scaling.
-
-```bash
-composer require laravel/horizon
-```
-
-**Note:** Requires Redis. Add to TECH_STACK.md Phase 2 dependencies.
-
----
-
-## SEO & PWA Enhancements
-
-### 13. Laravel Sitemap
-
-**Package:** `spatie/laravel-sitemap`
-
-**Purpose:** Generate XML sitemaps for static pages (privacy policy, terms, landing page).
-
-**Why:** Improves SEO for organic discovery. The PWA landing page should be indexable.
-
-```bash
-composer require spatie/laravel-sitemap
-```
-
----
-
-## Recommended Installation Order
-
-### Phase 1 (MVP — Now)
-```bash
-# Monitoring
-composer require sentry/sentry-laravel
-composer require spatie/laravel-health
-composer require spatie/laravel-schedule-monitor
-
-# Performance
+# 5. Install missing packages
 composer require appstract/laravel-opcache
 composer require spatie/laravel-response-cache
-
-# Security
-composer require bepsvpt/secure-headers
-
-# Dev only
-composer require laravel/telescope --dev
 ```
 
-### Phase 2 (Scaling — Later)
+### Post-Launch (Phase 7+)
 ```bash
-composer require laravel/horizon
-composer require propaganistas/laravel-phone
-composer require spatie/laravel-sitemap
+# Schedule monitor — needs scheduled tasks first
+# Response cache — after identifying slow pages
+# Excel exports — when admin requests them
 ```
 
 ---
 
-## Monitoring Stack Summary
-
-| Tool | Purpose | Environment | Cost |
-|------|---------|-------------|------|
-| **Laravel Telescope** | Local debugging | Dev only | Free |
-| **Sentry** | Production error tracking | Production | Free tier (5k errors) |
-| **Spatie Health** | System status endpoint | All | Free |
-| **Spatie Schedule Monitor** | Cron job monitoring | Production | Free |
-| **Railway Metrics** | CPU, memory, disk | Production | Included |
-
----
-
-*This document is a living record. Propose additions via PR with justification.*
+*Updated 2026-05-06 — Reflects actual installation and configuration state.*
