@@ -64,11 +64,13 @@ it('provides dedicated railway command scripts for web worker and scheduler', fu
     expect(base_path('deploy/railway/web.sh'))->toBeFile();
     expect(base_path('deploy/railway/worker.sh'))->toBeFile();
     expect(base_path('deploy/railway/scheduler.sh'))->toBeFile();
+    expect(base_path('deploy/railway/staging-readiness.sh'))->toBeFile();
 
     expect(file_get_contents(base_path('railway.toml')))->toContain('sh deploy/railway/web.sh');
     expect(file_get_contents(base_path('deploy/railway/worker.sh')))->toContain('queue:work redis');
     expect(file_get_contents(base_path('deploy/railway/scheduler.sh')))->toContain('schedule:run');
     expect(file_get_contents(base_path('deploy/railway/scheduler.sh')))->toContain('schedule-monitor:sync');
+    expect(file_get_contents(base_path('deploy/railway/staging-readiness.sh')))->toContain('ops:check-staging-readiness');
 });
 
 it('schedules backup monitoring and retention commands', function () {
