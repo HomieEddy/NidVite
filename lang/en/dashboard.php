@@ -22,4 +22,10 @@ return [
     'view_report' => 'View report',
     'low_stock_materials' => 'Low stock materials',
     'below_threshold' => 'Below configured threshold',
+    'repair_velocity_trend' => 'Repair velocity trend',
+    'repairs_completed' => 'Repairs completed',
+    'neighborhood_cost_analysis' => 'Neighborhood cost analysis',
+    'cost_cad' => 'Cost (CAD)',
+    'last_7_days' => 'Last 7 days',
+    'last_90_days' => 'Last 90 days',
 ];

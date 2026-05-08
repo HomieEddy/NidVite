@@ -22,4 +22,10 @@ return [
     'view_report' => 'Voir le signalement',
     'low_stock_materials' => 'Matériaux en stock bas',
     'below_threshold' => 'Sous le seuil configuré',
+    'repair_velocity_trend' => 'Tendance de vitesse de réparation',
+    'repairs_completed' => 'Réparations terminées',
+    'neighborhood_cost_analysis' => 'Analyse des coûts par quartier',
+    'cost_cad' => 'Coût (CAD)',
+    'last_7_days' => '7 derniers jours',
+    'last_90_days' => '90 derniers jours',
 ];

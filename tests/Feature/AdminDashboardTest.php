@@ -25,23 +25,41 @@ beforeEach(function () {
 
 it('dashboard widgets run without SQL errors', function () {
     // Seed data that exercises all dashboard widgets
-    Report::factory()->count(5)->create([
-        'status' => 'received',
+    $reportA = Report::factory()->create([
+        'status' => 'repaired',
         'category_id' => ReportCategory::first()->id,
         'is_spam' => false,
         'neighborhood' => 'Plateau-Mont-Royal',
         'borough' => 'Le Plateau-Mont-Royal',
+        'completed_at' => now()->subDays(2),
     ]);
 
+    $reportB = Report::factory()->create([
+        'status' => 'repaired',
+        'category_id' => ReportCategory::first()->id,
+        'is_spam' => false,
+        'neighborhood' => 'Rosemont-La Petite-Patrie',
+        'borough' => 'Rosemont-La Petite-Patrie',
+        'completed_at' => now()->subDays(1),
+    ]);
+
+    /** @var RepairJob $repairJob */
     $repairJob = RepairJob::factory()->create([
         'status' => 'completed',
+        'completed_at' => now()->subDay(),
         'created_by' => $this->admin->getKey(),
     ]);
 
-    Expense::factory()->count(3)->create([
+    $repairJob->reports()->attach($reportA->getKey(), ['cost_allocation_percentage' => 60]);
+    $repairJob->reports()->attach($reportB->getKey(), ['cost_allocation_percentage' => 40]);
+
+    Expense::factory()->create([
         'repair_job_id' => $repairJob->getKey(),
         'created_by' => $this->admin->getKey(),
-        'total' => 100.00,
+        'quantity' => 2,
+        'unit_cost' => 100,
+        'gst_rate' => 0,
+        'qst_rate' => 0,
     ]);
 
     // ReportsOverview: getOpenReportsCount
@@ -68,24 +86,30 @@ it('dashboard widgets run without SQL errors', function () {
         ->value('avg_days');
     expect($avgDays === null || is_numeric($avgDays))->toBeTrue();
 
-    // ReportsChart: 30-day report counts
+    // ReportsChart: repair velocity trend over completed jobs
     $start = now()->subDays(29)->startOfDay();
     $end = now()->endOfDay();
-    $counts = Report::whereBetween('created_at', [$start, $end])
-        ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+    $counts = RepairJob::where('status', 'completed')
+        ->whereBetween('completed_at', [$start, $end])
+        ->selectRaw('DATE(completed_at) as date, COUNT(*) as count')
         ->groupBy('date')
         ->pluck('count', 'date');
     expect($counts)->toBeInstanceOf(Collection::class);
 
-    // ReportsByNeighborhood: top 10 neighborhoods
-    $neighborhoods = Report::whereNotNull('neighborhood')
-        ->where('neighborhood', '!=', '')
-        ->selectRaw('neighborhood, COUNT(*) as count')
-        ->groupBy('neighborhood')
-        ->orderByDesc('count')
+    // ReportsByNeighborhood: neighborhood cost analysis
+    $neighborhoodCosts = Expense::query()
+        ->join('repair_jobs', 'repair_jobs.id', '=', 'expenses.repair_job_id')
+        ->join('job_reports', 'job_reports.repair_job_id', '=', 'repair_jobs.id')
+        ->join('reports', 'reports.id', '=', 'job_reports.report_id')
+        ->whereNotNull('reports.neighborhood')
+        ->where('reports.neighborhood', '!=', '')
+        ->whereBetween('expenses.created_at', [$start, $end])
+        ->selectRaw('reports.neighborhood as neighborhood, SUM(expenses.total * (job_reports.cost_allocation_percentage / 100.0)) as total_cost')
+        ->groupBy('reports.neighborhood')
+        ->orderByDesc('total_cost')
         ->limit(10)
         ->get();
-    expect($neighborhoods)->toHaveCount(1);
+    expect($neighborhoodCosts)->toHaveCount(2);
 });
 
 it('expenses table has total column not amount', function () {
