@@ -1,6 +1,5 @@
 <?php
 
-use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\StagingDemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -8,7 +7,6 @@ use Illuminate\Support\Facades\DB;
 uses(RefreshDatabase::class);
 
 it('seeds observability-ready demo data for map and analytics', function () {
-    $this->seed(DatabaseSeeder::class);
     $this->seed(StagingDemoSeeder::class);
 
     $response = $this->getJson(route('api.reports.geojson'));
