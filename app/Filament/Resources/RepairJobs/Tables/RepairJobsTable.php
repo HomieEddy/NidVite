@@ -4,11 +4,13 @@ namespace App\Filament\Resources\RepairJobs\Tables;
 
 use App\Filament\Resources\RepairJobs\RepairJobResource;
 use App\Models\RepairJob;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -130,6 +132,33 @@ class RepairJobsTable
                             ->all(),
                     ])
                     ->modalWidth('6xl'),
+                Action::make('assign_workers')
+                    ->label(__('filament.admin.resources.repair_jobs.actions.assign_workers'))
+                    ->visible(fn (RepairJob $record): bool => auth()->user()?->can('assignWorkers', $record) ?? false)
+                    ->authorize(fn (RepairJob $record): bool => auth()->user()?->can('assignWorkers', $record) ?? false)
+                    ->form([
+                        Select::make('worker_ids')
+                            ->label(__('filament.admin.resources.repair_jobs.fields.workers'))
+                            ->options(fn (): array => User::query()
+                                ->where('is_active', true)
+                                ->whereHas('role', fn ($query) => $query->where('slug', 'service_worker'))
+                                ->pluck('name', 'id')
+                                ->all())
+                            ->multiple()
+                            ->searchable()
+                            ->required(),
+                    ])
+                    ->action(function (RepairJob $record, array $data): void {
+                        $record->assignWorkers($data['worker_ids'] ?? []);
+                    }),
+                Action::make('self_assign')
+                    ->label(__('filament.admin.resources.repair_jobs.actions.self_assign'))
+                    ->visible(fn (RepairJob $record): bool => auth()->user()?->can('selfAssign', $record)
+                        && ! $record->users()->whereKey(auth()->id())->exists())
+                    ->authorize(fn (RepairJob $record): bool => auth()->user()?->can('selfAssign', $record) ?? false)
+                    ->action(function (RepairJob $record): void {
+                        $record->selfAssign(auth()->user());
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

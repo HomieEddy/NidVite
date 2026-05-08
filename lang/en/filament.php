@@ -59,6 +59,15 @@ return [
             'priority' => 'Priority',
             'action' => 'View report',
         ],
+        'low_stock' => [
+            'subject' => 'Low stock alert',
+            'message' => 'A tracked material has dropped below its low-stock threshold.',
+            'material' => 'Material',
+            'sku' => 'SKU',
+            'current' => 'Current stock',
+            'threshold' => 'Threshold',
+            'action' => 'View materials',
+        ],
     ],
 
     'admin' => [
@@ -90,8 +99,12 @@ return [
             'unit_cost' => 'Unit Cost',
             'subtotal' => 'Subtotal',
             'tax_rate' => 'Tax Rate',
+            'gst_rate' => 'GST Rate',
+            'qst_rate' => 'QST Rate',
             'tax_amount' => 'Tax Amount',
             'total' => 'Total',
+            'cost_allocation_mode' => 'Cost Allocation Mode',
+            'receipt' => 'Receipt',
             'incurred_at' => 'Incurred At',
             'scheduled_at' => 'Scheduled At',
             'started_at' => 'Started At',
@@ -194,6 +207,10 @@ return [
                     'month' => 'Month',
                     'unknown' => 'Unknown',
                 ],
+                'allocation' => [
+                    'equal_split' => 'Equal split',
+                    'manual_override' => 'Manual override',
+                ],
             ],
             'repair_jobs' => [
                 'navigation' => 'Repair Jobs',
@@ -205,10 +222,13 @@ return [
                 ],
                 'actions' => [
                     'create' => 'Create Repair Job',
+                    'assign_workers' => 'Assign Workers',
+                    'self_assign' => 'Self-Assign',
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
                     'reports' => 'Reports',
+                    'workers' => 'Workers',
                     'title' => 'Title',
                     'status' => 'Status',
                     'scheduled_at' => 'Scheduled At',
@@ -248,6 +268,25 @@ return [
                 'status' => [
                     'active' => 'Active',
                     'inactive' => 'Inactive',
+                ],
+            ],
+            'materials' => [
+                'navigation' => 'Materials',
+                'singular' => 'Material',
+                'plural' => 'Materials',
+                'empty_state' => [
+                    'heading' => 'No materials found',
+                    'description' => 'Materials will appear here once added.',
+                ],
+                'actions' => [
+                    'create' => 'Create Material',
+                ],
+                'fields' => [
+                    'sku' => 'SKU',
+                    'current_stock' => 'Current Stock',
+                    'reserved_stock' => 'Reserved Stock',
+                    'available_stock' => 'Available Stock',
+                    'min_stock_alert' => 'Low Stock Threshold',
                 ],
             ],
             'users' => [

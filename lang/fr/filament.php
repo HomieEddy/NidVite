@@ -59,6 +59,15 @@ return [
             'priority' => 'Priorite',
             'action' => 'Voir le signalement',
         ],
+        'low_stock' => [
+            'subject' => 'Alerte de stock bas',
+            'message' => 'Un materiau suivi est passe sous son seuil de stock bas.',
+            'material' => 'Materiau',
+            'sku' => 'SKU',
+            'current' => 'Stock actuel',
+            'threshold' => 'Seuil',
+            'action' => 'Voir les materiaux',
+        ],
     ],
 
     'admin' => [
@@ -90,8 +99,12 @@ return [
             'unit_cost' => 'Cout unitaire',
             'subtotal' => 'Sous-total',
             'tax_rate' => 'Taux de taxe',
+            'gst_rate' => 'Taux TPS',
+            'qst_rate' => 'Taux TVQ',
             'tax_amount' => 'Montant de taxe',
             'total' => 'Total',
+            'cost_allocation_mode' => 'Mode de repartition des couts',
+            'receipt' => 'Recu',
             'incurred_at' => 'Date de depense',
             'scheduled_at' => 'Planifie le',
             'started_at' => 'Debute le',
@@ -194,6 +207,10 @@ return [
                     'month' => 'Mois',
                     'unknown' => 'Inconnu',
                 ],
+                'allocation' => [
+                    'equal_split' => 'Repartition egale',
+                    'manual_override' => 'Remplacement manuel',
+                ],
             ],
             'repair_jobs' => [
                 'navigation' => 'Interventions',
@@ -205,10 +222,13 @@ return [
                 ],
                 'actions' => [
                     'create' => 'Creer une intervention',
+                    'assign_workers' => 'Assigner des travailleurs',
+                    'self_assign' => 'Auto-assigner',
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
                     'reports' => 'Signalements',
+                    'workers' => 'Travailleurs',
                     'title' => 'Titre',
                     'status' => 'Statut',
                     'scheduled_at' => 'Planifie le',
@@ -248,6 +268,25 @@ return [
                 'status' => [
                     'active' => 'Actif',
                     'inactive' => 'Inactif',
+                ],
+            ],
+            'materials' => [
+                'navigation' => 'Materiaux',
+                'singular' => 'Materiau',
+                'plural' => 'Materiaux',
+                'empty_state' => [
+                    'heading' => 'Aucun materiau trouve',
+                    'description' => 'Les materiaux apparaitront ici une fois ajoutes.',
+                ],
+                'actions' => [
+                    'create' => 'Creer un materiau',
+                ],
+                'fields' => [
+                    'sku' => 'SKU',
+                    'current_stock' => 'Stock actuel',
+                    'reserved_stock' => 'Stock reserve',
+                    'available_stock' => 'Stock disponible',
+                    'min_stock_alert' => 'Seuil stock bas',
                 ],
             ],
             'users' => [

@@ -94,13 +94,16 @@ it('expenses table has total column not amount', function () {
         'created_by' => $this->admin->getKey(),
     ]);
 
-    Expense::factory()->create([
+    $expense = Expense::factory()->create([
         'repair_job_id' => $repairJob->getKey(),
         'created_by' => $this->admin->getKey(),
-        'total' => 250.00,
+        'quantity' => 1,
+        'unit_cost' => 250,
+        'gst_rate' => 0,
+        'qst_rate' => 0,
     ]);
 
-    $foundExpense = Expense::where('total', 250.00)->firstOrFail();
+    $foundExpense = Expense::findOrFail($expense->getKey());
 
     expect((float) $foundExpense->total)->toBe(250.0);
     expect(property_exists($foundExpense, 'amount'))->toBeFalse();

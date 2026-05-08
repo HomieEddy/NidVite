@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
@@ -29,7 +30,11 @@ class NotificationInbox extends Page implements HasTable
     {
         $user = Auth::user();
 
-        return $user?->is_active && ($user?->isAdmin() || $user?->isManager());
+        if (! $user) {
+            return false;
+        }
+
+        return $user->is_active && ($user->isAdmin() || $user->isManager());
     }
 
     public static function getNavigationLabel(): string
@@ -44,7 +49,12 @@ class NotificationInbox extends Page implements HasTable
 
     public function table(Table $table): Table
     {
+        /** @var User|null $user */
         $user = Auth::user();
+
+        if (! $user) {
+            return $table->query(DatabaseNotification::query()->whereRaw('1 = 0'));
+        }
 
         return $table
             ->query(
@@ -81,9 +91,17 @@ class NotificationInbox extends Page implements HasTable
             ->headerActions([
                 Action::make('mark_all_read')
                     ->label(__('filament.notifications.actions.mark_all_read'))
-                    ->visible(fn (): bool => Auth::user()?->unreadNotifications()->exists() ?? false)
+                    ->visible(function (): bool {
+                        $user = Auth::user();
+
+                        return $user ? $user->unreadNotifications()->exists() : false;
+                    })
                     ->action(function (): void {
-                        Auth::user()?->unreadNotifications->markAsRead();
+                        $user = Auth::user();
+
+                        if ($user) {
+                            $user->unreadNotifications()->update(['read_at' => now()]);
+                        }
                     }),
             ])
             ->emptyStateHeading(__('filament.notifications.empty_heading'));
