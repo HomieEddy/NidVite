@@ -78,6 +78,12 @@
     <main id="main-content" class="flex-1 w-full">
         @yield('content')
     </main>
+
+    <footer class="max-w-3xl mx-auto px-4 py-4 text-xs text-gray-500 flex items-center justify-center gap-4">
+        <a href="{{ route('legal.privacy') }}" class="hover:text-amber-700">{{ app()->getLocale() === 'fr' ? 'Confidentialite' : 'Privacy' }}</a>
+        <span>|</span>
+        <a href="{{ route('legal.terms') }}" class="hover:text-amber-700">{{ app()->getLocale() === 'fr' ? 'Conditions' : 'Terms' }}</a>
+    </footer>
     
     {{-- Bottom Navigation (mobile only) --}}
     <nav class="sticky bottom-0 z-1001 citizen-glass-nav safe-bottom shadow-[0_-4px_16px_-1px_rgba(0,0,0,0.1)] md:hidden" aria-label="{{ __('Navigation mobile') }}">

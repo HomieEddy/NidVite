@@ -33,7 +33,7 @@ class MapController extends Controller
             ->whereNotNull('location')
             ->select([
                 'id',
-                'uuid',
+                'public_tracking_id',
                 'status',
                 'description',
                 'address',
@@ -59,14 +59,14 @@ class MapController extends Controller
                         'coordinates' => [$longitude, $latitude],
                     ],
                     'properties' => [
-                        'uuid' => $report->uuid,
+                        'tracking_id' => $report->public_tracking_id,
                         'status' => $report->status,
                         'status_label' => __("tracking.status.{$report->status}"),
                         'description' => $report->description,
                         'address' => $report->address,
                         'neighborhood' => $report->neighborhood,
                         'borough' => $report->borough,
-                        'url' => route('report.tracking', $report->uuid),
+                        'url' => route('report.tracking', $report->public_tracking_id),
                     ],
                 ];
             }),
