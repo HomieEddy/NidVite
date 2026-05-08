@@ -36,6 +36,31 @@ return [
         ],
     ],
 
+    'notifications' => [
+        'navigation_label' => 'Notifications',
+        'heading' => 'Boite de notifications',
+        'empty_heading' => 'Aucune notification',
+        'columns' => [
+            'date' => 'Date',
+            'message' => 'Message',
+            'tracking_id' => 'ID suivi',
+            'read_at' => 'Etat',
+        ],
+        'actions' => [
+            'mark_read' => 'Marquer comme lue',
+            'mark_all_read' => 'Tout marquer comme lues',
+        ],
+        'read' => 'Lue',
+        'unread' => 'Non lue',
+        'critical_report' => [
+            'subject' => 'Alerte critique sur un signalement',
+            'message' => 'Un signalement prioritaire exige votre attention.',
+            'address' => 'Adresse',
+            'priority' => 'Priorite',
+            'action' => 'Voir le signalement',
+        ],
+    ],
+
     'admin' => [
         'language_switcher' => [
             'french' => 'Francais',
