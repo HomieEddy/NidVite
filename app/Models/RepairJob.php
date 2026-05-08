@@ -169,4 +169,32 @@ class RepairJob extends Model
 
         $this->users()->attach($user->id, ['role_in_job' => 'assistant']);
     }
+
+    public function applyEqualCostAllocation(): void
+    {
+        $reportIds = $this->reports()->pluck('reports.id')->all();
+        $count = count($reportIds);
+
+        if ($count === 0) {
+            return;
+        }
+
+        $base = round(100 / $count, 2);
+        $remaining = 100.0;
+
+        foreach ($reportIds as $index => $reportId) {
+            $allocation = $index === $count - 1 ? round($remaining, 2) : $base;
+            $this->reports()->updateExistingPivot($reportId, ['cost_allocation_percentage' => $allocation]);
+            $remaining -= $allocation;
+        }
+    }
+
+    public function applyManualCostAllocation(array $overrides): void
+    {
+        foreach ($overrides as $reportId => $allocation) {
+            $this->reports()->updateExistingPivot((int) $reportId, [
+                'cost_allocation_percentage' => (float) $allocation,
+            ]);
+        }
+    }
 }

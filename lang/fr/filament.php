@@ -99,8 +99,12 @@ return [
             'unit_cost' => 'Cout unitaire',
             'subtotal' => 'Sous-total',
             'tax_rate' => 'Taux de taxe',
+            'gst_rate' => 'Taux TPS',
+            'qst_rate' => 'Taux TVQ',
             'tax_amount' => 'Montant de taxe',
             'total' => 'Total',
+            'cost_allocation_mode' => 'Mode de repartition des couts',
+            'receipt' => 'Recu',
             'incurred_at' => 'Date de depense',
             'scheduled_at' => 'Planifie le',
             'started_at' => 'Debute le',
@@ -202,6 +206,10 @@ return [
                     'created_by' => 'Cree par',
                     'month' => 'Mois',
                     'unknown' => 'Inconnu',
+                ],
+                'allocation' => [
+                    'equal_split' => 'Repartition egale',
+                    'manual_override' => 'Remplacement manuel',
                 ],
             ],
             'repair_jobs' => [

@@ -99,8 +99,12 @@ return [
             'unit_cost' => 'Unit Cost',
             'subtotal' => 'Subtotal',
             'tax_rate' => 'Tax Rate',
+            'gst_rate' => 'GST Rate',
+            'qst_rate' => 'QST Rate',
             'tax_amount' => 'Tax Amount',
             'total' => 'Total',
+            'cost_allocation_mode' => 'Cost Allocation Mode',
+            'receipt' => 'Receipt',
             'incurred_at' => 'Incurred At',
             'scheduled_at' => 'Scheduled At',
             'started_at' => 'Started At',
@@ -202,6 +206,10 @@ return [
                     'created_by' => 'Created By',
                     'month' => 'Month',
                     'unknown' => 'Unknown',
+                ],
+                'allocation' => [
+                    'equal_split' => 'Equal split',
+                    'manual_override' => 'Manual override',
                 ],
             ],
             'repair_jobs' => [
