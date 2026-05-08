@@ -59,6 +59,15 @@ return [
             'priority' => 'Priority',
             'action' => 'View report',
         ],
+        'low_stock' => [
+            'subject' => 'Low stock alert',
+            'message' => 'A tracked material has dropped below its low-stock threshold.',
+            'material' => 'Material',
+            'sku' => 'SKU',
+            'current' => 'Current stock',
+            'threshold' => 'Threshold',
+            'action' => 'View materials',
+        ],
     ],
 
     'admin' => [

@@ -59,6 +59,15 @@ return [
             'priority' => 'Priorite',
             'action' => 'Voir le signalement',
         ],
+        'low_stock' => [
+            'subject' => 'Alerte de stock bas',
+            'message' => 'Un materiau suivi est passe sous son seuil de stock bas.',
+            'material' => 'Materiau',
+            'sku' => 'SKU',
+            'current' => 'Stock actuel',
+            'threshold' => 'Seuil',
+            'action' => 'Voir les materiaux',
+        ],
     ],
 
     'admin' => [

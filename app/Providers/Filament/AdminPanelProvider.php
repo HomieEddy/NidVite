@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\LowStockMaterialsOverview;
 use App\Filament\Widgets\ReportsByNeighborhood;
 use App\Filament\Widgets\ReportsChart;
 use App\Filament\Widgets\ReportsMap;
@@ -46,6 +47,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 ReportsMap::class,
                 ReportsOverview::class,
+                LowStockMaterialsOverview::class,
                 ReportsChart::class,
                 ReportsByNeighborhood::class,
             ])

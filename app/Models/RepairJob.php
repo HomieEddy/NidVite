@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\LowStockMaterialAlertNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,49 @@ class RepairJob extends Model
     {
         static::creating(function (RepairJob $job) {
             $job->uuid ??= (string) Str::uuid();
+        });
+
+        static::updated(function (RepairJob $job): void {
+            if (! $job->wasChanged('status')) {
+                return;
+            }
+
+            if ($job->getOriginal('status') === 'completed' || $job->status !== 'completed') {
+                return;
+            }
+
+            $job->loadMissing('jobMaterials.material');
+
+            $recipients = User::query()
+                ->where('is_active', true)
+                ->whereHas('role', fn ($query) => $query->whereIn('slug', ['admin', 'manager']))
+                ->get();
+
+            foreach ($job->jobMaterials as $jobMaterial) {
+                $material = $jobMaterial->material;
+                if (! $material) {
+                    continue;
+                }
+
+                $used = (float) ($jobMaterial->quantity_actual ?? $jobMaterial->quantity_planned ?? 0);
+                if ($used <= 0) {
+                    continue;
+                }
+
+                $previousStock = (float) $material->current_stock;
+                $material->current_stock = max(0, $previousStock - $used);
+                $material->reserved_stock = max(0, (float) $material->reserved_stock - $used);
+                $material->save();
+
+                $threshold = (float) $material->min_stock_alert;
+                if ($threshold <= 0 || $previousStock < $threshold || (float) $material->current_stock >= $threshold) {
+                    continue;
+                }
+
+                foreach ($recipients as $recipient) {
+                    $recipient->notify(new LowStockMaterialAlertNotification($material, $previousStock));
+                }
+            }
         });
     }
 

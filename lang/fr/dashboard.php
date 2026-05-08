@@ -20,4 +20,6 @@ return [
     'top_10' => 'Top 10',
     'reports_map' => 'Carte des signalements',
     'view_report' => 'Voir le signalement',
+    'low_stock_materials' => 'Materiaux en stock bas',
+    'below_threshold' => 'Sous le seuil configure',
 ];

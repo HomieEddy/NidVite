@@ -20,4 +20,6 @@ return [
     'top_10' => 'Top 10',
     'reports_map' => 'Reports Map',
     'view_report' => 'View report',
+    'low_stock_materials' => 'Low stock materials',
+    'below_threshold' => 'Below configured threshold',
 ];
