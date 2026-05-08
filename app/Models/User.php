@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,7 +16,7 @@ use Illuminate\Support\Str;
 use Laravel\Passkeys\Contracts\PasskeyUser;
 use Laravel\Passkeys\PasskeyAuthenticatable;
 
-class User extends Authenticatable implements HasAppAuthentication, HasAppAuthenticationRecovery, PasskeyUser
+class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, PasskeyUser
 {
     use HasFactory, Notifiable, PasskeyAuthenticatable;
 
@@ -114,6 +116,11 @@ class User extends Authenticatable implements HasAppAuthentication, HasAppAuthen
     public function canManage(): bool
     {
         return in_array($this->role?->slug, ['admin', 'manager'], true);
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->is_active && $this->isAdmin();
     }
 
     public function getAppAuthenticationSecret(): ?string
