@@ -2,7 +2,6 @@
 
 use App\Models\Report;
 use Bepsvpt\SecureHeaders\SecureHeaders;
-use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\StagingDemoSeeder;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -84,6 +83,71 @@ Artisan::command('security:check-headers', function () {
     return 0;
 })->purpose('Fail-fast validation for secure headers configuration in CI');
 
+Artisan::command('ops:check-staging-readiness', function () {
+    $issues = [];
+
+    if (! app()->environment(['staging', 'testing'])) {
+        $issues[] = 'APP_ENV must be staging for staging readiness checks.';
+    }
+
+    if ((string) config('queue.default') !== 'redis') {
+        $issues[] = 'QUEUE_CONNECTION must resolve to redis.';
+    }
+
+    if ((string) config('cache.default') !== 'redis') {
+        $issues[] = 'CACHE_STORE must resolve to redis.';
+    }
+
+    if ((string) config('filesystems.default') !== 'r2') {
+        $issues[] = 'FILESYSTEM_DISK must resolve to r2.';
+    }
+
+    try {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver !== 'pgsql') {
+            $issues[] = 'DB_CONNECTION must resolve to pgsql.';
+        } else {
+            $postgis = DB::selectOne("SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'postgis') AS installed");
+
+            if (! isset($postgis->installed) || ! (bool) $postgis->installed) {
+                $issues[] = 'PostGIS extension is not installed on the active database.';
+            }
+        }
+    } catch (Throwable $exception) {
+        $issues[] = 'Database/PostGIS readiness check failed: '.$exception->getMessage();
+    }
+
+    $mailer = (string) config('mail.default');
+
+    if (! in_array($mailer, ['log', 'array'], true)) {
+        $issues[] = 'MAIL_MAILER must be log or array in staging to prevent outbound delivery.';
+    }
+
+    $workerScript = base_path('deploy/railway/worker.sh');
+    $schedulerScript = base_path('deploy/railway/scheduler.sh');
+
+    if (! is_file($workerScript) || ! str_contains((string) file_get_contents($workerScript), 'queue:work redis')) {
+        $issues[] = 'Railway worker script must run queue:work redis.';
+    }
+
+    if (! is_file($schedulerScript) || ! str_contains((string) file_get_contents($schedulerScript), 'schedule:run')) {
+        $issues[] = 'Railway scheduler script must run schedule:run.';
+    }
+
+    if ($issues !== []) {
+        foreach ($issues as $issue) {
+            $this->error($issue);
+        }
+
+        return 1;
+    }
+
+    $this->info('Staging readiness check passed.');
+
+    return 0;
+})->purpose('Fail-fast validation for Railway staging parity and safety checks');
+
 Artisan::command('ops:seed-staging-demo {--fresh : Recreate schema before seeding}', function () {
     if (! app()->environment(['staging', 'testing'])) {
         $this->error('This command is restricted to staging/testing environments.');
@@ -93,7 +157,6 @@ Artisan::command('ops:seed-staging-demo {--fresh : Recreate schema before seedin
 
     if ((bool) $this->option('fresh')) {
         Artisan::call('migrate:fresh', ['--force' => true]);
-        Artisan::call('db:seed', ['--class' => DatabaseSeeder::class, '--force' => true]);
     }
 
     Artisan::call('db:seed', ['--class' => StagingDemoSeeder::class, '--force' => true]);

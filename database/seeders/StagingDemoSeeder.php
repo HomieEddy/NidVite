@@ -16,7 +16,23 @@ class StagingDemoSeeder extends Seeder
         // Keep the demo dataset deterministic and reproducible on repeated runs.
         DB::statement('TRUNCATE TABLE job_reports, expenses, repair_jobs, reports RESTART IDENTITY CASCADE');
 
-        $operator = User::query()->first() ?? User::factory()->create();
+        $adminRoleId = DB::table('roles')->where('slug', 'admin')->value('id');
+        if (! is_numeric($adminRoleId)) {
+            $adminRoleId = DB::table('roles')->insertGetId([
+                'slug' => 'admin',
+                'label_en' => 'Administrator',
+                'label_fr' => 'Administrateur',
+                'sort_order' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $operator = User::query()->first() ?? User::factory()->create([
+            'role_id' => (int) $adminRoleId,
+            'is_active' => true,
+            'locale' => 'fr',
+        ]);
 
         $received = Report::factory()->count(12)->create([
             'status' => 'received',

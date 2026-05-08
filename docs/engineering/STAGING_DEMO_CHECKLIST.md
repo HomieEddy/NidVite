@@ -1,39 +1,59 @@
-# Staging Demo Checklist
+# Staging Demo UAT Go/No-Go Checklist
 
-Use this checklist before any staging demo run.
+Date: 2026-05-08
+Milestone: v2.0 Phase 14
 
-## Preconditions
+## 1) Preflight Gate
 
-- Deploy is complete on Railway staging services.
-- Queue worker and scheduler services are running.
-- Staging environment is configured to avoid outbound mail delivery.
-
-## Readiness Command
-
-Run:
+Run from project root:
 
 ```bash
 php artisan ops:check-staging-readiness
 ```
 
-Expected outcome:
-- Exit code `0`
-- Output includes `Staging readiness check passed.`
+Go criteria:
+- Command exits with code 0.
+- Queue/cache/filesystem/database/postgis checks pass.
+- Mailer is safe for staging (`log` or `array`).
 
-If the command fails, resolve all reported issues before demo rehearsal.
+No-go criteria:
+- Any failed check output from the command.
 
-## Railway Script Shortcut
-
-Run:
+## 2) Demo Data Reset
 
 ```bash
-sh deploy/railway/staging-readiness.sh
+php artisan ops:seed-staging-demo --fresh
 ```
 
-This executes the same guard command in fail-fast mode.
+Go criteria:
+- Command exits with code 0.
+- Output contains `Staging demo seed completed.`
+- Demo reports are present for map and dashboard checks.
 
-## Post-Check Actions
+No-go criteria:
+- Seed command fails or dataset count is not reproducible.
 
-- Run smoke test on critical admin pages.
-- Validate map/dashboard data visibility using staging dataset.
-- Confirm no real outbound notification path is enabled.
+## 3) UAT Functional Pass
+
+Run and verify:
+- Public map page loads and markers render.
+- `/api/reports/geojson` returns features.
+- Admin dashboard loads repair velocity and neighborhood cost widgets without SQL errors.
+- Export actions generate Excel and PDF successfully.
+
+## 4) Rollback Plan
+
+If go/no-go fails:
+1. Stop demo and record failure output.
+2. Re-run `php artisan ops:check-staging-readiness` after env fix.
+3. Re-seed with `php artisan ops:seed-staging-demo --fresh`.
+4. If still failing, revert to the last known good staging commit and repeat preflight.
+
+## 5) Sign-off
+
+Record:
+- Commit SHA tested
+- Operator
+- Date/time
+- Go/No-go decision
+- Follow-up actions (if any)
