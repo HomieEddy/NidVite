@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\MontrealBoundary;
 use App\Models\Report;
 use Database\Seeders\MontrealBoundarySeeder;
 use Database\Seeders\ReportCategorySeeder;
