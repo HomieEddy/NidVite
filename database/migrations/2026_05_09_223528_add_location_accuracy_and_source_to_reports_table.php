@@ -12,10 +12,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('reports', function (Blueprint $table) {
-            $table->string('location_source', 20)->nullable()->after('location_accuracy')
-                ->comment('gps|manual|geocode');
-        });
+        if (! Schema::hasColumn('reports', 'location_accuracy')) {
+            Schema::table('reports', function (Blueprint $table) {
+                $table->float('location_accuracy')->nullable()->after('location');
+            });
+        }
+
+        if (! Schema::hasColumn('reports', 'location_source')) {
+            Schema::table('reports', function (Blueprint $table) {
+                $table->string('location_source', 20)->nullable()->after('location_accuracy')
+                    ->comment('gps|manual|geocode');
+            });
+        }
+
+        DB::statement('ALTER TABLE reports DROP CONSTRAINT IF EXISTS chk_location_accuracy_non_negative');
+        DB::statement('ALTER TABLE reports DROP CONSTRAINT IF EXISTS chk_location_source_allowed');
 
         DB::statement('ALTER TABLE reports ADD CONSTRAINT chk_location_accuracy_non_negative CHECK (location_accuracy IS NULL OR location_accuracy >= 0)');
         DB::statement("ALTER TABLE reports ADD CONSTRAINT chk_location_source_allowed CHECK (location_source IS NULL OR location_source IN ('gps', 'manual', 'geocode'))");
@@ -29,8 +40,16 @@ return new class extends Migration
         DB::statement('ALTER TABLE reports DROP CONSTRAINT IF EXISTS chk_location_source_allowed');
         DB::statement('ALTER TABLE reports DROP CONSTRAINT IF EXISTS chk_location_accuracy_non_negative');
 
-        Schema::table('reports', function (Blueprint $table) {
-            $table->dropColumn('location_source');
-        });
+        if (Schema::hasColumn('reports', 'location_source')) {
+            Schema::table('reports', function (Blueprint $table) {
+                $table->dropColumn('location_source');
+            });
+        }
+
+        if (Schema::hasColumn('reports', 'location_accuracy')) {
+            Schema::table('reports', function (Blueprint $table) {
+                $table->dropColumn('location_accuracy');
+            });
+        }
     }
 };

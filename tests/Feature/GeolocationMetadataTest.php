@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Report;
+use App\Models\ReportCategory;
 use Database\Seeders\MontrealBoundarySeeder;
 use Database\Seeders\ReportCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -50,12 +51,16 @@ describe('Report setLocation with accuracy and source', function () {
     });
 
     it('can create report with accuracy and source via fillable', function () {
+        $categoryId = ReportCategory::query()
+            ->where('slug', 'pothole')
+            ->value('id');
+
         $report = Report::create([
             'reporter_email' => 'citizen@example.com',
             'preferred_locale' => 'fr',
             'status' => 'received',
             'priority' => 'normal',
-            'category_id' => 1,
+            'category_id' => $categoryId,
             'description' => 'Test pothole',
             'location_accuracy' => 15.0,
             'location_source' => 'gps',
