@@ -132,6 +132,17 @@ class Report extends Model implements HasMedia
      */
     public function setLocation(float $latitude, float $longitude, ?float $accuracy = null, ?string $source = null): void
     {
+        if ($accuracy !== null && ($accuracy < 0 || ! is_numeric($accuracy))) {
+            throw new InvalidArgumentException('location_accuracy must be a non-negative number');
+        }
+
+        if ($source !== null) {
+            $source = trim($source);
+            if ($source === '' || ! in_array($source, ['gps', 'manual', 'geocode'], true)) {
+                throw new InvalidArgumentException('location_source must be one of: gps, manual, geocode');
+            }
+        }
+
         DB::statement(
             'UPDATE reports SET location = ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography WHERE id = ?',
             [$longitude, $latitude, $this->id]

@@ -4,6 +4,7 @@ use App\Models\MontrealBoundary;
 use App\Models\Report;
 use Database\Seeders\MontrealBoundarySeeder;
 use Database\Seeders\ReportCategorySeeder;
+use DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 
@@ -71,6 +72,7 @@ describe('Report creation with geofence regression', function () {
         $report->setLocation(45.5019, -73.5674);
 
         $report->refresh();
-        expect($report->location)->not->toBeNull();
+        $location = DB::selectOne('SELECT ST_X(location::geometry) as lng FROM reports WHERE id = ?', [$report->id]);
+        expect($location->lng)->not->toBeNull();
     });
 });

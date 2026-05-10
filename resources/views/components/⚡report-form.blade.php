@@ -290,9 +290,9 @@ new class extends Component
                 var bbox = data[0].boundingbox;
                 var accuracy = null;
                 if (bbox && bbox[0] && bbox[1] && bbox[2] && bbox[3]) {
-                    var latErr = (parseFloat(bbox[0]) - parseFloat(bbox[1])) / 2;
-                    var lngErr = (parseFloat(bbox[2]) - parseFloat(bbox[3])) / 2;
-                    accuracy = Math.max(latErr, lngErr) * 111320;
+                    var latErr = (parseFloat(bbox[1]) - parseFloat(bbox[0])) / 2;
+                    var lngErr = (parseFloat(bbox[3]) - parseFloat(bbox[2])) / 2;
+                    accuracy = Math.max(Math.abs(latErr), Math.abs(lngErr)) * 111320;
                 }
                 $wire.latitude = lat;
                 $wire.longitude = lng;

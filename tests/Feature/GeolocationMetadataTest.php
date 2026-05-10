@@ -67,3 +67,19 @@ describe('Report setLocation with accuracy and source', function () {
             ->and($report->location_source)->toBe('gps');
     });
 });
+
+describe('Report setLocation failure modes', function () {
+    it('rejects invalid location_source', function () {
+        $report = Report::factory()->create(['reporter_email' => 'citizen@example.com']);
+
+        expect(fn () => $report->setLocation(45.5019, -73.5674, null, 'invalid_source'))
+            ->toThrow(InvalidArgumentException::class);
+    });
+
+    it('rejects negative location_accuracy', function () {
+        $report = Report::factory()->create(['reporter_email' => 'citizen@example.com']);
+
+        expect(fn () => $report->setLocation(45.5019, -73.5674, -5.0))
+            ->toThrow(InvalidArgumentException::class);
+    });
+});
