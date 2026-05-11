@@ -1,38 +1,14 @@
 <?php
 
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\ReportTrackingController;
 use App\Http\Controllers\SignedMediaController;
-use App\Models\Report;
 use Illuminate\Support\Facades\Route;
 use Spatie\Health\Http\Controllers\HealthCheckJsonResultsController;
 use Spatie\ResponseCache\Middlewares\CacheResponse;
 
-Route::get('/', function () {
-    $visibleReports = Report::query()
-        ->where('is_spam', false)
-        ->where('status', '!=', 'rejected')
-        ->whereNotNull('location');
-
-    $totalReported = (clone $visibleReports)->count();
-    $totalFixed = (clone $visibleReports)->where('status', 'repaired')->count();
-    $totalPending = (clone $visibleReports)->whereIn('status', ['received', 'verified', 'scheduled', 'in_progress'])->count();
-
-    $avgDays = (clone $visibleReports)
-        ->where('status', 'repaired')
-        ->whereNotNull('completed_at')
-        ->whereNotNull('created_at')
-        ->selectRaw('AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400) as avg_days')
-        ->value('avg_days');
-
-    if (app()->getLocale() === 'fr') {
-        $velocity = $avgDays ? round($avgDays, 1).' jours' : 'N/D';
-    } else {
-        $velocity = $avgDays ? round($avgDays, 1).' days' : 'N/A';
-    }
-
-    return view('welcome', compact('totalReported', 'totalFixed', 'totalPending', 'velocity'));
-})->when(! app()->environment('staging'), function ($route) {
+Route::get('/', [HomeController::class, 'index'])->when(! app()->environment('staging'), function ($route) {
     $route->middleware(CacheResponse::class);
 });
 

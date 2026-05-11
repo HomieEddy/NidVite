@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Reports\OverrideRoadValidationAction;
 use App\Models\Report;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
@@ -46,4 +47,25 @@ it('stores override metadata and logs audit activity', function () {
         ->and($activity->properties['old_decision'])->toBe('pass')
         ->and($activity->properties['new_decision'])->toBe('fail_low_accuracy')
         ->and($activity->properties['audit_note'])->toBe('GPS drift observed in street canyon');
+});
+
+it('delegates override mutation through OverrideRoadValidationAction', function () {
+    $report = Report::factory()->create([
+        'road_validation_decision' => 'pass',
+        'road_validation_reason' => 'pass',
+        'road_validation_mode' => 'shadow',
+        'location_accuracy_passed' => true,
+    ]);
+
+    app(OverrideRoadValidationAction::class)(
+        $report,
+        'fail_off_street',
+        'Visual check confirms off-street location'
+    );
+
+    $report->refresh();
+
+    expect($report->road_validation_decision)->toBe('fail_off_street')
+        ->and($report->road_validation_reason)->toBe('admin_override')
+        ->and($report->road_validation_mode)->toBe('admin_override');
 });
