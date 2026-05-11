@@ -4,8 +4,8 @@ use App\Models\MontrealBoundary;
 use App\Models\Report;
 use Database\Seeders\MontrealBoundarySeeder;
 use Database\Seeders\ReportCategorySeeder;
-use DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
