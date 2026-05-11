@@ -71,7 +71,7 @@ class SuspiciousActivityDashboard extends Page implements HasTable
                     ->wrap()
                     ->limit(100)
                     ->searchable(),
-                TextColumn::make('report.uuid')
+                TextColumn::make('report.public_tracking_id')
                     ->label(__('filament.suspicious_activity.columns.report'))
                     ->placeholder('-')
                     ->searchable(),
