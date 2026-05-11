@@ -27,7 +27,7 @@ it('fails off street when nearest road is outside threshold', function () {
     config()->set('report_validation.max_road_distance_meters', 5);
     config()->set('report_validation.max_location_accuracy_meters', 50);
 
-    $result = (new StreetProximityValidationService)->validate(45.40, -73.90, 12.0);
+    $result = (new StreetProximityValidationService)->validate(45.5120, -73.5945, 12.0);
 
     expect($result['decision'])->toBe('fail_off_street');
     expect($result['should_block'])->toBeTrue();
@@ -49,7 +49,7 @@ it('fails both when off street and low accuracy', function () {
     config()->set('report_validation.max_road_distance_meters', 5);
     config()->set('report_validation.max_location_accuracy_meters', 20);
 
-    $result = (new StreetProximityValidationService)->validate(45.40, -73.90, 100.0);
+    $result = (new StreetProximityValidationService)->validate(45.5120, -73.5945, 100.0);
 
     expect($result['decision'])->toBe('fail_both');
     expect($result['should_block'])->toBeTrue();

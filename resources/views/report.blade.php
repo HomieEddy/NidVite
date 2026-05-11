@@ -17,7 +17,7 @@
 @endsection
 
 @push('scripts')
-@if (config('captcha.sitekey'))
+@if (config('services.recaptcha.enabled', true) && config('captcha.sitekey'))
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     @vite('resources/js/recaptcha-report.js')
 @endif

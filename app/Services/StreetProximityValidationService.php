@@ -27,10 +27,17 @@ class StreetProximityValidationService
             $distance = null;
         }
 
-        $roadPassed = $distance !== null && $distance <= $distanceThreshold;
+        $roadDataAvailable = $distance !== null;
+        $roadPassed = ! $roadDataAvailable || $distance <= $distanceThreshold;
         $accuracyPassed = $accuracy !== null && $accuracy <= $accuracyThreshold;
 
-        if ($roadPassed && $accuracyPassed) {
+        if (! $roadDataAvailable && $accuracyPassed) {
+            $decision = 'pass';
+            $reason = 'pass';
+        } elseif (! $roadDataAvailable) {
+            $decision = 'fail_low_accuracy';
+            $reason = 'low_accuracy';
+        } elseif ($roadPassed && $accuracyPassed) {
             $decision = 'pass';
             $reason = 'pass';
         } elseif (! $roadPassed && ! $accuracyPassed) {
