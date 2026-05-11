@@ -66,3 +66,15 @@ it('shadow mode accepts failing outcomes and stores metadata', function () {
     expect($report->road_validation_mode)->toBe('shadow');
     expect($report->road_validation_decision)->toBe('fail_both');
 });
+
+it('falls back to shadow mode when configuration is invalid', function () {
+    config()->set('report_validation.mode', 'unexpected');
+    config()->set('report_validation.max_road_distance_meters', 5);
+    config()->set('report_validation.max_location_accuracy_meters', 20);
+
+    $result = (new StreetProximityValidationService)->validate(45.40, -73.90, 100.0);
+
+    expect($result['mode'])->toBe('shadow');
+    expect($result['should_block'])->toBeFalse();
+    expect($result['decision'])->toBe('fail_both');
+});
