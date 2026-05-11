@@ -202,11 +202,25 @@ new class extends Component
 
             if (! empty($this->photos)) {
                 foreach ($this->photos as $photo) {
-                    $cleanPath = ExifStripper::process($photo);
+                    $cleanPath = null;
 
-                    $report->addMedia($cleanPath)
-                        ->usingName($photo->getClientOriginalName())
-                        ->toMediaCollection('report-photos');
+                    try {
+                        $cleanPath = ExifStripper::process($photo);
+
+                        $report->addMedia($cleanPath)
+                            ->usingName($photo->getClientOriginalName())
+                            ->toMediaCollection('report-photos');
+                    } catch (\Throwable $e) {
+                        report($e);
+
+                        throw ValidationException::withMessages([
+                            'photos' => [__('report.validation.photo_upload_failed')],
+                        ]);
+                    } finally {
+                        if (is_string($cleanPath) && is_file($cleanPath)) {
+                            @unlink($cleanPath);
+                        }
+                    }
                 }
             }
 

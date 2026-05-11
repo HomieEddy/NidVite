@@ -50,6 +50,7 @@ return [
         'off_street' => 'This location appears too far from a public road. Please place the pin directly on the street.',
         'low_accuracy' => 'Your location accuracy is too low. Please recapture your location and try again.',
         'off_street_and_low_accuracy' => 'Your location appears off-street and accuracy is too low. Please recapture your location on the street.',
+        'photo_upload_failed' => 'We could not process one of your photos. Please try another photo or submit without photos.',
         'captcha_required' => 'Please confirm the reCAPTCHA before submitting your report.',
         'captcha_invalid' => 'reCAPTCHA verification failed. Please try again.',
         'captcha_unavailable' => 'reCAPTCHA is unavailable right now.',
