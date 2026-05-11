@@ -74,7 +74,15 @@ class ActivityLogViewer extends Page implements HasTable
 
                         return __('filament.activity_log.values.system');
                     })
-                    ->searchable(),
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where(function (Builder $query) use ($search): void {
+                            $query->where('causer_id', 'like', "%{$search}%")
+                                ->orWhereHasMorph('causer', [User::class], function (Builder $causerQuery) use ($search): void {
+                                    $causerQuery->where('name', 'like', "%{$search}%")
+                                        ->orWhere('email', 'like', "%{$search}%");
+                                });
+                        });
+                    }),
                 TextColumn::make('event')
                     ->label(__('filament.activity_log.columns.event'))
                     ->placeholder('-')
