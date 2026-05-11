@@ -49,7 +49,7 @@ class MapController extends Controller
                 'borough',
                 'category_id',
             ])
-            ->selectRaw('ST_Y(location::geometry) as latitude, ST_X(location::geometry) as longitude');
+            ->withCoordinates();
 
         if ($status !== null) {
             $reportsQuery->where('status', $status);
@@ -60,10 +60,9 @@ class MapController extends Controller
         return response()->json([
             'type' => 'FeatureCollection',
             'features' => $reports->map(function (Report $report): array {
-                /** @phpstan-ignore property.notFound */
-                $longitude = (float) $report->longitude;
-                /** @phpstan-ignore property.notFound */
-                $latitude = (float) $report->latitude;
+                $coordinates = $report->coordinates();
+                $longitude = $coordinates['lng'] ?? 0.0;
+                $latitude = $coordinates['lat'] ?? 0.0;
 
                 return [
                     'type' => 'Feature',

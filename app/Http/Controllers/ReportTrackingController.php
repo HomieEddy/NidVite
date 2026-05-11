@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Report;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ReportTrackingController extends Controller
@@ -15,14 +14,7 @@ class ReportTrackingController extends Controller
             ->with(['category', 'media'])
             ->firstOrFail();
 
-        $location = null;
-        /** @phpstan-ignore property.notFound */
-        if ($report->location !== null) {
-            $location = DB::selectOne(
-                'SELECT ST_Y(location::geometry) as lat, ST_X(location::geometry) as lng FROM reports WHERE id = ?',
-                [$report->id]
-            );
-        }
+        $location = $report->coordinatePoint();
 
         $photoUrls = $report->signedPhotoUrls();
 
@@ -39,14 +31,7 @@ class ReportTrackingController extends Controller
             return response()->json(['error' => 'Report not found'], 404);
         }
 
-        $location = null;
-        /** @phpstan-ignore property.notFound */
-        if ($report->location !== null) {
-            $location = DB::selectOne(
-                'SELECT ST_Y(location::geometry) as lat, ST_X(location::geometry) as lng FROM reports WHERE id = ?',
-                [$report->id]
-            );
-        }
+        $location = $report->coordinates();
 
         $steps = ['received', 'verified', 'scheduled', 'in_progress', 'repaired'];
         $currentIndex = array_search($report->status, $steps);
@@ -64,7 +49,7 @@ class ReportTrackingController extends Controller
             'created_at' => $report->created_at->toIso8601String(),
             'rejection_reason' => $report->rejection_reason,
             'photos' => $report->signedPhotoUrls(),
-            'location' => $location ? ['lat' => (float) $location->lat, 'lng' => (float) $location->lng] : null,
+            'location' => $location,
             'progress' => [
                 'current_step' => $currentIndex,
                 'total_steps' => count($steps),
