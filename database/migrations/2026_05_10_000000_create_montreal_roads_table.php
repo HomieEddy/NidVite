@@ -18,7 +18,6 @@ return new class extends Migration
 
         DB::statement('ALTER TABLE montreal_roads ADD COLUMN geom GEOMETRY(LINESTRING, 4326) NOT NULL');
         DB::statement('CREATE INDEX idx_montreal_roads_geom ON montreal_roads USING GIST(geom)');
-        DB::statement('CREATE INDEX idx_montreal_roads_source ON montreal_roads(source)');
     }
 
     public function down(): void

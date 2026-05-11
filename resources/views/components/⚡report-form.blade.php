@@ -189,12 +189,14 @@ new class extends Component
                 'address' => $validated['address'],
                 'neighborhood' => $validated['neighborhood'] ?: null,
                 'borough' => $validated['borough'] ?: null,
-                'road_distance_meters' => $validation['distance_meters'],
-                'road_validation_decision' => $validation['decision'],
-                'road_validation_reason' => $validation['reason'],
-                'road_validation_mode' => $validation['mode'],
-                'location_accuracy_passed' => $validation['accuracy_passed'],
             ]);
+
+            $report->road_distance_meters = $validation['distance_meters'];
+            $report->road_validation_decision = $validation['decision'];
+            $report->road_validation_reason = $validation['reason'];
+            $report->road_validation_mode = $validation['mode'];
+            $report->location_accuracy_passed = $validation['accuracy_passed'];
+            $report->save();
 
             $report->setLocation($this->latitude, $this->longitude, $this->location_accuracy, $this->location_source);
 

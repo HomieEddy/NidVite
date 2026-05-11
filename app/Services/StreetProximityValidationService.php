@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\MontrealRoad;
+use Illuminate\Support\Facades\Log;
 
 class StreetProximityValidationService
 {
@@ -17,7 +18,14 @@ class StreetProximityValidationService
         $distanceThreshold = (float) config('report_validation.max_road_distance_meters', 35);
         $accuracyThreshold = (float) config('report_validation.max_location_accuracy_meters', 50);
 
-        $distance = MontrealRoad::distanceToNearestMeters($latitude, $longitude);
+        try {
+            $distance = MontrealRoad::distanceToNearestMeters($latitude, $longitude);
+        } catch (\Throwable $exception) {
+            Log::warning('Street proximity lookup unavailable; continuing with fallback.', [
+                'message' => $exception->getMessage(),
+            ]);
+            $distance = null;
+        }
 
         $roadPassed = $distance !== null && $distance <= $distanceThreshold;
         $accuracyPassed = $accuracy !== null && $accuracy <= $accuracyThreshold;

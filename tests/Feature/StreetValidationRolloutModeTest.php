@@ -54,12 +54,14 @@ it('shadow mode accepts failing outcomes and stores metadata', function () {
         'category_id' => $categoryId,
         'description' => 'Shadow mode test',
         'address' => 'Montreal',
-        'road_distance_meters' => $result['distance_meters'],
-        'road_validation_decision' => $result['decision'],
-        'road_validation_reason' => $result['reason'],
-        'road_validation_mode' => $result['mode'],
-        'location_accuracy_passed' => $result['accuracy_passed'],
     ]);
+
+    $report->road_distance_meters = $result['distance_meters'];
+    $report->road_validation_decision = $result['decision'];
+    $report->road_validation_reason = $result['reason'];
+    $report->road_validation_mode = $result['mode'];
+    $report->location_accuracy_passed = $result['accuracy_passed'];
+    $report->save();
 
     expect($report->road_validation_mode)->toBe('shadow');
     expect($report->road_validation_decision)->toBe('fail_both');

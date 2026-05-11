@@ -67,11 +67,6 @@ class Report extends Model implements HasMedia
         'expires_at',
         'location_accuracy',
         'location_source',
-        'road_distance_meters',
-        'road_validation_decision',
-        'road_validation_reason',
-        'road_validation_mode',
-        'location_accuracy_passed',
     ];
 
     protected $casts = [
