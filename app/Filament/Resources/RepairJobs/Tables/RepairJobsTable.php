@@ -109,12 +109,14 @@ class RepairJobsTable
                             ->reorderable(false)
                             ->defaultItems(0)
                             ->schema([
+                                TextInput::make('tracking_id')
+                                    ->label(__('filament.admin.resources.repair_jobs.fields.tracking_id')),
                                 TextInput::make('address')
                                     ->label(__('filament.admin.resources.repair_jobs.fields.address')),
                                 TextInput::make('status')
                                     ->label(__('filament.admin.resources.repair_jobs.fields.status')),
                             ])
-                            ->columns(2),
+                            ->columns(3),
                     ])
                     ->fillForm(fn (RepairJob $record): array => [
                         'title' => $record->title,
@@ -122,6 +124,7 @@ class RepairJobsTable
                         'scheduled_at' => optional($record->scheduled_at)->format('M j, Y H:i') ?? __('filament.admin.resources.repair_jobs.fields.status_fallback'),
                         'reports' => $record->reports
                             ->map(fn ($report): array => [
+                                'tracking_id' => $report->public_tracking_id,
                                 'address' => $report->address ?? __('filament.admin.resources.repair_jobs.fields.address_fallback'),
                                 'status' => __('filament.admin.resources.reports.statuses.'.$report->status),
                             ])

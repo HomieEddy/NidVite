@@ -266,6 +266,7 @@ return [
                     'created_by' => 'Cree par',
                     'scheduled_month' => 'Mois planifie',
                     'linked_reports' => 'Signalements associes',
+                    'tracking_id' => 'ID de suivi',
                     'report_uuid' => 'ID du signalement',
                     'address' => 'Adresse',
                     'status_fallback' => 'N/A',
