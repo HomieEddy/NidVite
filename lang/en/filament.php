@@ -8,13 +8,23 @@ return [
         'columns' => [
             'date' => 'Date',
             'user' => 'User',
+            'event' => 'Event',
             'action' => 'Action',
+            'log' => 'Log',
             'subject' => 'Subject',
+            'subject_id' => 'Subject ID',
+            'ip' => 'IP Address',
         ],
         'filters' => [
             'user' => 'User',
+            'event' => 'Event',
+            'log' => 'Log',
             'action' => 'Action',
             'date' => 'Date range',
+        ],
+        'values' => [
+            'system' => 'System',
+            'user_id' => 'User #:id',
         ],
     ],
 
@@ -27,7 +37,7 @@ return [
             'severity' => 'Severity',
             'type' => 'Type',
             'reason' => 'Reason',
-            'report' => 'Report UUID',
+            'report' => 'Report ID',
         ],
         'filters' => [
             'type' => 'Type',
@@ -266,7 +276,8 @@ return [
                     'created_by' => 'Created By',
                     'scheduled_month' => 'Scheduled Month',
                     'linked_reports' => 'Linked Reports',
-                    'report_uuid' => 'Report UUID',
+                    'tracking_id' => 'Tracker ID',
+                    'report_uuid' => 'Report ID',
                     'address' => 'Address',
                     'status_fallback' => 'N/A',
                     'address_fallback' => 'Address not specified',

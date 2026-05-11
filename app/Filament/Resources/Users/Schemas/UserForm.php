@@ -26,9 +26,6 @@ class UserForm
                     ->label(__('filament.admin.fields_common.password'))
                     ->password()
                     ->required(),
-                TextInput::make('uuid')
-                    ->label(__('filament.admin.resources.users.fields.uuid'))
-                    ->required(),
                 Select::make('role_id')
                     ->relationship('role', 'id')
                     ->label(__('filament.admin.fields_common.role'))

@@ -8,13 +8,23 @@ return [
         'columns' => [
             'date' => 'Date',
             'user' => 'Utilisateur',
+            'event' => 'Evenement',
             'action' => 'Action',
+            'log' => 'Journal',
             'subject' => 'Sujet',
+            'subject_id' => 'ID sujet',
+            'ip' => 'Adresse IP',
         ],
         'filters' => [
             'user' => 'Utilisateur',
+            'event' => 'Evenement',
+            'log' => 'Journal',
             'action' => 'Action',
             'date' => 'Periode',
+        ],
+        'values' => [
+            'system' => 'Systeme',
+            'user_id' => 'Utilisateur #:id',
         ],
     ],
 
@@ -27,7 +37,7 @@ return [
             'severity' => 'Severite',
             'type' => 'Type',
             'reason' => 'Raison',
-            'report' => 'UUID du signalement',
+            'report' => 'ID du signalement',
         ],
         'filters' => [
             'type' => 'Type',
@@ -266,7 +276,8 @@ return [
                     'created_by' => 'Cree par',
                     'scheduled_month' => 'Mois planifie',
                     'linked_reports' => 'Signalements associes',
-                    'report_uuid' => 'UUID du signalement',
+                    'tracking_id' => 'ID de suivi',
+                    'report_uuid' => 'ID du signalement',
                     'address' => 'Adresse',
                     'status_fallback' => 'N/A',
                     'address_fallback' => 'Adresse non precisee',

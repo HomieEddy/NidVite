@@ -109,8 +109,8 @@ class RepairJobsTable
                             ->reorderable(false)
                             ->defaultItems(0)
                             ->schema([
-                                TextInput::make('uuid')
-                                    ->label(__('filament.admin.resources.repair_jobs.fields.report_uuid')),
+                                TextInput::make('tracking_id')
+                                    ->label(__('filament.admin.resources.repair_jobs.fields.tracking_id')),
                                 TextInput::make('address')
                                     ->label(__('filament.admin.resources.repair_jobs.fields.address')),
                                 TextInput::make('status')
@@ -124,7 +124,7 @@ class RepairJobsTable
                         'scheduled_at' => optional($record->scheduled_at)->format('M j, Y H:i') ?? __('filament.admin.resources.repair_jobs.fields.status_fallback'),
                         'reports' => $record->reports
                             ->map(fn ($report): array => [
-                                'uuid' => $report->uuid,
+                                'tracking_id' => $report->public_tracking_id,
                                 'address' => $report->address ?? __('filament.admin.resources.repair_jobs.fields.address_fallback'),
                                 'status' => __('filament.admin.resources.reports.statuses.'.$report->status),
                             ])

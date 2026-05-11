@@ -10,7 +10,6 @@ export default defineConfig({
                 'resources/js/echo.js',
                 'resources/js/reverb-listener.js',
                 'resources/js/recaptcha-report.js',
-                'resources/js/admin-map-filters.js',
             ],
             refresh: true,
         }),

@@ -15,9 +15,6 @@ class ReportForm
     {
         return $schema
             ->components([
-                TextInput::make('uuid')
-                    ->label(__('filament.admin.resources.reports.fields.uuid'))
-                    ->required(),
                 TextInput::make('reporter_email')
                     ->label(__('filament.admin.fields_common.reporter_email'))
                     ->email()

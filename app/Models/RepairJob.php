@@ -11,10 +11,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class RepairJob extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected static function booted(): void
     {
@@ -102,6 +104,14 @@ class RepairJob extends Model
         'estimated_cost' => 'decimal:2',
         'actual_cost' => 'decimal:2',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'status', 'scheduled_at', 'started_at', 'completed_at', 'estimated_cost', 'actual_cost'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     public function creator(): BelongsTo
     {
