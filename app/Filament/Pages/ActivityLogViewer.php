@@ -57,16 +57,19 @@ class ActivityLogViewer extends Page implements HasTable
                 TextColumn::make('causer_display')
                     ->label(__('filament.activity_log.columns.user'))
                     ->state(function (Activity $record): string {
-                        if ($record->causer?->name) {
-                            return $record->causer->name;
+                        $causerName = data_get($record, 'causer.name');
+                        if (is_string($causerName) && $causerName !== '') {
+                            return $causerName;
                         }
 
-                        if ($record->causer?->email) {
-                            return $record->causer->email;
+                        $causerEmail = data_get($record, 'causer.email');
+                        if (is_string($causerEmail) && $causerEmail !== '') {
+                            return $causerEmail;
                         }
 
-                        if ($record->causer_id !== null) {
-                            return __('filament.activity_log.values.user_id', ['id' => $record->causer_id]);
+                        $causerId = $record->getAttribute('causer_id');
+                        if ($causerId !== null) {
+                            return __('filament.activity_log.values.user_id', ['id' => $causerId]);
                         }
 
                         return __('filament.activity_log.values.system');
