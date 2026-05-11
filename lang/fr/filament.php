@@ -6,15 +6,26 @@ return [
         'heading' => 'Journal d\'activite',
         'empty_heading' => 'Aucune activite trouvee',
         'columns' => [
+            'id' => 'ID',
             'date' => 'Date',
             'user' => 'Utilisateur',
+            'event' => 'Evenement',
             'action' => 'Action',
+            'log' => 'Journal',
             'subject' => 'Sujet',
+            'subject_id' => 'ID sujet',
+            'ip' => 'Adresse IP',
         ],
         'filters' => [
             'user' => 'Utilisateur',
+            'event' => 'Evenement',
+            'log' => 'Journal',
             'action' => 'Action',
             'date' => 'Periode',
+        ],
+        'values' => [
+            'system' => 'Systeme',
+            'user_id' => 'Utilisateur #:id',
         ],
     ],
 

@@ -6,15 +6,26 @@ return [
         'heading' => 'Activity Log',
         'empty_heading' => 'No activity found',
         'columns' => [
+            'id' => 'ID',
             'date' => 'Date',
             'user' => 'User',
+            'event' => 'Event',
             'action' => 'Action',
+            'log' => 'Log',
             'subject' => 'Subject',
+            'subject_id' => 'Subject ID',
+            'ip' => 'IP Address',
         ],
         'filters' => [
             'user' => 'User',
+            'event' => 'Event',
+            'log' => 'Log',
             'action' => 'Action',
             'date' => 'Date range',
+        ],
+        'values' => [
+            'system' => 'System',
+            'user_id' => 'User #:id',
         ],
     ],
 

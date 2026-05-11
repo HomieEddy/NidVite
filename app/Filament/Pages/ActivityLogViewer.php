@@ -50,20 +50,63 @@ class ActivityLogViewer extends Page implements HasTable
             ->query(Activity::query()->with('causer')->latest())
             ->emptyStateHeading(__('filament.activity_log.empty_heading'))
             ->columns([
+                TextColumn::make('id')
+                    ->label(__('filament.activity_log.columns.id'))
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label(__('filament.activity_log.columns.date'))
                     ->dateTime('Y-m-d H:i:s')
                     ->sortable(),
-                TextColumn::make('causer.name')
+                TextColumn::make('causer_display')
                     ->label(__('filament.activity_log.columns.user'))
-                    ->placeholder('-')
+                    ->state(function (Activity $record): string {
+                        if ($record->causer?->name) {
+                            return $record->causer->name;
+                        }
+
+                        if ($record->causer?->email) {
+                            return $record->causer->email;
+                        }
+
+                        if ($record->causer_id !== null) {
+                            return __('filament.activity_log.values.user_id', ['id' => $record->causer_id]);
+                        }
+
+                        return __('filament.activity_log.values.system');
+                    })
                     ->searchable(),
+                TextColumn::make('event')
+                    ->label(__('filament.activity_log.columns.event'))
+                    ->placeholder('-')
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('description')
                     ->label(__('filament.activity_log.columns.action'))
                     ->searchable(),
+                TextColumn::make('log_name')
+                    ->label(__('filament.activity_log.columns.log'))
+                    ->placeholder('-')
+                    ->badge()
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('subject_type')
                     ->label(__('filament.activity_log.columns.subject'))
                     ->formatStateUsing(fn (?string $state): string => $state ? class_basename($state) : '-')
+                    ->toggleable(),
+                TextColumn::make('subject_id')
+                    ->label(__('filament.activity_log.columns.subject_id'))
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('ip_address')
+                    ->label(__('filament.activity_log.columns.ip'))
+                    ->state(function (Activity $record): string {
+                        $ip = data_get($record->properties, 'ip_address_raw')
+                            ?? data_get($record->properties, 'ip_address')
+                            ?? data_get($record->properties, 'attributes.ip_address_raw')
+                            ?? data_get($record->properties, 'attributes.ip_address');
+
+                        return is_string($ip) && $ip !== '' ? $ip : '-';
+                    })
                     ->toggleable(),
             ])
             ->filters([
@@ -84,6 +127,28 @@ class ActivityLogViewer extends Page implements HasTable
                             ->distinct()
                             ->orderBy('description')
                             ->pluck('description', 'description')
+                            ->all()
+                    ),
+                SelectFilter::make('event')
+                    ->label(__('filament.activity_log.filters.event'))
+                    ->options(
+                        Activity::query()
+                            ->select('event')
+                            ->whereNotNull('event')
+                            ->distinct()
+                            ->orderBy('event')
+                            ->pluck('event', 'event')
+                            ->all()
+                    ),
+                SelectFilter::make('log_name')
+                    ->label(__('filament.activity_log.filters.log'))
+                    ->options(
+                        Activity::query()
+                            ->select('log_name')
+                            ->whereNotNull('log_name')
+                            ->distinct()
+                            ->orderBy('log_name')
+                            ->pluck('log_name', 'log_name')
                             ->all()
                     ),
                 Filter::make('created_at')
