@@ -38,7 +38,7 @@ it('denies viewer access to edit reports in filament', function () {
         ->assertForbidden();
 });
 
-it('allows manager access to edit reports in filament', function () {
+it('denies manager access to edit reports in filament', function () {
     $manager = User::factory()->create([
         'role_id' => Role::where('slug', 'manager')->value('id'),
         'is_active' => true,
@@ -47,7 +47,7 @@ it('allows manager access to edit reports in filament', function () {
 
     $this->actingAs($manager)
         ->get(ReportResource::getUrl('edit', ['record' => $report]))
-        ->assertOk();
+        ->assertForbidden();
 });
 
 it('applies throttle middleware to geojson endpoint', function () {
