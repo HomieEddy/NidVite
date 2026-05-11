@@ -256,6 +256,48 @@ class Report extends Model implements HasMedia
     }
 
     /**
+     * Apply a manual admin override for road-validation decision with an audit note.
+     */
+    public function overrideRoadValidation(string $decision, string $note): void
+    {
+        $allowedDecisions = ['pass', 'fail_off_street', 'fail_low_accuracy', 'fail_both'];
+
+        $decision = trim($decision);
+        if (! in_array($decision, $allowedDecisions, true)) {
+            throw new InvalidArgumentException('Invalid road_validation_decision provided for override');
+        }
+
+        $note = trim($note);
+        if ($note === '') {
+            throw new InvalidArgumentException('Audit note is required for validation override');
+        }
+
+        $oldDecision = $this->road_validation_decision;
+        $oldReason = $this->road_validation_reason;
+        $oldMode = $this->road_validation_mode;
+
+        $this->road_validation_decision = $decision;
+        $this->road_validation_reason = 'admin_override';
+        $this->road_validation_mode = 'admin_override';
+        $this->location_accuracy_passed = ! in_array($decision, ['fail_low_accuracy', 'fail_both'], true);
+        $this->save();
+
+        activity('report_validation_override')
+            ->performedOn($this)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'old_decision' => $oldDecision,
+                'new_decision' => $decision,
+                'old_reason' => $oldReason,
+                'new_reason' => 'admin_override',
+                'old_mode' => $oldMode,
+                'new_mode' => 'admin_override',
+                'audit_note' => $note,
+            ])
+            ->log('Report road validation overridden by admin');
+    }
+
+    /**
      * Check if the report is in a terminal state.
      */
     public function isTerminal(): bool
