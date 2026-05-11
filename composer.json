@@ -73,6 +73,12 @@
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --ansi"
+        ],
+        "quality:phpstan-stage6": [
+            "./vendor/bin/phpstan analyse --configuration=phpstan.stage6.neon --no-progress --memory-limit=1G"
+        ],
+        "quality:rector-dry-run": [
+            "rector process --dry-run --config rector.php app/Actions/Reports app/Filament/Resources/Reports/Schemas app/Filament/Resources/RepairJobs/Schemas"
         ]
     },
     "extra": {
