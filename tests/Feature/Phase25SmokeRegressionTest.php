@@ -2,6 +2,7 @@
 
 use App\Models\Report;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\ResponseCache\Middlewares\CacheResponse;
 
 uses(RefreshDatabase::class);
 
@@ -48,6 +49,8 @@ it('keeps tracking lookup payload shape stable for frontend progress rendering',
 });
 
 it('keeps homepage stats response contract stable', function () {
+    $this->withoutMiddleware(CacheResponse::class);
+
     $report = Report::factory()->create([
         'status' => 'repaired',
         'is_spam' => false,
