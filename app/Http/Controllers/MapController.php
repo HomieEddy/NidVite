@@ -7,6 +7,7 @@ use App\Models\Report;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use RuntimeException;
 
 class MapController extends Controller
 {
@@ -49,7 +50,7 @@ class MapController extends Controller
                 'borough',
                 'category_id',
             ])
-            ->selectRaw('ST_Y(location::geometry) as latitude, ST_X(location::geometry) as longitude');
+            ->withCoordinates();
 
         if ($status !== null) {
             $reportsQuery->where('status', $status);
@@ -60,10 +61,17 @@ class MapController extends Controller
         return response()->json([
             'type' => 'FeatureCollection',
             'features' => $reports->map(function (Report $report): array {
-                /** @phpstan-ignore property.notFound */
-                $longitude = (float) $report->longitude;
-                /** @phpstan-ignore property.notFound */
-                $latitude = (float) $report->latitude;
+                $coordinates = $report->coordinates();
+
+                if ($coordinates === null) {
+                    throw new RuntimeException(sprintf(
+                        'Missing coordinate payload for report id %d in geojson response.',
+                        $report->getKey()
+                    ));
+                }
+
+                $longitude = (float) $coordinates['lng'];
+                $latitude = (float) $coordinates['lat'];
 
                 return [
                     'type' => 'Feature',

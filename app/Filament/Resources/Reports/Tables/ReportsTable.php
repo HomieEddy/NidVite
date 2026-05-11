@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Reports\Tables;
 
+use App\Actions\Reports\OverrideRoadValidationAction;
 use App\Filament\Resources\Reports\ReportResource;
 use App\Models\Report;
 use Filament\Actions\Action;
@@ -20,7 +21,6 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
 
 class ReportsTable
 {
@@ -103,13 +103,7 @@ class ReportsTable
                             ->modalSubmitAction(false)
                             ->modalCancelActionLabel(__('filament.admin.resources.reports.actions.close'))
                             ->modalContent(function ($record): View {
-                                $location = null;
-                                if ($record->location !== null) {
-                                    $location = DB::selectOne(
-                                        'SELECT ST_Y(location::geometry) as lat, ST_X(location::geometry) as lng FROM reports WHERE id = ?',
-                                        [$record->id]
-                                    );
-                                }
+                                $location = $record->coordinatePoint();
 
                                 return view('filament.modals.report-location', [
                                     'report' => $record,
@@ -170,6 +164,7 @@ class ReportsTable
                 Action::make('override_validation')
                     ->label(__('filament.admin.resources.reports.actions.override_validation'))
                     ->icon('heroicon-m-shield-check')
+                    ->visible(fn (Report $record): bool => auth()->user()?->can('update', $record) ?? false)
                     ->form([
                         Select::make('decision')
                             ->label(__('filament.admin.resources.reports.fields.override_decision'))
@@ -186,7 +181,8 @@ class ReportsTable
                             ->minLength(5),
                     ])
                     ->action(function (Report $record, array $data): void {
-                        $record->overrideRoadValidation(
+                        app(OverrideRoadValidationAction::class)(
+                            $record,
                             (string) $data['decision'],
                             (string) $data['audit_note']
                         );

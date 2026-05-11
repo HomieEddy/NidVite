@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ReportStatus;
 use App\Mail\ReportStatusUpdated;
+use App\Models\Concerns\HasReportCoordinates;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,7 +25,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Report extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia, LogsActivity, SoftDeletes;
+    use HasFactory, HasReportCoordinates, InteractsWithMedia, LogsActivity, SoftDeletes;
 
     protected static function booted(): void
     {
