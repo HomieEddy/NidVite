@@ -126,6 +126,8 @@ new class extends Component
     {
         $this->protectAgainstSpam();
 
+        $recaptchaEnabled = (bool) config('services.recaptcha.enabled', true);
+
         $validated = $this->validate([
             'reporter_email' => 'required|email|max:255',
             'category_id' => 'required|exists:report_categories,id',
@@ -135,7 +137,7 @@ new class extends Component
             'borough' => 'nullable|string|max:100',
             'photos' => 'nullable|array|max:5',
             'photos.*' => 'file|mimes:jpeg,png,gif,webp|max:10240',
-            'recaptcha_response' => 'required|string',
+            'recaptcha_response' => $recaptchaEnabled ? 'required|string' : 'nullable|string',
         ], [
             'recaptcha_response.required' => __('report.validation.captcha_required'),
         ]);
@@ -557,12 +559,12 @@ new class extends Component
                 </div>
 
                 {{-- Submit --}}
-                @if (config('captcha.sitekey'))
+                @if (config('services.recaptcha.enabled', true) && config('captcha.sitekey'))
                     <div>
                         <div class="g-recaptcha" data-sitekey="{{ config('captcha.sitekey') }}" data-callback="onReportRecaptchaSuccess" data-expired-callback="onReportRecaptchaExpired"></div>
                         @error('recaptcha_response') <span class="mt-1.5 text-sm text-red-600 block">{{ $message }}</span> @enderror
                     </div>
-                @else
+                @elseif (config('services.recaptcha.enabled', true))
                     <p class="text-sm text-red-600">{{ __('report.validation.captcha_unavailable') }}</p>
                 @endif
 

@@ -39,3 +39,20 @@ it('passes validation when recaptcha verification succeeds', function () {
     expect(fn () => $validator->validateOrFail('valid-token', '127.0.0.1'))
         ->not->toThrow(ValidationException::class);
 });
+
+it('skips recaptcha validation when recaptcha is disabled', function () {
+    config()->set('services.recaptcha.enabled', false);
+
+    app()->bind('captcha', fn () => new class
+    {
+        public function verifyResponse(string $token, string $ipAddress): bool
+        {
+            throw new RuntimeException('captcha service should not be called when recaptcha is disabled');
+        }
+    });
+
+    $validator = new RecaptchaValidator;
+
+    expect(fn () => $validator->validateOrFail('', '127.0.0.1'))
+        ->not->toThrow(ValidationException::class);
+});

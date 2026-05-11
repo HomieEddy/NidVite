@@ -31,4 +31,8 @@ return [
         ],
     ],
 
+    'recaptcha' => [
+        'enabled' => env('RECAPTCHA_ENABLED', env('APP_ENV', 'production') !== 'local'),
+    ],
+
 ];
