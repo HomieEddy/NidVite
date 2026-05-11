@@ -47,6 +47,9 @@ return [
     'validation' => [
         'location_required' => 'Veuillez autoriser la geolocalisation ou preciser l\'emplacement.',
         'outside_montreal' => 'Cet emplacement semble etre en dehors de Montreal. Veuillez signaler uniquement les problemes situes sur le territoire de Montreal.',
+        'off_street' => 'Cet emplacement semble trop loin d\'une voie publique. Placez le repere directement sur la rue.',
+        'low_accuracy' => 'La precision de votre localisation est insuffisante. Veuillez recapturer votre position puis reessayer.',
+        'off_street_and_low_accuracy' => 'Votre localisation semble hors rue et la precision est insuffisante. Veuillez recapturer votre position sur la rue.',
         'captcha_required' => 'Veuillez confirmer le reCAPTCHA avant d\'envoyer le signalement.',
         'captcha_invalid' => 'La verification reCAPTCHA a echoue. Veuillez reessayer.',
         'captcha_unavailable' => 'Le reCAPTCHA est indisponible pour le moment.',

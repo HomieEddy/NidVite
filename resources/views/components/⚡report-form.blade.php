@@ -5,6 +5,7 @@ use App\Models\Report;
 use App\Models\ReportCategory;
 use App\Services\ExifStripper;
 use App\Services\RecaptchaValidator;
+use App\Services\StreetProximityValidationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
@@ -162,7 +163,24 @@ new class extends Component
             return;
         }
 
-        $report = DB::transaction(function () use ($validated): Report {
+        $validation = (new StreetProximityValidationService())->validate(
+            $this->latitude,
+            $this->longitude,
+            $this->location_accuracy
+        );
+
+        if ($validation['should_block']) {
+            $errorKey = match ($validation['reason']) {
+                'off_street' => 'report.validation.off_street',
+                'low_accuracy' => 'report.validation.low_accuracy',
+                default => 'report.validation.off_street_and_low_accuracy',
+            };
+            $this->addError('location', __($errorKey));
+
+            return;
+        }
+
+        $report = DB::transaction(function () use ($validated, $validation): Report {
             $report = Report::create([
                 'reporter_email' => $validated['reporter_email'],
                 'preferred_locale' => app()->getLocale(),
@@ -171,6 +189,11 @@ new class extends Component
                 'address' => $validated['address'],
                 'neighborhood' => $validated['neighborhood'] ?: null,
                 'borough' => $validated['borough'] ?: null,
+                'road_distance_meters' => $validation['distance_meters'],
+                'road_validation_decision' => $validation['decision'],
+                'road_validation_reason' => $validation['reason'],
+                'road_validation_mode' => $validation['mode'],
+                'location_accuracy_passed' => $validation['accuracy_passed'],
             ]);
 
             $report->setLocation($this->latitude, $this->longitude, $this->location_accuracy, $this->location_source);
