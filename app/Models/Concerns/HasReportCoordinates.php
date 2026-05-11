@@ -32,7 +32,7 @@ trait HasReportCoordinates
             ];
         }
 
-        if ($this->location === null) {
+        if ($this->getAttribute('location') === null) {
             return null;
         }
 
