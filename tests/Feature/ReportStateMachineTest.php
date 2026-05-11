@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Reports\TransitionReportStatusAction;
 use App\Enums\ReportStatus;
 use App\Models\Report;
 use App\Models\Role;
@@ -149,6 +150,23 @@ describe('Report state machine', function () {
 
         expect($report->canTransitionTo('in_progress'))->toBeTrue()
             ->and($report->canTransitionTo('repaired'))->toBeFalse();
+    });
+
+    it('blocks direct status write updates that bypass transitionTo', function () {
+        $report = createReport(['status' => 'received']);
+
+        $report->status = 'repaired';
+
+        expect(fn () => $report->save())
+            ->toThrow(InvalidArgumentException::class, 'Direct status writes are not allowed. Use transitionTo().');
+    });
+
+    it('transitions status through TransitionReportStatusAction', function () {
+        $report = createReport(['status' => 'received']);
+
+        app(TransitionReportStatusAction::class)($report, 'verified');
+
+        expect($report->fresh()->status)->toBe('verified');
     });
 });
 
