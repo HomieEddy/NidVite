@@ -34,7 +34,7 @@ class StagingDemoSeeder extends Seeder
         DB::table('roles')->delete();
         DB::table('report_categories')->delete();
         DB::table('activity_log')->delete();
-        
+
         // Create Roles
         DB::table('roles')->updateOrInsert(
             ['slug' => 'admin'],

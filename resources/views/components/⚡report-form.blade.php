@@ -40,6 +40,8 @@ new class extends Component
 
     public ?float $latitude = null;
     public ?float $longitude = null;
+    public ?float $location_accuracy = null;
+    public ?string $location_source = null;
 
     #[Validate('nullable|array|max:5')]
     public array $photos = [];
@@ -171,7 +173,7 @@ new class extends Component
                 'borough' => $validated['borough'] ?: null,
             ]);
 
-            $report->setLocation($this->latitude, $this->longitude);
+            $report->setLocation($this->latitude, $this->longitude, $this->location_accuracy, $this->location_source);
 
             if (! empty($this->photos)) {
                 foreach ($this->photos as $photo) {
@@ -233,8 +235,11 @@ new class extends Component
             (position) => {
                 var lat = position.coords.latitude;
                 var lng = position.coords.longitude;
+                var accuracy = position.coords.accuracy;
                 $wire.latitude = lat;
                 $wire.longitude = lng;
+                $wire.location_accuracy = accuracy;
+                $wire.location_source = 'gps';
                 setTimeout(() => {
                     this.updateMap(lat, lng);
                 }, 300);
@@ -282,8 +287,17 @@ new class extends Component
                 if (!data || !data[0]) return;
                 var lat = parseFloat(data[0].lat);
                 var lng = parseFloat(data[0].lon);
+                var bbox = data[0].boundingbox;
+                var accuracy = null;
+                if (bbox && bbox[0] && bbox[1] && bbox[2] && bbox[3]) {
+                    var latErr = (parseFloat(bbox[1]) - parseFloat(bbox[0])) / 2;
+                    var lngErr = (parseFloat(bbox[3]) - parseFloat(bbox[2])) / 2;
+                    accuracy = Math.max(Math.abs(latErr), Math.abs(lngErr)) * 111320;
+                }
                 $wire.latitude = lat;
                 $wire.longitude = lng;
+                $wire.location_accuracy = accuracy;
+                $wire.location_source = 'geocode';
                 setTimeout(function() {
                     this.updateMap(lat, lng);
                 }.bind(this), 300);
