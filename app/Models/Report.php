@@ -27,6 +27,8 @@ class Report extends Model implements HasMedia
 {
     use HasFactory, HasReportCoordinates, InteractsWithMedia, LogsActivity, SoftDeletes;
 
+    protected bool $allowStatusTransitionWrite = false;
+
     protected static function booted(): void
     {
         static::creating(function (Report $report) {
@@ -38,6 +40,12 @@ class Report extends Model implements HasMedia
             $fingerprint = request()->attributes->get('device_fingerprint_hash');
             if (is_string($fingerprint) && $fingerprint !== '') {
                 $report->device_fingerprint_hash = $fingerprint;
+            }
+        });
+
+        static::updating(function (Report $report): void {
+            if ($report->isDirty('status') && ! $report->allowStatusTransitionWrite) {
+                throw new InvalidArgumentException('Direct status writes are not allowed. Use transitionTo().');
             }
         });
     }
@@ -213,13 +221,23 @@ class Report extends Model implements HasMedia
         }
 
         $oldStatus = $this->status;
-        $this->status = $newStatus;
 
-        if ($newStatus === ReportStatus::Rejected->value && $reason !== null) {
-            $this->rejection_reason = $reason;
+        try {
+            $this->allowStatusTransitionWrite = true;
+            $this->status = $newStatus;
+
+            if ($newStatus === ReportStatus::Rejected->value && $reason !== null) {
+                $this->rejection_reason = $reason;
+            }
+
+            if ($newStatus !== ReportStatus::Rejected->value) {
+                $this->rejection_reason = null;
+            }
+
+            $this->save();
+        } finally {
+            $this->allowStatusTransitionWrite = false;
         }
-
-        $this->save();
 
         activity('report_status')
             ->performedOn($this)

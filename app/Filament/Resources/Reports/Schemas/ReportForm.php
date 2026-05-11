@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Reports\Schemas;
 
+use App\Enums\ReportStatus;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -29,9 +30,17 @@ class ReportForm
                     ->label(__('filament.admin.resources.reports.fields.neighborhood')),
                 TextInput::make('borough')
                     ->label(__('filament.admin.resources.reports.fields.borough')),
-                TextInput::make('status')
+                Select::make('status')
                     ->label(__('filament.admin.fields_common.status'))
                     ->required()
+                    ->options([
+                        ReportStatus::Received->value => __('filament.admin.resources.reports.statuses.received'),
+                        ReportStatus::Verified->value => __('filament.admin.resources.reports.statuses.verified'),
+                        ReportStatus::Scheduled->value => __('filament.admin.resources.reports.statuses.scheduled'),
+                        ReportStatus::InProgress->value => __('filament.admin.resources.reports.statuses.in_progress'),
+                        ReportStatus::Repaired->value => __('filament.admin.resources.reports.statuses.repaired'),
+                        ReportStatus::Rejected->value => __('filament.admin.resources.reports.statuses.rejected'),
+                    ])
                     ->default('received'),
                 TextInput::make('priority')
                     ->label(__('filament.admin.fields_common.priority'))
