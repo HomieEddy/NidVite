@@ -39,7 +39,7 @@ class SendCriticalReportAlerts
                 continue;
             }
 
-            SendCriticalAlertEmailJob::dispatch($report->id, $recipient->id, $log->id);
+            SendCriticalAlertEmailJob::dispatch($report->id, $recipient->id, $log->id)->afterCommit();
         }
     }
 }
