@@ -4,6 +4,8 @@ use App\Services\RecaptchaValidator;
 use Illuminate\Validation\ValidationException;
 
 it('fails validation when recaptcha token is missing', function () {
+    config()->set('services.recaptcha.enabled', true);
+
     $validator = new RecaptchaValidator;
 
     expect(fn () => $validator->validateOrFail('', '127.0.0.1'))
@@ -11,6 +13,8 @@ it('fails validation when recaptcha token is missing', function () {
 });
 
 it('fails validation when recaptcha verification is invalid', function () {
+    config()->set('services.recaptcha.enabled', true);
+
     app()->bind('captcha', fn () => new class
     {
         public function verifyResponse(string $token, string $ipAddress): bool
@@ -26,6 +30,8 @@ it('fails validation when recaptcha verification is invalid', function () {
 });
 
 it('passes validation when recaptcha verification succeeds', function () {
+    config()->set('services.recaptcha.enabled', true);
+
     app()->bind('captcha', fn () => new class
     {
         public function verifyResponse(string $token, string $ipAddress): bool
