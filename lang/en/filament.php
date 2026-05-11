@@ -6,7 +6,6 @@ return [
         'heading' => 'Activity Log',
         'empty_heading' => 'No activity found',
         'columns' => [
-            'id' => 'ID',
             'date' => 'Date',
             'user' => 'User',
             'event' => 'Event',

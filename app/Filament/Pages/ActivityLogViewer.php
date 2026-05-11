@@ -50,9 +50,6 @@ class ActivityLogViewer extends Page implements HasTable
             ->query(Activity::query()->with('causer')->latest())
             ->emptyStateHeading(__('filament.activity_log.empty_heading'))
             ->columns([
-                TextColumn::make('id')
-                    ->label(__('filament.activity_log.columns.id'))
-                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label(__('filament.activity_log.columns.date'))
                     ->dateTime('Y-m-d H:i:s')

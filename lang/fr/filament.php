@@ -6,7 +6,6 @@ return [
         'heading' => 'Journal d\'activite',
         'empty_heading' => 'Aucune activite trouvee',
         'columns' => [
-            'id' => 'ID',
             'date' => 'Date',
             'user' => 'Utilisateur',
             'event' => 'Evenement',
