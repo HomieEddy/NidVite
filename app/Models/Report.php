@@ -79,6 +79,8 @@ class Report extends Model implements HasMedia
         'archived_at' => 'datetime',
         'expires_at' => 'datetime',
         'location_accuracy' => 'float',
+        'road_distance_meters' => 'float',
+        'location_accuracy_passed' => 'boolean',
     ];
 
     public function getActivitylogOptions(): LogOptions

@@ -47,6 +47,9 @@ return [
     'validation' => [
         'location_required' => 'Please allow geolocation or specify the location.',
         'outside_montreal' => 'This location appears to be outside Montreal. Please report issues located within Montreal only.',
+        'off_street' => 'This location appears too far from a public road. Please place the pin directly on the street.',
+        'low_accuracy' => 'Your location accuracy is too low. Please recapture your location and try again.',
+        'off_street_and_low_accuracy' => 'Your location appears off-street and accuracy is too low. Please recapture your location on the street.',
         'captcha_required' => 'Please confirm the reCAPTCHA before submitting your report.',
         'captcha_invalid' => 'reCAPTCHA verification failed. Please try again.',
         'captcha_unavailable' => 'reCAPTCHA is unavailable right now.',

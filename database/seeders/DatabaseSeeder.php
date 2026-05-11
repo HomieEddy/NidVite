@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             ReportCategorySeeder::class,
             MontrealBoundarySeeder::class,
+            MontrealRoadSeeder::class,
             AdminUserSeeder::class,
         ]);
     }
