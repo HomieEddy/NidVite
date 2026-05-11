@@ -144,3 +144,24 @@ it('applies status filter even when neighborhood parameter is provided', functio
     expect($features)->toHaveCount(2)
         ->and(collect($features)->pluck('properties.status')->unique()->all())->toBe(['verified']);
 });
+
+it('returns geojson point coordinates in [lng, lat] order', function () {
+    $report = Report::factory()->create([
+        'status' => 'verified',
+        'is_spam' => false,
+    ]);
+    $report->setLocation(45.5017, -73.5673);
+
+    $response = $this->getJson(route('api.reports.geojson'));
+
+    $response->assertOk();
+
+    $firstFeature = $response->json('features.0');
+
+    expect($firstFeature)
+        ->toHaveKey('geometry.coordinates.0')
+        ->and($firstFeature)
+        ->toHaveKey('geometry.coordinates.1')
+        ->and($firstFeature['geometry']['coordinates'][0])->toBeFloat()->toBe(-73.5673)
+        ->and($firstFeature['geometry']['coordinates'][1])->toBeFloat()->toBe(45.5017);
+});
