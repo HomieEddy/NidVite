@@ -6,6 +6,13 @@ Frictionless pothole reporting bridge for Montreal citizens and repair entrepren
 
 NidVite is a bilingual (FR/EN) web application that lets Montreal citizens report infrastructure issues (potholes, graffiti, broken lights, sidewalk damage) without creating an account, and gives repair entrepreneurs a Filament dashboard to manage, track, and repair those reports.
 
+## Current Status
+
+- The latest improvement cycle (v2.1) is finished and live.
+- We strengthened account safety and secure browsing behavior.
+- We also added extra checks to make sure key login, admin access, and report-submission protections keep working over time.
+- Most recent updates were merged as PR #27 and PR #28.
+
 ## Tech Stack
 
 - **Backend:** Laravel 11, PHP 8.2+

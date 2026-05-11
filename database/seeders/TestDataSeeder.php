@@ -221,6 +221,7 @@ class TestDataSeeder extends Seeder
 
                 $reportId = DB::table('reports')->insertGetId([
                     'uuid' => (string) Str::uuid(),
+                    'public_tracking_id' => Report::generatePublicTrackingId(),
                     'reporter_email' => 'citizen'.rand(1000, 999999).'@example.com',
                     'preferred_locale' => rand(0, 1) ? 'fr' : 'en',
                     'status' => $status,
