@@ -1,12 +1,10 @@
 <?php
 
-use App\Events\ReportCreated;
+use App\Actions\Reports\SubmitReportAction;
 use App\Models\Report;
 use App\Models\ReportCategory;
-use App\Services\ExifStripper;
 use App\Services\RecaptchaValidator;
 use App\Services\StreetProximityValidationService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -189,54 +187,15 @@ new class extends Component
             return;
         }
 
-        $report = DB::transaction(function () use ($validated, $validation): Report {
-            $report = Report::create([
-                'reporter_email' => $validated['reporter_email'],
-                'preferred_locale' => app()->getLocale(),
-                'category_id' => $validated['category_id'],
-                'description' => $validated['description'],
-                'address' => $validated['address'],
-                'neighborhood' => $validated['neighborhood'] ?: null,
-                'borough' => $validated['borough'] ?: null,
-            ]);
-
-            $report->road_distance_meters = $validation['distance_meters'];
-            $report->road_validation_decision = $validation['decision'];
-            $report->road_validation_reason = $validation['reason'];
-            $report->road_validation_mode = $validation['mode'];
-            $report->location_accuracy_passed = $validation['accuracy_passed'];
-            $report->save();
-
-            $report->setLocation($this->latitude, $this->longitude, $this->location_accuracy, $this->location_source);
-
-            if (! empty($this->photos)) {
-                foreach ($this->photos as $photo) {
-                    $cleanPath = null;
-
-                    try {
-                        $cleanPath = ExifStripper::process($photo);
-
-                        $report->addMedia($cleanPath)
-                            ->usingName($photo->getClientOriginalName())
-                            ->toMediaCollection('report-photos');
-                    } catch (Throwable $e) {
-                        report($e);
-
-                        throw ValidationException::withMessages([
-                            'photos' => [__('report.validation.photo_upload_failed')],
-                        ]);
-                    } finally {
-                        if (is_string($cleanPath) && is_file($cleanPath)) {
-                            @unlink($cleanPath);
-                        }
-                    }
-                }
-            }
-
-            return $report;
-        });
-
-        event(new ReportCreated($report));
+        $report = app(SubmitReportAction::class)(
+            $validated,
+            $this->latitude,
+            $this->longitude,
+            $this->location_accuracy,
+            $this->location_source,
+            $this->photos,
+            $validation
+        );
 
         $this->submittedTrackingId = $report->public_tracking_id;
         $this->submitted = true;
