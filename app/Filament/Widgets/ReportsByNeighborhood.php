@@ -9,6 +9,8 @@ class ReportsByNeighborhood extends ChartWidget
 {
     public ?string $filter = '30d';
 
+    protected static ?int $sort = 60;
+
     protected ?string $heading = null;
 
     protected ?string $description = null;

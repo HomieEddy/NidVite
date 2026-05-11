@@ -8,6 +8,11 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class LowStockMaterialsOverview extends StatsOverviewWidget
 {
+    public static function canView(): bool
+    {
+        return false;
+    }
+
     protected function getStats(): array
     {
         $lowStockCount = Material::query()
