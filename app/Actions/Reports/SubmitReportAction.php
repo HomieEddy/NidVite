@@ -12,9 +12,9 @@ use Illuminate\Validation\ValidationException;
 class SubmitReportAction
 {
     /**
-     * @param array<string, mixed> $validated
-     * @param array<int, UploadedFile> $photos
-     * @param array<string, mixed> $validation
+     * @param  array<string, mixed>  $validated
+     * @param  array<int, UploadedFile>  $photos
+     * @param  array<string, mixed>  $validation
      */
     public function __invoke(
         array $validated,

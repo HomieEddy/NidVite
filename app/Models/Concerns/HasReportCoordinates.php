@@ -21,15 +21,15 @@ trait HasReportCoordinates
      */
     public function coordinates(): ?array
     {
-        if ($this->location === null) {
-            return null;
-        }
-
         if (isset($this->attributes['latitude'], $this->attributes['longitude'])) {
             return [
                 'lat' => (float) $this->attributes['latitude'],
                 'lng' => (float) $this->attributes['longitude'],
             ];
+        }
+
+        if ($this->location === null) {
+            return null;
         }
 
         $point = static::query()

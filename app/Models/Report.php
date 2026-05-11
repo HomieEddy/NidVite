@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\HasReportCoordinates;
 use App\Enums\ReportStatus;
 use App\Mail\ReportStatusUpdated;
+use App\Models\Concerns\HasReportCoordinates;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

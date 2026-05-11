@@ -2,10 +2,13 @@
 
 use App\Models\Report;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\ResponseCache\Middlewares\CacheResponse;
 
 uses(RefreshDatabase::class);
 
 it('renders homepage stats from visible non-rejected, non-spam reports with locations', function () {
+    $this->withoutMiddleware(CacheResponse::class);
+
     $received = Report::factory()->create([
         'status' => 'received',
         'is_spam' => false,

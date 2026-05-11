@@ -5,8 +5,8 @@ use App\Events\ReportCreated;
 use App\Models\Report;
 use App\Models\ReportCategory;
 use Database\Seeders\ReportCategorySeeder;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 
 uses(RefreshDatabase::class);
@@ -67,7 +67,6 @@ it('creates report through SubmitReportAction and dispatches ReportCreated', fun
         ->and($report->road_validation_decision)->toBe('pass')
         ->and($report->road_validation_mode)->toBe('enforce');
 
-    Event::assertDispatched(ReportCreated::class, fn (ReportCreated $event): bool =>
-        $event->report->is($report)
+    Event::assertDispatched(ReportCreated::class, fn (ReportCreated $event): bool => $event->report->is($report)
     );
 });
