@@ -27,7 +27,7 @@ return [
             'severity' => 'Severity',
             'type' => 'Type',
             'reason' => 'Reason',
-            'report' => 'Report UUID',
+            'report' => 'Report ID',
         ],
         'filters' => [
             'type' => 'Type',
@@ -266,7 +266,7 @@ return [
                     'created_by' => 'Created By',
                     'scheduled_month' => 'Scheduled Month',
                     'linked_reports' => 'Linked Reports',
-                    'report_uuid' => 'Report UUID',
+                    'report_uuid' => 'Report ID',
                     'address' => 'Address',
                     'status_fallback' => 'N/A',
                     'address_fallback' => 'Address not specified',

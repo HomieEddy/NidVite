@@ -27,7 +27,7 @@ class RepairJobForm
                     ->label(__('filament.admin.resources.repair_jobs.fields.reports'))
                     ->relationship(
                         'reports',
-                        'uuid',
+                        'public_tracking_id',
                         modifyQueryUsing: fn (Builder $query) => $query
                             ->where('reports.status', 'received')
                     )

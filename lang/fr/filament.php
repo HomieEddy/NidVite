@@ -27,7 +27,7 @@ return [
             'severity' => 'Severite',
             'type' => 'Type',
             'reason' => 'Raison',
-            'report' => 'UUID du signalement',
+            'report' => 'ID du signalement',
         ],
         'filters' => [
             'type' => 'Type',
@@ -266,7 +266,7 @@ return [
                     'created_by' => 'Cree par',
                     'scheduled_month' => 'Mois planifie',
                     'linked_reports' => 'Signalements associes',
-                    'report_uuid' => 'UUID du signalement',
+                    'report_uuid' => 'ID du signalement',
                     'address' => 'Adresse',
                     'status_fallback' => 'N/A',
                     'address_fallback' => 'Adresse non precisee',
