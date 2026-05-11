@@ -1,15 +1,15 @@
 <?php
 
-use App\Http\Middleware\GenerateDeviceFingerprint;
 use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\GenerateDeviceFingerprint;
 use App\Http\Middleware\RemovePermissionsPolicyHeader;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\ThrottleReportSubmission;
 use Bepsvpt\SecureHeaders\SecureHeadersMiddleware;
+use Illuminate\Cookie\Middleware\EncryptCookies as FrameworkEncryptCookies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Cookie\Middleware\EncryptCookies as FrameworkEncryptCookies;
 use Illuminate\Http\Request;
 use Sentry\Laravel\Integration;
 
