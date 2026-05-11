@@ -19,7 +19,7 @@ class RepairJobForm
         return $schema
             ->components([
                 Hidden::make('created_by')
-                    ->default(fn () => Auth::id()),
+                    ->default(fn (): int => Auth::id() ?? throw new \RuntimeException('Authenticated user required for created_by.')),
                 TextInput::make('title')
                     ->label(__('filament.admin.fields_common.title'))
                     ->required(),
