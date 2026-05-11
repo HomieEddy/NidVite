@@ -16,8 +16,8 @@ use Spatie\Honeypot\Http\Livewire\Concerns\UsesSpamProtection;
 
 new class extends Component
 {
-    use WithFileUploads;
     use UsesSpamProtection;
+    use WithFileUploads;
 
     public HoneypotData $honeypotData;
 
@@ -40,8 +40,11 @@ new class extends Component
     public string $borough = '';
 
     public ?float $latitude = null;
+
     public ?float $longitude = null;
+
     public ?float $location_accuracy = null;
+
     public ?string $location_source = null;
 
     #[Validate('nullable|array|max:5')]
@@ -57,7 +60,7 @@ new class extends Component
 
     public function mount(): void
     {
-        $this->honeypotData = new HoneypotData();
+        $this->honeypotData = new HoneypotData;
         $pothole = ReportCategory::where('slug', 'pothole')->first();
         if ($pothole) {
             $this->category_id = $pothole->id;
@@ -143,7 +146,7 @@ new class extends Component
         ]);
 
         try {
-            (new RecaptchaValidator())->validateOrFail(
+            (new RecaptchaValidator)->validateOrFail(
                 $validated['recaptcha_response'] ?? null,
                 request()->ip() ?? ''
             );
@@ -155,6 +158,7 @@ new class extends Component
 
         if ($this->latitude === null || $this->longitude === null) {
             $this->addError('location', __('report.validation.location_required'));
+
             return;
         }
 
@@ -162,16 +166,19 @@ new class extends Component
             Report::validateGeofence($this->latitude, $this->longitude);
         } catch (ValidationException $e) {
             $this->addError('location', $e->getMessage());
+
             return;
         }
 
-        $validation = (new StreetProximityValidationService())->validate(
+        $validation = (new StreetProximityValidationService)->validate(
             $this->latitude,
             $this->longitude,
             $this->location_accuracy
         );
 
-        if ($validation['should_block']) {
+        $isOffStreetDecision = in_array($validation['decision'], ['fail_off_street', 'fail_both'], true);
+
+        if ($validation['should_block'] || $isOffStreetDecision) {
             $errorKey = match ($validation['reason']) {
                 'off_street' => 'report.validation.off_street',
                 'low_accuracy' => 'report.validation.low_accuracy',
@@ -212,7 +219,7 @@ new class extends Component
                         $report->addMedia($cleanPath)
                             ->usingName($photo->getClientOriginalName())
                             ->toMediaCollection('report-photos');
-                    } catch (\Throwable $e) {
+                    } catch (Throwable $e) {
                         report($e);
 
                         throw ValidationException::withMessages([
@@ -293,20 +300,39 @@ new class extends Component
     },
     reverseGeocode(lat, lng) {
         var lang = document.documentElement.lang || 'en';
-        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&addressdetails=1&accept-language=' + lang)
+        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&addressdetails=1&zoom=18&accept-language=' + lang)
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (!data || !data.display_name) return;
-                var parts = data.display_name.split(',');
-                if (parts[0]) {
-                    $wire.address = parts[0].trim();
-                }
+
                 if (data.address) {
+                    var addr = data.address;
+                    var houseNumber = addr.house_number || '';
+                    var road = addr.road || addr.pedestrian || addr.footway || addr.path || '';
+                    var streetAddress = (houseNumber ? houseNumber + ', ' : '') + road;
+
+                    if (streetAddress.trim() !== '') {
+                        $wire.address = streetAddress.trim();
+                    } else {
+                        var parts = data.display_name.split(',');
+                        if (parts[0]) {
+                            $wire.address = parts[0].trim();
+                        }
+                    }
+
                     if (data.address.suburb) {
                         $wire.neighborhood = data.address.suburb;
+                    } else if (data.address.neighbourhood) {
+                        $wire.neighborhood = data.address.neighbourhood;
+                    } else if (data.address.quarter) {
+                        $wire.neighborhood = data.address.quarter;
                     }
                     if (data.address.city_district) {
                         $wire.borough = data.address.city_district;
+                    } else if (data.address.borough) {
+                        $wire.borough = data.address.borough;
+                    } else if (data.address.city) {
+                        $wire.borough = data.address.city;
                     } else if (data.address.county) {
                         $wire.borough = data.address.county;
                     }
@@ -321,7 +347,7 @@ new class extends Component
         var q = el.value.trim();
         if (q.length < 5) return;
         this.geocoding = true;
-        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&city=Montreal&country=Canada&limit=1')
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&city=Montreal&country=Canada&countrycodes=ca&limit=1&addressdetails=1&bounded=1&viewbox=-74.01,45.72,-73.40,45.41')
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 this.geocoding = false;
