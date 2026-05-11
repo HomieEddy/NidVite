@@ -20,8 +20,12 @@ class ReportForm
                     ->label(__('filament.admin.fields_common.reporter_email'))
                     ->email()
                     ->required(),
-                TextInput::make('preferred_locale')
+                Select::make('preferred_locale')
                     ->label(__('filament.admin.fields_common.preferred_locale'))
+                    ->options([
+                        'fr' => __('filament.admin.language_switcher.french'),
+                        'en' => __('filament.admin.language_switcher.english'),
+                    ])
                     ->required()
                     ->default('fr'),
                 TextInput::make('address')
@@ -42,8 +46,14 @@ class ReportForm
                         ReportStatus::Rejected->value => __('filament.admin.resources.reports.statuses.rejected'),
                     ])
                     ->default('received'),
-                TextInput::make('priority')
+                Select::make('priority')
                     ->label(__('filament.admin.fields_common.priority'))
+                    ->options([
+                        'low' => __('filament.admin.resources.reports.priorities.low'),
+                        'normal' => __('filament.admin.resources.reports.priorities.normal'),
+                        'high' => __('filament.admin.resources.reports.priorities.high'),
+                        'critical' => __('filament.admin.resources.reports.priorities.critical'),
+                    ])
                     ->required()
                     ->default('normal'),
                 Select::make('category_id')
