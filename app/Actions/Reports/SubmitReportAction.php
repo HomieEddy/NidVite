@@ -8,6 +8,7 @@ use App\Services\ExifStripper;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class SubmitReportAction
 {
@@ -25,7 +26,39 @@ class SubmitReportAction
         array $photos,
         array $validation
     ): Report {
-        $report = DB::transaction(function () use ($validated, $latitude, $longitude, $locationAccuracy, $locationSource, $photos, $validation): Report {
+        /** @var array<int, array{path: string, originalName: string}> $preparedPhotos */
+        $preparedPhotos = [];
+
+        foreach ($photos as $photo) {
+            $cleanPath = null;
+
+            try {
+                $cleanPath = ExifStripper::process($photo);
+
+                $preparedPhotos[] = [
+                    'path' => $cleanPath,
+                    'originalName' => $photo->getClientOriginalName(),
+                ];
+            } catch (\Throwable $e) {
+                if (is_string($cleanPath) && is_file($cleanPath)) {
+                    @unlink($cleanPath);
+                }
+
+                foreach ($preparedPhotos as $preparedPhoto) {
+                    if (is_file($preparedPhoto['path'])) {
+                        @unlink($preparedPhoto['path']);
+                    }
+                }
+
+                report($e);
+
+                throw ValidationException::withMessages([
+                    'photos' => [__('report.validation.photo_upload_failed')],
+                ]);
+            }
+        }
+
+        $report = DB::transaction(function () use ($validated, $latitude, $longitude, $locationAccuracy, $locationSource, $validation): Report {
             $report = Report::create([
                 'reporter_email' => (string) $validated['reporter_email'],
                 'preferred_locale' => app()->getLocale(),
@@ -45,30 +78,30 @@ class SubmitReportAction
 
             $report->setLocation($latitude, $longitude, $locationAccuracy, $locationSource);
 
-            foreach ($photos as $photo) {
-                $cleanPath = null;
+            return $report;
+        });
 
-                try {
-                    $cleanPath = ExifStripper::process($photo);
+        try {
+            foreach ($preparedPhotos as $preparedPhoto) {
+                $report->addMedia($preparedPhoto['path'])
+                    ->usingName($preparedPhoto['originalName'])
+                    ->toMediaCollection('report-photos');
 
-                    $report->addMedia($cleanPath)
-                        ->usingName($photo->getClientOriginalName())
-                        ->toMediaCollection('report-photos');
-                } catch (\Throwable $e) {
-                    report($e);
-
-                    throw ValidationException::withMessages([
-                        'photos' => [__('report.validation.photo_upload_failed')],
-                    ]);
-                } finally {
-                    if (is_string($cleanPath) && is_file($cleanPath)) {
-                        @unlink($cleanPath);
-                    }
+                if (is_file($preparedPhoto['path'])) {
+                    @unlink($preparedPhoto['path']);
+                }
+            }
+        } catch (\Throwable $e) {
+            foreach ($preparedPhotos as $preparedPhoto) {
+                if (is_file($preparedPhoto['path'])) {
+                    @unlink($preparedPhoto['path']);
                 }
             }
 
-            return $report;
-        });
+            report($e);
+
+            throw new RuntimeException('Unable to attach report photos after report creation.', 0, $e);
+        }
 
         event(new ReportCreated($report));
 

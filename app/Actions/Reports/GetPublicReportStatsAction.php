@@ -2,6 +2,7 @@
 
 namespace App\Actions\Reports;
 
+use App\Enums\ReportStatus;
 use App\Models\Report;
 
 class GetPublicReportStatsAction
@@ -13,15 +14,22 @@ class GetPublicReportStatsAction
     {
         $visibleReports = Report::query()
             ->where('is_spam', false)
-            ->where('status', '!=', 'rejected')
+            ->where('status', '!=', ReportStatus::Rejected->value)
             ->whereNotNull('location');
 
         $totalReported = (clone $visibleReports)->count();
-        $totalFixed = (clone $visibleReports)->where('status', 'repaired')->count();
-        $totalPending = (clone $visibleReports)->whereIn('status', ['received', 'verified', 'scheduled', 'in_progress'])->count();
+        $totalFixed = (clone $visibleReports)->where('status', ReportStatus::Repaired->value)->count();
+        $totalPending = (clone $visibleReports)
+            ->whereIn('status', [
+                ReportStatus::Received->value,
+                ReportStatus::Verified->value,
+                ReportStatus::Scheduled->value,
+                ReportStatus::InProgress->value,
+            ])
+            ->count();
 
         $avgDays = (clone $visibleReports)
-            ->where('status', 'repaired')
+            ->where('status', ReportStatus::Repaired->value)
             ->whereNotNull('completed_at')
             ->whereNotNull('created_at')
             ->selectRaw('AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400) as avg_days')
@@ -36,9 +44,9 @@ class GetPublicReportStatsAction
             'totalReported' => $totalReported,
             'totalFixed' => $totalFixed,
             'totalPending' => $totalPending,
-            'velocity' => $locale === 'fr'
-                ? ($velocity !== null ? $velocity.' jours' : 'N/D')
-                : ($velocity !== null ? $velocity.' days' : 'N/A'),
+            'velocity' => $velocity !== null
+                ? __('report.velocity_days', ['count' => $velocity], $locale)
+                : __('report.velocity_na', [], $locale),
         ];
     }
 }

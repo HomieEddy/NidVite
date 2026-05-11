@@ -33,7 +33,8 @@ Route::get('/carte', [MapController::class, 'index'])
     });
 
 Route::get('/api/reports/geojson', [MapController::class, 'geojson'])
-    ->name('api.reports.geojson');
+    ->name('api.reports.geojson')
+    ->middleware('throttle:60,1');
 
 Route::get('/api/reports/{trackingId}/lookup', [ReportTrackingController::class, 'lookup'])
     ->name('api.reports.lookup')

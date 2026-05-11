@@ -53,8 +53,7 @@ it('renders homepage stats from visible non-rejected, non-spam reports with loca
         ->and($response->viewData('totalFixed'))->toBe(1)
         ->and($response->viewData('totalPending'))->toBe(1);
 
-    expect((string) $response->viewData('velocity'))->not->toBe('N/D');
-    expect((string) $response->viewData('velocity'))->not->toBe('N/A');
+    expect((string) $response->viewData('velocity'))->not->toBeOneOf(['N/D', 'N/A']);
 
     expect($withoutLocation->location)->toBeNull();
 });

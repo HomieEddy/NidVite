@@ -358,7 +358,7 @@ new class extends Component
                     {{ __('report.new_report') }}
                 </button>
                 <a href="/" class="w-full inline-flex items-center justify-center px-6 py-3.5 border-2 border-amber-100 text-base font-medium rounded-xl text-gray-700 bg-white/90 hover:bg-white active:scale-[0.98] transition-all duration-200 btn-touch interactive-lift">
-                    {{ app()->getLocale() === 'fr' ? 'Retour à l\'accueil' : 'Back to home' }}
+                    {{ __('report.back_to_home') }}
                 </a>
             </div>
         </div>
@@ -414,7 +414,7 @@ new class extends Component
                     <p class="text-xs text-gray-500 mb-2">{{ __('report.description_help') }}</p>
                     <textarea wire:model="description" rows="4"
                         class="block w-full rounded-xl border-amber-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 resize-none bg-white/90"
-                        placeholder="Décrivez le problème en détail..."></textarea>
+                        placeholder="{{ __('report.description_placeholder') }}"></textarea>
                     @error('description') <span class="mt-1.5 text-sm text-red-600">{{ $message }}</span> @enderror
                 </div>
 

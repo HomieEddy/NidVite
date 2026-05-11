@@ -7,6 +7,7 @@ use App\Models\Report;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use RuntimeException;
 
 class MapController extends Controller
 {
@@ -61,8 +62,16 @@ class MapController extends Controller
             'type' => 'FeatureCollection',
             'features' => $reports->map(function (Report $report): array {
                 $coordinates = $report->coordinates();
-                $longitude = $coordinates['lng'] ?? 0.0;
-                $latitude = $coordinates['lat'] ?? 0.0;
+
+                if ($coordinates === null) {
+                    throw new RuntimeException(sprintf(
+                        'Missing coordinate payload for report id %d in geojson response.',
+                        $report->getKey()
+                    ));
+                }
+
+                $longitude = (float) $coordinates['lng'];
+                $latitude = (float) $coordinates['lat'];
 
                 return [
                     'type' => 'Feature',

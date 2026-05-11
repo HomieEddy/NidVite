@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 trait HasReportCoordinates
 {
@@ -11,7 +12,10 @@ trait HasReportCoordinates
      */
     public function scopeWithCoordinates(Builder $query): Builder
     {
-        return $query->selectRaw('ST_Y(location::geometry) as latitude, ST_X(location::geometry) as longitude');
+        return $query->addSelect([
+            DB::raw('ST_Y(location::geometry) as latitude'),
+            DB::raw('ST_X(location::geometry) as longitude'),
+        ]);
     }
 
     /**
@@ -35,7 +39,7 @@ trait HasReportCoordinates
         $point = static::query()
             ->whereKey($this->getKey())
             ->withCoordinates()
-            ->first(['id']);
+            ->first();
 
         if ($point === null || ! isset($point->latitude, $point->longitude)) {
             return null;
