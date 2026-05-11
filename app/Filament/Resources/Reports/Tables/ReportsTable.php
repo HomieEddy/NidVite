@@ -11,6 +11,8 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -68,6 +70,26 @@ class ReportsTable
                         'critical' => 'danger',
                         default => 'gray',
                     })
+                    ->sortable(),
+                TextColumn::make('road_validation_decision')
+                    ->label(__('filament.admin.resources.reports.fields.road_validation_status'))
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'pass' => __('filament.admin.resources.reports.validation_decisions.pass'),
+                        'fail_off_street' => __('filament.admin.resources.reports.validation_decisions.fail_off_street'),
+                        'fail_low_accuracy' => __('filament.admin.resources.reports.validation_decisions.fail_low_accuracy'),
+                        'fail_both' => __('filament.admin.resources.reports.validation_decisions.fail_both'),
+                        default => '-',
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'pass' => 'success',
+                        'fail_off_street', 'fail_low_accuracy', 'fail_both' => 'danger',
+                        default => 'gray',
+                    })
+                    ->sortable(),
+                TextColumn::make('road_distance_meters')
+                    ->label(__('filament.admin.resources.reports.fields.road_distance'))
+                    ->formatStateUsing(fn (?float $state): string => $state === null ? '-' : number_format($state, 1).' m')
                     ->sortable(),
                 TextColumn::make('location')
                     ->label(__('filament.admin.resources.reports.fields.map'))
@@ -145,6 +167,30 @@ class ReportsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('override_validation')
+                    ->label(__('filament.admin.resources.reports.actions.override_validation'))
+                    ->icon('heroicon-m-shield-check')
+                    ->form([
+                        Select::make('decision')
+                            ->label(__('filament.admin.resources.reports.fields.override_decision'))
+                            ->options([
+                                'pass' => __('filament.admin.resources.reports.validation_decisions.pass'),
+                                'fail_off_street' => __('filament.admin.resources.reports.validation_decisions.fail_off_street'),
+                                'fail_low_accuracy' => __('filament.admin.resources.reports.validation_decisions.fail_low_accuracy'),
+                                'fail_both' => __('filament.admin.resources.reports.validation_decisions.fail_both'),
+                            ])
+                            ->required(),
+                        Textarea::make('audit_note')
+                            ->label(__('filament.admin.resources.reports.fields.audit_note'))
+                            ->required()
+                            ->minLength(5),
+                    ])
+                    ->action(function (Report $record, array $data): void {
+                        $record->overrideRoadValidation(
+                            (string) $data['decision'],
+                            (string) $data['audit_note']
+                        );
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
