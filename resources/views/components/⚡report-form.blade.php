@@ -383,7 +383,7 @@ new class extends Component
                     <p class="text-xs text-gray-500 mb-2">{{ __('report.email_help') }}</p>
                     <input type="email" wire:model="reporter_email"
                         class="block w-full rounded-xl border-amber-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 bg-white/90"
-                        placeholder="exemple@email.com">
+                        placeholder="{{ __('report.email_placeholder') }}">
                     @error('reporter_email') <span class="mt-1.5 text-sm text-red-600">{{ $message }}</span> @enderror
                 </div>
 
@@ -427,7 +427,7 @@ new class extends Component
                     <p class="text-xs text-gray-500 mb-2">{{ __('report.address_help') }}</p>
                     <input type="text" wire:model="address" x-ref="addressInput" x-on:blur="geocodeAddress()"
                         class="block w-full rounded-xl border-amber-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 bg-white/90"
-                        placeholder="123 rue Example">
+                        placeholder="{{ __('report.address_placeholder') }}">
                     @error('address') <span class="mt-1.5 text-sm text-red-600">{{ $message }}</span> @enderror
                 </div>
 
@@ -507,7 +507,7 @@ new class extends Component
                         <div class="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-3">
                             @foreach ($photoPreviews as $index => $preview)
                                 <div class="relative aspect-square rounded-xl overflow-hidden border border-amber-100 bg-white">
-                                    <img src="{{ $preview }}" class="w-full h-full object-cover" alt="Preview {{ $index + 1 }}">
+                                    <img src="{{ $preview }}" class="w-full h-full object-cover" alt="{{ __('report.photo_preview_alt', ['number' => $index + 1]) }}">
                                     <button type="button" wire:click="removePhoto({{ $index }})"
                                         class="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition btn-touch">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

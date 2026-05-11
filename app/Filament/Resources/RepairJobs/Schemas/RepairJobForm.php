@@ -62,8 +62,14 @@ class RepairJobForm
                     ->label(__('filament.admin.fields_common.started_at')),
                 DateTimePicker::make('completed_at')
                     ->label(__('filament.admin.fields_common.completed_at')),
-                TextInput::make('status')
+                Select::make('status')
                     ->label(__('filament.admin.fields_common.status'))
+                    ->options([
+                        'planned' => __('filament.admin.resources.repair_jobs.statuses.planned'),
+                        'in_progress' => __('filament.admin.resources.repair_jobs.statuses.in_progress'),
+                        'completed' => __('filament.admin.resources.repair_jobs.statuses.completed'),
+                        'cancelled' => __('filament.admin.resources.repair_jobs.statuses.cancelled'),
+                    ])
                     ->required()
                     ->default('planned'),
                 TextInput::make('estimated_cost')
