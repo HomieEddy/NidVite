@@ -55,7 +55,7 @@ it('renders homepage stats from visible non-rejected, non-spam reports with loca
 
     $velocity = (string) $response->viewData('velocity');
 
-    expect(in_array($velocity, ['N/D', 'N/A'], true))->toBeFalse();
+    expect($velocity)->not->toBeIn(['N/D', 'N/A']);
 
     expect($withoutLocation->getAttribute('location'))->toBeNull();
 });
