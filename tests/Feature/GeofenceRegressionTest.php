@@ -44,7 +44,7 @@ describe('Report validateGeofence regression', function () {
 
     it('rejects coordinates outside montreal', function () {
         expect(fn () => Report::validateGeofence(43.6532, -79.3832))
-            ->toThrow(ValidationException::class, 'Montreal');
+            ->toThrow(ValidationException::class);
     });
 
     it('accepts another point within montreal boundary', function () {

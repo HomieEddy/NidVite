@@ -1,15 +1,11 @@
 <?php
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-uses(RefreshDatabase::class);
-
 it('serves privacy and terms pages in french', function () {
     $this->withSession(['locale' => 'fr']);
 
     $this->get('/confidentialite')
         ->assertOk()
-        ->assertSeeText('Politique de confidentialite');
+        ->assertSeeText('Politique de confidentialité');
 
     $this->get('/conditions')
         ->assertOk()
