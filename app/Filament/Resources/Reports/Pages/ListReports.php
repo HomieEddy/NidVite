@@ -4,12 +4,17 @@ namespace App\Filament\Resources\Reports\Pages;
 
 use App\Exports\ReportsDatasetExport;
 use App\Filament\Resources\Reports\ReportResource;
+use App\Models\ReportSavedView;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -21,6 +26,130 @@ class ListReports extends ListRecords
     {
         return [
             CreateAction::make(),
+            Action::make('save_view')
+                ->label(__('filament.admin.resources.reports.saved_views.actions.save'))
+                ->icon('heroicon-o-bookmark-square')
+                ->form([
+                    TextInput::make('name')
+                        ->label(__('filament.admin.resources.reports.saved_views.fields.name'))
+                        ->required()
+                        ->maxLength(100),
+                ])
+                ->action(function (array $data): void {
+                    $userId = Auth::id();
+                    if (! $userId) {
+                        return;
+                    }
+
+                    ReportSavedView::query()->updateOrCreate(
+                        [
+                            'user_id' => $userId,
+                            'name' => trim((string) ($data['name'] ?? '')),
+                        ],
+                        $this->currentSavedViewPayload()
+                    );
+
+                    Notification::make()
+                        ->success()
+                        ->title(__('filament.admin.resources.reports.saved_views.feedback.saved'))
+                        ->send();
+                }),
+            Action::make('update_view')
+                ->label(__('filament.admin.resources.reports.saved_views.actions.update'))
+                ->icon('heroicon-o-pencil-square')
+                ->form([
+                    Select::make('view_id')
+                        ->label(__('filament.admin.resources.reports.saved_views.fields.view'))
+                        ->options(fn (): array => ReportSavedView::query()
+                            ->where('user_id', Auth::id())
+                            ->orderBy('name')
+                            ->pluck('name', 'id')
+                            ->all())
+                        ->searchable()
+                        ->required(),
+                    TextInput::make('name')
+                        ->label(__('filament.admin.resources.reports.saved_views.fields.rename_to'))
+                        ->maxLength(100),
+                ])
+                ->action(function (array $data): void {
+                    $view = ReportSavedView::query()
+                        ->where('user_id', Auth::id())
+                        ->find($data['view_id'] ?? null);
+
+                    if (! $view) {
+                        return;
+                    }
+
+                    $payload = $this->currentSavedViewPayload();
+                    $newName = trim((string) ($data['name'] ?? ''));
+                    if ($newName !== '') {
+                        $payload['name'] = $newName;
+                    }
+
+                    $view->update($payload);
+
+                    Notification::make()
+                        ->success()
+                        ->title(__('filament.admin.resources.reports.saved_views.feedback.updated'))
+                        ->send();
+                }),
+            Action::make('load_view')
+                ->label(__('filament.admin.resources.reports.saved_views.actions.load'))
+                ->icon('heroicon-o-folder-open')
+                ->form([
+                    Select::make('view_id')
+                        ->label(__('filament.admin.resources.reports.saved_views.fields.view'))
+                        ->options(fn (): array => ReportSavedView::query()
+                            ->where('user_id', Auth::id())
+                            ->orderBy('name')
+                            ->pluck('name', 'id')
+                            ->all())
+                        ->searchable()
+                        ->required(),
+                ])
+                ->action(function (array $data): void {
+                    $view = ReportSavedView::query()
+                        ->where('user_id', Auth::id())
+                        ->find($data['view_id'] ?? null);
+
+                    if (! $view) {
+                        return;
+                    }
+
+                    $this->applySavedView($view);
+
+                    Notification::make()
+                        ->success()
+                        ->title(__('filament.admin.resources.reports.saved_views.feedback.loaded'))
+                        ->send();
+                }),
+            Action::make('delete_view')
+                ->label(__('filament.admin.resources.reports.saved_views.actions.delete'))
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->form([
+                    Select::make('view_id')
+                        ->label(__('filament.admin.resources.reports.saved_views.fields.view'))
+                        ->options(fn (): array => ReportSavedView::query()
+                            ->where('user_id', Auth::id())
+                            ->orderBy('name')
+                            ->pluck('name', 'id')
+                            ->all())
+                        ->searchable()
+                        ->required(),
+                ])
+                ->action(function (array $data): void {
+                    ReportSavedView::query()
+                        ->where('user_id', Auth::id())
+                        ->whereKey($data['view_id'] ?? null)
+                        ->delete();
+
+                    Notification::make()
+                        ->success()
+                        ->title(__('filament.admin.resources.reports.saved_views.feedback.deleted'))
+                        ->send();
+                }),
             Action::make('export_excel')
                 ->label(__('filament.admin.resources.reports.actions.export_excel'))
                 ->icon('heroicon-o-table-cells')
@@ -72,6 +201,27 @@ class ListReports extends ListRecords
                     return response()->streamDownload(static fn () => print ($pdf->output()), $filename);
                 }),
         ];
+    }
+
+    /**
+     * @return array{filters: array<string, mixed>, sort_column: ?string, sort_direction: ?string, search: ?string}
+     */
+    private function currentSavedViewPayload(): array
+    {
+        return [
+            'filters' => is_array($this->tableFilters ?? null) ? $this->tableFilters : [],
+            'sort_column' => $this->getTableSortColumn(),
+            'sort_direction' => $this->getTableSortDirection(),
+            'search' => is_string($this->tableSearch ?? null) ? $this->tableSearch : null,
+        ];
+    }
+
+    private function applySavedView(ReportSavedView $view): void
+    {
+        $this->tableFilters = is_array($view->filters) ? $view->filters : [];
+        $this->sortTable($view->sort_column, $view->sort_direction);
+        $this->tableSearch = $view->search;
+        $this->resetPage();
     }
 
     private function buildReportsDataset(Carbon $startDate, Carbon $endDate)
