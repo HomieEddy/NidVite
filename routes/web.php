@@ -56,6 +56,10 @@ Route::get('/api/reports/{trackingId}/lookup', [ReportTrackingController::class,
     ->where('trackingId', 'MTL[A-Z0-9]{8}')
     ->middleware('throttle:60,1');
 
+Route::get('/api/reports/duplicate-hint', [ReportTrackingController::class, 'duplicateHint'])
+    ->name('api.reports.duplicate-hint')
+    ->middleware('throttle:60,1');
+
 Route::get('/health', HealthCheckJsonResultsController::class)
     ->name('health.json');
 

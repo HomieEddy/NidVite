@@ -30,6 +30,18 @@
                 </svg>
                 {{ __('report.capture_location') }}
             </button>
+
+            <div x-show="gpsWarning" x-cloak data-action="gps-warning" class="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                <span x-text="gpsWarning"></span>
+            </div>
+
+            <div x-show="duplicateNudge" x-cloak data-action="duplicate-nudge" class="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                <p>
+                    <span x-text="duplicateNudgeText"></span>
+                    <a x-bind:href="duplicateNudge?.tracking_url" class="font-semibold underline ml-1" x-text="duplicateNudgeLinkText"></a>
+                </p>
+            </div>
+
             @error('location') <span class="mt-2 text-sm text-red-600 block">{{ $message }}</span> @enderror
         </div>
     </div>

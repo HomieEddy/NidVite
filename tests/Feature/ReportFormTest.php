@@ -22,6 +22,16 @@ it('displays the public report form', function () {
         ->assertSee('Signaler');
 });
 
+it('renders duplicate, gps, and photo quality client-side hooks on report form', function () {
+    $response = $this->get('/signaler');
+
+    $response->assertOk()
+        ->assertSee('data-action="duplicate-nudge"', false)
+        ->assertSee('data-action="gps-warning"', false)
+        ->assertSee('data-action="photo-quality-warning"', false)
+        ->assertSee('data-action="photo-quality-severe"', false);
+});
+
 it('has active report categories for the form', function () {
     $categories = ReportCategory::where('is_active', true)->get();
 

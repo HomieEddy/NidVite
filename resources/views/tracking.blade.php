@@ -104,6 +104,23 @@
                 </div>
             </div>
         @endif
+
+        @if($etaHint)
+            <div class="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-3" data-testid="tracking-eta-hint">
+                <p class="text-sm font-semibold text-blue-900">{{ __('tracking.eta_title') }}</p>
+                <p class="text-sm text-blue-800 mt-1">{{ $etaHint['label'] }}</p>
+                <p class="text-xs text-blue-700 mt-1">{{ $etaHint['disclaimer'] }}</p>
+            </div>
+        @endif
+
+        <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3" data-testid="tracking-qr-card">
+            <p class="text-sm font-semibold text-gray-900">{{ __('tracking.qr_title') }}</p>
+            <p class="text-xs text-gray-600 mt-1">{{ __('tracking.qr_help') }}</p>
+            <div class="mt-3 inline-flex rounded-lg bg-white p-2 border border-gray-200">
+                {!! $trackingQrSvg !!}
+            </div>
+            <p class="mt-2 text-xs text-gray-500 break-all">{{ $trackingUrl }}</p>
+        </div>
     </div>
 
     <div class="citizen-card p-5 mb-4 animate-fade-in">

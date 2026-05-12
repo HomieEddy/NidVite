@@ -72,6 +72,20 @@ it('shows category label when present', function () {
         ->assertSee($report->category->label_fr);
 });
 
+it('renders eta hint and qr card on tracking page', function () {
+    $report = Report::factory()->create([
+        'status' => 'verified',
+        'borough' => 'Ville-Marie',
+    ]);
+
+    $response = $this->get(route('report.tracking', ['trackingId' => $report->public_tracking_id]));
+
+    $response->assertOk()
+        ->assertSee('data-testid="tracking-eta-hint"', false)
+        ->assertSee('data-testid="tracking-qr-card"', false)
+        ->assertSee(route('report.tracking', ['trackingId' => $report->public_tracking_id]));
+});
+
 it('returns tracking lookup location as lat/lng object when report has coordinates', function () {
     $report = Report::factory()->create([
         'status' => 'verified',
@@ -94,6 +108,52 @@ it('returns null location in tracking lookup when report has no coordinates', fu
 
     $response->assertOk()
         ->assertJsonPath('location', null);
+});
+
+it('returns eta hint in tracking lookup payload', function () {
+    $report = Report::factory()->create([
+        'status' => 'scheduled',
+        'borough' => 'Ville-Marie',
+    ]);
+
+    $response = $this->getJson(route('api.reports.lookup', ['trackingId' => $report->public_tracking_id]));
+
+    $response->assertOk()
+        ->assertJsonPath('eta_hint.zone_bucket', 'central')
+        ->assertJsonPath('eta_hint.days_min', 1);
+});
+
+it('returns duplicate nudge when an open nearby report exists in 30-day window', function () {
+    $report = Report::factory()->create([
+        'status' => 'received',
+        'created_at' => now()->subDays(3),
+    ]);
+    $report->setLocation(45.5017, -73.5673);
+
+    $response = $this->getJson(route('api.reports.duplicate-hint', [
+        'latitude' => 45.5018,
+        'longitude' => -73.5674,
+    ]));
+
+    $response->assertOk()
+        ->assertJsonPath('has_duplicate_nudge', true)
+        ->assertJsonPath('report.tracking_id', $report->public_tracking_id);
+});
+
+it('does not return duplicate nudge for reports outside 30-day window', function () {
+    $report = Report::factory()->create([
+        'status' => 'verified',
+        'created_at' => now()->subDays(40),
+    ]);
+    $report->setLocation(45.5017, -73.5673);
+
+    $response = $this->getJson(route('api.reports.duplicate-hint', [
+        'latitude' => 45.5017,
+        'longitude' => -73.5673,
+    ]));
+
+    $response->assertOk()
+        ->assertJsonPath('has_duplicate_nudge', false);
 });
 
 it('updates notification preference from tracking page', function () {
