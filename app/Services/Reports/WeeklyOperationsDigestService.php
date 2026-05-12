@@ -7,6 +7,8 @@ use Carbon\CarbonInterface;
 
 class WeeklyOperationsDigestService
 {
+    private const UNKNOWN_NEIGHBORHOOD_TOKEN = 'UNKNOWN_NEIGHBORHOOD';
+
     /**
      * @return array<string, mixed>
      */
@@ -32,14 +34,14 @@ class WeeklyOperationsDigestService
             ->count();
 
         $neighborhoodHotspots = Report::query()
-            ->selectRaw('COALESCE(neighborhood, ?) as neighborhood_key, COUNT(*) as report_count', ['Unknown'])
+            ->selectRaw('COALESCE(neighborhood, ?) as neighborhood_key, COUNT(*) as report_count', [self::UNKNOWN_NEIGHBORHOOD_TOKEN])
             ->whereBetween('created_at', [$windowStart, $windowEnd])
             ->groupBy('neighborhood_key')
             ->orderByDesc('report_count')
             ->limit($hotspotLimit)
             ->get()
             ->map(fn ($row): array => [
-                'neighborhood' => (string) data_get($row, 'neighborhood_key', 'Unknown'),
+                'neighborhood' => (string) data_get($row, 'neighborhood_key', self::UNKNOWN_NEIGHBORHOOD_TOKEN),
                 'count' => (int) data_get($row, 'report_count', 0),
             ])
             ->values()

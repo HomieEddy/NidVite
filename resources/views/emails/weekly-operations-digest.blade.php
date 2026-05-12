@@ -17,7 +17,7 @@
 ## {{ __('email.weekly_digest.hotspots.neighborhoods', [], $locale) }}
 
 @forelse(($summary['hotspots']['neighborhoods'] ?? []) as $item)
-- {{ $item['neighborhood'] }}: {{ $item['count'] }}
+- {{ ($item['neighborhood'] ?? null) === 'UNKNOWN_NEIGHBORHOOD' ? __('email.weekly_digest.hotspots.unknown_neighborhood', [], $locale) : $item['neighborhood'] }}: {{ $item['count'] }}
 @empty
 - {{ __('email.weekly_digest.hotspots.none', [], $locale) }}
 @endforelse

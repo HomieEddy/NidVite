@@ -278,7 +278,7 @@ Artisan::command('reports:recompute-reliability', function () {
 
 Artisan::command('reports:send-weekly-digest', function () {
     $recipients = collect((array) config('operations_digest.recipients', []))
-        ->map(fn ($email): string => trim((string) $email))
+        ->map(fn ($email): string => mb_strtolower(trim((string) $email)))
         ->filter(fn (string $email): bool => $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) !== false)
         ->unique()
         ->values();
@@ -334,10 +334,21 @@ Schedule::command('reports:run-retention')
     ->monitorName('reports:run-retention')
     ->withoutOverlapping();
 
+$digestDayOfWeek = (int) config('operations_digest.day_of_week', 1);
+$digestTime = (string) config('operations_digest.time', '08:00');
+
+if ($digestDayOfWeek < 0 || $digestDayOfWeek > 6) {
+    $digestDayOfWeek = 1;
+}
+
+if (! preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $digestTime)) {
+    $digestTime = '08:00';
+}
+
 Schedule::command('reports:send-weekly-digest')
     ->weeklyOn(
-        (int) config('operations_digest.day_of_week', 1),
-        (string) config('operations_digest.time', '08:00')
+        $digestDayOfWeek,
+        $digestTime
     )
     ->monitorName('reports:send-weekly-digest')
     ->withoutOverlapping();

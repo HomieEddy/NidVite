@@ -54,3 +54,56 @@ it('penalizes clearly untrusted signals', function () {
 
     expect($trustedScore)->toBeGreaterThan($untrustedScore);
 });
+
+it('handles unknown signal values with safe defaults', function () {
+    $report = new Report([
+        'description' => '',
+        'is_spam' => false,
+        'geofence_passed' => false,
+        'location_accuracy_passed' => false,
+        'location_source' => 'unknown-source',
+        'road_validation_decision' => 'unknown-decision',
+    ]);
+
+    $score = app(ReliabilityScoreService::class)->score($report);
+
+    expect($score['score'])->toBeInt()
+        ->and($score['score'])->toBeGreaterThanOrEqual(0)
+        ->and($score['score'])->toBeLessThanOrEqual(100)
+        ->and($score['breakdown'])->toHaveKeys(['base_score', 'factors', 'raw_score', 'normalized_score'])
+        ->and($score['breakdown']['factors'])->toHaveKeys(['source', 'road_validation']);
+});
+
+it('clamps score to bounds when config weights are extreme', function () {
+    config()->set('reliability_scoring.base_score', 500);
+    config()->set('reliability_scoring.weights.spam_penalty', 0);
+    config()->set('reliability_scoring.weights.description_short_penalty', 0);
+
+    $high = new Report([
+        'description' => str_repeat('a', 80),
+        'is_spam' => false,
+        'geofence_passed' => true,
+        'location_accuracy_passed' => true,
+        'location_source' => 'gps',
+        'road_validation_decision' => 'pass',
+    ]);
+
+    $highScore = app(ReliabilityScoreService::class)->score($high);
+
+    config()->set('reliability_scoring.base_score', -500);
+    config()->set('reliability_scoring.weights.spam_penalty', -500);
+
+    $low = new Report([
+        'description' => 'x',
+        'is_spam' => true,
+        'geofence_passed' => false,
+        'location_accuracy_passed' => false,
+        'location_source' => 'manual',
+        'road_validation_decision' => 'fail_both',
+    ]);
+
+    $lowScore = app(ReliabilityScoreService::class)->score($low);
+
+    expect($highScore['score'])->toBe(100)
+        ->and($lowScore['score'])->toBe(0);
+});

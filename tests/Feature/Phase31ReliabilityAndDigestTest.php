@@ -74,3 +74,24 @@ it('returns success without sending digest when recipients are not configured', 
     expect($exitCode)->toBe(0);
     Mail::assertNothingQueued();
 });
+
+it('filters malformed recipients and still sends once to valid destination', function () {
+    Mail::fake();
+
+    Config::set('operations_digest.recipients', [
+        'OPS@example.com',
+        'ops@example.com',
+        'not-an-email',
+        ' ',
+    ]);
+
+    Report::factory()->create([
+        'created_at' => now()->subHours(12),
+        'updated_at' => now()->subHours(12),
+    ]);
+
+    $exitCode = Artisan::call('reports:send-weekly-digest');
+
+    expect($exitCode)->toBe(0);
+    Mail::assertQueued(WeeklyOperationsDigest::class, 1);
+});

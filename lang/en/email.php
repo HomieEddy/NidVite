@@ -25,6 +25,7 @@ return [
             'neighborhoods' => 'Top neighborhoods',
             'zones' => 'Top zones',
             'none' => 'No data for this period.',
+            'unknown_neighborhood' => 'Unknown neighborhood',
         ],
         'footer' => 'This digest was generated automatically by NidVite operations.',
         'signature' => 'Regards,',

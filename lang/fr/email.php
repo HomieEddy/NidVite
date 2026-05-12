@@ -13,9 +13,9 @@ return [
         'signature' => 'Cordialement,',
     ],
     'weekly_digest' => [
-        'subject' => 'Digest operations hebdomadaire (:start a :end)',
+        'subject' => 'Synthese hebdomadaire des operations (:start a :end)',
         'greeting' => 'Bonjour equipe operations,',
-        'body' => 'Voici votre digest hebdomadaire pour la periode :start a :end.',
+        'body' => 'Voici la synthese hebdomadaire des operations pour la periode du :start au :end.',
         'counts' => [
             'new' => 'Nouveaux signalements',
             'open' => 'Signalements ouverts',
@@ -25,6 +25,7 @@ return [
             'neighborhoods' => 'Quartiers principaux',
             'zones' => 'Zones principales',
             'none' => 'Aucune donnee pour cette periode.',
+            'unknown_neighborhood' => 'Quartier inconnu',
         ],
         'footer' => 'Ce digest est genere automatiquement par les operations NidVite.',
         'signature' => 'Cordialement,',
