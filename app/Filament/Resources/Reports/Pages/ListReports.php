@@ -33,6 +33,8 @@ class ListReports extends ListRecords
                     TextInput::make('name')
                         ->label(__('filament.admin.resources.reports.saved_views.fields.name'))
                         ->required()
+                        ->dehydrateStateUsing(fn ($state): string => trim((string) $state))
+                        ->minLength(1)
                         ->maxLength(100),
                 ])
                 ->action(function (array $data): void {
@@ -41,10 +43,20 @@ class ListReports extends ListRecords
                         return;
                     }
 
+                    $name = trim((string) ($data['name'] ?? ''));
+                    if ($name === '' || mb_strlen($name) > 100) {
+                        Notification::make()
+                            ->danger()
+                            ->title(__('filament.admin.resources.reports.saved_views.feedback.updated'))
+                            ->send();
+
+                        return;
+                    }
+
                     ReportSavedView::query()->updateOrCreate(
                         [
                             'user_id' => $userId,
-                            'name' => trim((string) ($data['name'] ?? '')),
+                            'name' => $name,
                         ],
                         $this->currentSavedViewPayload()
                     );
@@ -69,6 +81,7 @@ class ListReports extends ListRecords
                         ->required(),
                     TextInput::make('name')
                         ->label(__('filament.admin.resources.reports.saved_views.fields.rename_to'))
+                        ->dehydrateStateUsing(fn ($state): string => trim((string) $state))
                         ->maxLength(100),
                 ])
                 ->action(function (array $data): void {
@@ -83,6 +96,20 @@ class ListReports extends ListRecords
                     $payload = $this->currentSavedViewPayload();
                     $newName = trim((string) ($data['name'] ?? ''));
                     if ($newName !== '') {
+                        if (mb_strlen($newName) > 100) {
+                            return;
+                        }
+
+                        $nameExists = ReportSavedView::query()
+                            ->where('user_id', (int) Auth::id())
+                            ->where('name', $newName)
+                            ->whereKeyNot($view->id)
+                            ->exists();
+
+                        if ($nameExists) {
+                            return;
+                        }
+
                         $payload['name'] = $newName;
                     }
 

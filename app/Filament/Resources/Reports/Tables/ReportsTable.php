@@ -221,18 +221,23 @@ class ReportsTable
                                     'selected_report_ids' => $recordIds,
                                 ])
                                 ->log('Batch duplicate-close started');
+                            $parentId = $parent instanceof ActivityModel ? $parent->id : null;
 
                             $processed = 0;
                             $blocked = [];
 
                             foreach ($records as $record) {
+                                if (! $record instanceof Report) {
+                                    continue;
+                                }
+
                                 if (! $user->can('update', $record)) {
                                     $blocked[] = $record->public_tracking_id;
                                     activity('report_batch_item')
                                         ->causedBy($user)
                                         ->performedOn($record)
                                         ->withProperties([
-                                            'batch_activity_id' => $parent->id,
+                                            'batch_activity_id' => $parentId,
                                             'operation' => 'duplicate_close',
                                             'result' => 'blocked',
                                             'reason' => 'unauthorized',
@@ -250,7 +255,7 @@ class ReportsTable
                                         ->causedBy($user)
                                         ->performedOn($record)
                                         ->withProperties([
-                                            'batch_activity_id' => $parent->id,
+                                            'batch_activity_id' => $parentId,
                                             'operation' => 'duplicate_close',
                                             'result' => 'blocked',
                                             'reason' => 'invalid_transition',
@@ -265,16 +270,17 @@ class ReportsTable
                                 $oldStatus = $record->status;
                                 $oldRejectionReason = $record->rejection_reason;
                                 $record->transitionTo('rejected', $rejectionReason);
+                                $record->refresh();
 
                                 activity('report_batch_item')
                                     ->causedBy($user)
                                     ->performedOn($record)
                                     ->withProperties([
-                                        'batch_activity_id' => $parent->id,
+                                        'batch_activity_id' => $parentId,
                                         'operation' => 'duplicate_close',
                                         'result' => 'processed',
                                         'old_status' => $oldStatus,
-                                        'new_status' => $record->fresh()->status,
+                                        'new_status' => $record->status,
                                         'old_rejection_reason' => $oldRejectionReason,
                                         'new_rejection_reason' => $rejectionReason,
                                     ])
@@ -340,18 +346,23 @@ class ReportsTable
                                     'contractor_user_id' => $contractorId,
                                 ])
                                 ->log('Batch assign-contractor started');
+                            $parentId = $parent instanceof ActivityModel ? $parent->id : null;
 
                             $processed = 0;
                             $blocked = [];
 
                             foreach ($records as $record) {
+                                if (! $record instanceof Report) {
+                                    continue;
+                                }
+
                                 if (! $user->can('update', $record)) {
                                     $blocked[] = $record->public_tracking_id;
                                     activity('report_batch_item')
                                         ->causedBy($user)
                                         ->performedOn($record)
                                         ->withProperties([
-                                            'batch_activity_id' => $parent->id,
+                                            'batch_activity_id' => $parentId,
                                             'operation' => 'assign_contractor',
                                             'result' => 'blocked',
                                             'reason' => 'unauthorized',
@@ -372,7 +383,7 @@ class ReportsTable
                                         ->causedBy($user)
                                         ->performedOn($record)
                                         ->withProperties([
-                                            'batch_activity_id' => $parent->id,
+                                            'batch_activity_id' => $parentId,
                                             'operation' => 'assign_contractor',
                                             'result' => 'blocked',
                                             'reason' => 'invalid_transition',
@@ -391,7 +402,7 @@ class ReportsTable
                                     ->causedBy($user)
                                     ->performedOn($record)
                                     ->withProperties([
-                                        'batch_activity_id' => $parent->id,
+                                        'batch_activity_id' => $parentId,
                                         'operation' => 'assign_contractor',
                                         'result' => 'processed',
                                         'old_status' => $oldStatus,
@@ -449,21 +460,26 @@ class ReportsTable
                                 ->withProperties([
                                     'operation' => 'request_more_info',
                                     'selected_report_ids' => $records->modelKeys(),
-                                    'note' => $note,
+                                    'note_length' => mb_strlen($note),
                                 ])
                                 ->log('Batch request-more-info started');
+                            $parentId = $parent instanceof ActivityModel ? $parent->id : null;
 
                             $processed = 0;
                             $blocked = [];
 
                             foreach ($records as $record) {
+                                if (! $record instanceof Report) {
+                                    continue;
+                                }
+
                                 if (! $user->can('update', $record)) {
                                     $blocked[] = $record->public_tracking_id;
                                     activity('report_batch_item')
                                         ->causedBy($user)
                                         ->performedOn($record)
                                         ->withProperties([
-                                            'batch_activity_id' => $parent->id,
+                                            'batch_activity_id' => $parentId,
                                             'operation' => 'request_more_info',
                                             'result' => 'blocked',
                                             'reason' => 'unauthorized',
@@ -481,7 +497,7 @@ class ReportsTable
                                         ->causedBy($user)
                                         ->performedOn($record)
                                         ->withProperties([
-                                            'batch_activity_id' => $parent->id,
+                                            'batch_activity_id' => $parentId,
                                             'operation' => 'request_more_info',
                                             'result' => 'blocked',
                                             'reason' => 'terminal_state',
@@ -503,13 +519,13 @@ class ReportsTable
                                     ->causedBy($user)
                                     ->performedOn($record)
                                     ->withProperties([
-                                        'batch_activity_id' => $parent->id,
+                                        'batch_activity_id' => $parentId,
                                         'operation' => 'request_more_info',
                                         'result' => 'processed',
                                         'old_status' => $record->status,
                                         'new_status' => $record->status,
-                                        'old_admin_notes' => $oldNotes,
-                                        'new_admin_notes' => $record->admin_notes,
+                                        'old_admin_notes_length' => mb_strlen((string) $oldNotes),
+                                        'new_admin_notes_length' => mb_strlen((string) $record->admin_notes),
                                     ])
                                     ->log('Batch request-more-info processed');
 

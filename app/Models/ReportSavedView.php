@@ -17,10 +17,12 @@ class ReportSavedView extends Model
         'sort_column',
         'sort_direction',
         'search',
+        'expires_at',
     ];
 
     protected $casts = [
         'filters' => 'array',
+        'expires_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

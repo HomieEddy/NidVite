@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('sort_column', 100)->nullable();
             $table->string('sort_direction', 10)->nullable();
             $table->string('search', 255)->nullable();
+            $table->timestamp('expires_at')->nullable()->index();
             $table->timestamps();
 
             $table->unique(['user_id', 'name']);

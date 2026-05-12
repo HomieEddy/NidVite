@@ -68,6 +68,25 @@ it('stores and loads saved report views for current user only', function () {
         ->callAction('delete_view', ['view_id' => $otherView->id]);
 
     expect(ReportSavedView::query()->whereKey($otherView->id)->exists())->toBeTrue();
+
+    Livewire::test(ListReports::class)
+        ->set('tableFilters', ['status' => ['values' => ['verified']]])
+        ->sortTable('created_at', 'desc')
+        ->set('tableSearch', 'updated')
+        ->callAction('update_view', ['view_id' => $saved->id, 'name' => 'My Queue Updated']);
+
+    $saved->refresh();
+
+    expect($saved->name)->toBe('My Queue Updated')
+        ->and($saved->filters)->toMatchArray(['status' => ['values' => ['verified']]])
+        ->and($saved->sort_column)->toBe('created_at')
+        ->and($saved->sort_direction)->toBe('desc')
+        ->and($saved->search)->toBe('updated');
+
+    Livewire::test(ListReports::class)
+        ->callAction('delete_view', ['view_id' => $saved->id]);
+
+    expect(ReportSavedView::query()->whereKey($saved->id)->exists())->toBeFalse();
 });
 
 it('bulk duplicate-close processes valid rows and blocks invalid transitions', function () {

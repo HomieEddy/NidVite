@@ -71,7 +71,6 @@ class Report extends Model implements HasMedia
         'is_spam',
         'rejection_reason',
         'admin_notes',
-        'contractor_user_id',
         'first_scheduled_at',
         'first_started_at',
         'target_completion_at',
