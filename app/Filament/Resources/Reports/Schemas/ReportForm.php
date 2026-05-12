@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Reports\Schemas;
 
+use App\Enums\ReportStatus;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -15,15 +16,16 @@ class ReportForm
     {
         return $schema
             ->components([
-                TextInput::make('uuid')
-                    ->label(__('filament.admin.resources.reports.fields.uuid'))
-                    ->required(),
                 TextInput::make('reporter_email')
                     ->label(__('filament.admin.fields_common.reporter_email'))
                     ->email()
                     ->required(),
-                TextInput::make('preferred_locale')
+                Select::make('preferred_locale')
                     ->label(__('filament.admin.fields_common.preferred_locale'))
+                    ->options([
+                        'fr' => __('filament.admin.language_switcher.french'),
+                        'en' => __('filament.admin.language_switcher.english'),
+                    ])
                     ->required()
                     ->default('fr'),
                 TextInput::make('address')
@@ -32,12 +34,26 @@ class ReportForm
                     ->label(__('filament.admin.resources.reports.fields.neighborhood')),
                 TextInput::make('borough')
                     ->label(__('filament.admin.resources.reports.fields.borough')),
-                TextInput::make('status')
+                Select::make('status')
                     ->label(__('filament.admin.fields_common.status'))
                     ->required()
-                    ->default('received'),
-                TextInput::make('priority')
+                    ->options([
+                        ReportStatus::Received->value => __('filament.admin.resources.reports.statuses.received'),
+                        ReportStatus::Verified->value => __('filament.admin.resources.reports.statuses.verified'),
+                        ReportStatus::Scheduled->value => __('filament.admin.resources.reports.statuses.scheduled'),
+                        ReportStatus::InProgress->value => __('filament.admin.resources.reports.statuses.in_progress'),
+                        ReportStatus::Repaired->value => __('filament.admin.resources.reports.statuses.repaired'),
+                        ReportStatus::Rejected->value => __('filament.admin.resources.reports.statuses.rejected'),
+                    ])
+                    ->default(ReportStatus::Received->value),
+                Select::make('priority')
                     ->label(__('filament.admin.fields_common.priority'))
+                    ->options([
+                        'low' => __('filament.admin.resources.reports.priorities.low'),
+                        'normal' => __('filament.admin.resources.reports.priorities.normal'),
+                        'high' => __('filament.admin.resources.reports.priorities.high'),
+                        'critical' => __('filament.admin.resources.reports.priorities.critical'),
+                    ])
                     ->required()
                     ->default('normal'),
                 Select::make('category_id')

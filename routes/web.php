@@ -1,32 +1,16 @@
 <?php
 
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\ReportTrackingController;
 use App\Http\Controllers\SignedMediaController;
-use App\Models\Report;
 use Illuminate\Support\Facades\Route;
 use Spatie\Health\Http\Controllers\HealthCheckJsonResultsController;
 use Spatie\ResponseCache\Middlewares\CacheResponse;
 
-Route::get('/', function () {
-    $totalReported = Report::count();
-    $totalFixed = Report::where('status', 'repaired')->count();
-    $totalPending = Report::whereIn('status', ['received', 'verified', 'scheduled', 'in_progress'])->count();
-
-    $avgDays = Report::where('status', 'repaired')
-        ->whereNotNull('completed_at')
-        ->whereNotNull('created_at')
-        ->selectRaw('AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400) as avg_days')
-        ->value('avg_days');
-
-    if (app()->getLocale() === 'fr') {
-        $velocity = $avgDays ? round($avgDays, 1).' jours' : 'N/D';
-    } else {
-        $velocity = $avgDays ? round($avgDays, 1).' days' : 'N/A';
-    }
-
-    return view('welcome', compact('totalReported', 'totalFixed', 'totalPending', 'velocity'));
-})->middleware(CacheResponse::class);
+Route::get('/', [HomeController::class, 'index'])->when(! app()->environment('staging'), function ($route) {
+    $route->middleware(CacheResponse::class);
+});
 
 Route::get('/signaler', function () {
     return view('report');
@@ -44,10 +28,13 @@ Route::view('/conditions', 'pages.terms')
 
 Route::get('/carte', [MapController::class, 'index'])
     ->name('map.public')
-    ->middleware(CacheResponse::class);
+    ->when(! app()->environment('staging'), function ($route) {
+        $route->middleware(CacheResponse::class);
+    });
 
 Route::get('/api/reports/geojson', [MapController::class, 'geojson'])
-    ->name('api.reports.geojson');
+    ->name('api.reports.geojson')
+    ->middleware('throttle:60,1');
 
 Route::get('/api/reports/{trackingId}/lookup', [ReportTrackingController::class, 'lookup'])
     ->name('api.reports.lookup')

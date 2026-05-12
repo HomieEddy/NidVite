@@ -4,11 +4,13 @@ namespace App\Filament\Resources\RepairJobs\Schemas;
 
 use App\Models\Report;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class RepairJobForm
 {
@@ -16,9 +18,8 @@ class RepairJobForm
     {
         return $schema
             ->components([
-                TextInput::make('uuid')
-                    ->label(__('filament.admin.resources.repair_jobs.fields.uuid'))
-                    ->required(),
+                Hidden::make('created_by')
+                    ->default(fn (): int => Auth::id() ?? throw new \RuntimeException('Authenticated user required for created_by.')),
                 TextInput::make('title')
                     ->label(__('filament.admin.fields_common.title'))
                     ->required(),
@@ -26,7 +27,7 @@ class RepairJobForm
                     ->label(__('filament.admin.resources.repair_jobs.fields.reports'))
                     ->relationship(
                         'reports',
-                        'uuid',
+                        'public_tracking_id',
                         modifyQueryUsing: fn (Builder $query) => $query
                             ->where('reports.status', 'received')
                     )
@@ -61,14 +62,16 @@ class RepairJobForm
                     ->label(__('filament.admin.fields_common.started_at')),
                 DateTimePicker::make('completed_at')
                     ->label(__('filament.admin.fields_common.completed_at')),
-                TextInput::make('status')
+                Select::make('status')
                     ->label(__('filament.admin.fields_common.status'))
+                    ->options([
+                        'planned' => __('filament.admin.resources.repair_jobs.statuses.planned'),
+                        'in_progress' => __('filament.admin.resources.repair_jobs.statuses.in_progress'),
+                        'completed' => __('filament.admin.resources.repair_jobs.statuses.completed'),
+                        'cancelled' => __('filament.admin.resources.repair_jobs.statuses.cancelled'),
+                    ])
                     ->required()
                     ->default('planned'),
-                TextInput::make('created_by')
-                    ->label(__('filament.admin.fields_common.created_by'))
-                    ->required()
-                    ->numeric(),
                 TextInput::make('estimated_cost')
                     ->label(__('filament.admin.fields_common.estimated_cost'))
                     ->numeric()

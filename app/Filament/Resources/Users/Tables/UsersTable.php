@@ -28,8 +28,6 @@ class UsersTable
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('uuid')
-                    ->label(__('filament.admin.resources.users.fields.uuid')),
                 TextColumn::make('role.id')
                     ->searchable(),
                 TextColumn::make('two_factor_confirmed_at')

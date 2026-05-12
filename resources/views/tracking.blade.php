@@ -73,15 +73,20 @@
         @if(!empty($photoUrls))
             <div class="mt-4">
                 <p class="text-sm font-semibold text-gray-800 mb-2">{{ __('report.photos') }}</p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     @foreach($photoUrls as $photoUrl)
                         <a
                             href="{{ $photoUrl }}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="inline-flex items-center justify-center px-3 py-2 rounded-lg border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 transition text-sm"
+                            class="block rounded-lg border border-amber-200 bg-amber-50 hover:bg-amber-100 transition overflow-hidden"
                         >
-                            {{ __('report.photos') }} #{{ $loop->iteration }}
+                            <img
+                                src="{{ $photoUrl }}"
+                                alt="{{ __('report.photos') }} #{{ $loop->iteration }}"
+                                class="w-full h-28 object-cover"
+                                loading="lazy"
+                            >
                         </a>
                     @endforeach
                 </div>

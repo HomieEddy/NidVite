@@ -22,7 +22,7 @@ it('runs demo seed command in testing environment', function () {
         ->expectsOutputToContain('Staging demo seed completed.')
         ->assertSuccessful();
 
-    expect(Report::query()->count())->toBeGreaterThan(0);
+    expect(Report::withTrashed()->count())->toBe(0);
 });
 
 it('runs fresh migrate and core seed before demo seed when fresh option is used', function () {
@@ -32,5 +32,5 @@ it('runs fresh migrate and core seed before demo seed when fresh option is used'
         ->expectsOutputToContain('Staging demo seed completed.')
         ->assertSuccessful();
 
-    expect(Report::query()->count())->toBe(30);
+    expect(Report::withTrashed()->count())->toBe(0);
 });

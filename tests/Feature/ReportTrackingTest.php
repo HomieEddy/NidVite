@@ -69,3 +69,27 @@ it('shows category label when present', function () {
     $response->assertStatus(200)
         ->assertSee($report->category->label_fr);
 });
+
+it('returns tracking lookup location as lat/lng object when report has coordinates', function () {
+    $report = Report::factory()->create([
+        'status' => 'verified',
+    ]);
+    $report->setLocation(45.508, -73.561);
+
+    $response = $this->getJson(route('api.reports.lookup', ['trackingId' => $report->public_tracking_id]));
+
+    $response->assertOk()
+        ->assertJsonPath('location.lat', 45.508)
+        ->assertJsonPath('location.lng', -73.561);
+});
+
+it('returns null location in tracking lookup when report has no coordinates', function () {
+    $report = Report::factory()->create([
+        'status' => 'verified',
+    ]);
+
+    $response = $this->getJson(route('api.reports.lookup', ['trackingId' => $report->public_tracking_id]));
+
+    $response->assertOk()
+        ->assertJsonPath('location', null);
+});

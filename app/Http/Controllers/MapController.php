@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ReportStatus;
 use App\Models\Report;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class MapController extends Controller
@@ -29,10 +31,14 @@ class MapController extends Controller
     public function geojson(Request $request): JsonResponse
     {
         $status = $request->query('status');
-        $neighborhood = trim((string) $request->query('neighborhood', ''));
+        $validStatuses = array_values(array_filter(
+            ReportStatus::values(),
+            fn (string $value): bool => $value !== ReportStatus::Rejected->value
+        ));
+        $status = is_string($status) && in_array($status, $validStatuses, true) ? $status : null;
 
         $reportsQuery = Report::where('is_spam', false)
-            ->where('status', '!=', 'rejected')
+            ->where('status', '!=', ReportStatus::Rejected->value)
             ->whereNotNull('location')
             ->select([
                 'id',
@@ -44,44 +50,52 @@ class MapController extends Controller
                 'borough',
                 'category_id',
             ])
-            ->selectRaw('ST_Y(location::geometry) as latitude, ST_X(location::geometry) as longitude');
+            ->withCoordinates();
 
-        if (is_string($status) && in_array($status, ['received', 'verified', 'scheduled', 'in_progress', 'repaired', 'rejected'], true)) {
+        if ($status !== null) {
             $reportsQuery->where('status', $status);
-        }
-
-        if ($neighborhood !== '') {
-            $reportsQuery->whereRaw('LOWER(neighborhood) LIKE ?', ['%'.mb_strtolower($neighborhood).'%']);
         }
 
         $reports = $reportsQuery->get();
 
+        $features = [];
+
+        foreach ($reports as $report) {
+            $coordinates = $report->coordinates();
+
+            if ($coordinates === null) {
+                Log::warning('Skipping report without coordinate payload in geojson response.', [
+                    'report_id' => $report->getKey(),
+                ]);
+
+                continue;
+            }
+
+            $longitude = (float) $coordinates['lng'];
+            $latitude = (float) $coordinates['lat'];
+
+            $features[] = [
+                'type' => 'Feature',
+                'geometry' => [
+                    'type' => 'Point',
+                    'coordinates' => [$longitude, $latitude],
+                ],
+                'properties' => [
+                    'tracking_id' => $report->public_tracking_id,
+                    'status' => $report->status,
+                    'status_label' => __("tracking.status.{$report->status}"),
+                    'description' => $report->description,
+                    'address' => $report->address,
+                    'neighborhood' => $report->neighborhood,
+                    'borough' => $report->borough,
+                    'url' => route('report.tracking', $report->public_tracking_id),
+                ],
+            ];
+        }
+
         return response()->json([
             'type' => 'FeatureCollection',
-            'features' => $reports->map(function (Report $report): array {
-                /** @phpstan-ignore property.notFound */
-                $longitude = (float) $report->longitude;
-                /** @phpstan-ignore property.notFound */
-                $latitude = (float) $report->latitude;
-
-                return [
-                    'type' => 'Feature',
-                    'geometry' => [
-                        'type' => 'Point',
-                        'coordinates' => [$longitude, $latitude],
-                    ],
-                    'properties' => [
-                        'tracking_id' => $report->public_tracking_id,
-                        'status' => $report->status,
-                        'status_label' => __("tracking.status.{$report->status}"),
-                        'description' => $report->description,
-                        'address' => $report->address,
-                        'neighborhood' => $report->neighborhood,
-                        'borough' => $report->borough,
-                        'url' => route('report.tracking', $report->public_tracking_id),
-                    ],
-                ];
-            }),
+            'features' => $features,
         ]);
     }
 }

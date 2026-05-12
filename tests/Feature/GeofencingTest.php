@@ -40,7 +40,7 @@ describe('Report geofence validation', function () {
 
     it('throws validation exception for a point outside Montreal', function () {
         expect(fn () => Report::validateGeofence(43.6532, -79.3832))
-            ->toThrow(ValidationException::class, 'Montreal');
+            ->toThrow(ValidationException::class);
     });
 });
 

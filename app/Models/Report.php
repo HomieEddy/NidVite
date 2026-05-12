@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ReportStatus;
 use App\Mail\ReportStatusUpdated;
+use App\Models\Concerns\HasReportCoordinates;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,7 +25,9 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Report extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia, LogsActivity, SoftDeletes;
+    use HasFactory, HasReportCoordinates, InteractsWithMedia, LogsActivity, SoftDeletes;
+
+    protected bool $allowStatusTransitionWrite = false;
 
     protected static function booted(): void
     {
@@ -37,6 +40,12 @@ class Report extends Model implements HasMedia
             $fingerprint = request()->attributes->get('device_fingerprint_hash');
             if (is_string($fingerprint) && $fingerprint !== '') {
                 $report->device_fingerprint_hash = $fingerprint;
+            }
+        });
+
+        static::updating(function (Report $report): void {
+            if ($report->isDirty('status') && ! $report->allowStatusTransitionWrite) {
+                throw new InvalidArgumentException('Direct status writes are not allowed. Use transitionTo().');
             }
         });
     }
@@ -65,6 +74,8 @@ class Report extends Model implements HasMedia
         'target_completion_at',
         'completed_at',
         'expires_at',
+        'location_accuracy',
+        'location_source',
     ];
 
     protected $casts = [
@@ -76,6 +87,9 @@ class Report extends Model implements HasMedia
         'completed_at' => 'datetime',
         'archived_at' => 'datetime',
         'expires_at' => 'datetime',
+        'location_accuracy' => 'float',
+        'road_distance_meters' => 'float',
+        'location_accuracy_passed' => 'boolean',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -127,12 +141,35 @@ class Report extends Model implements HasMedia
     /**
      * Set the PostGIS geography location from lat/lng.
      */
-    public function setLocation(float $latitude, float $longitude): void
+    public function setLocation(float $latitude, float $longitude, ?float $accuracy = null, ?string $source = null): void
     {
+        if ($accuracy !== null && ($accuracy < 0 || ! is_numeric($accuracy))) {
+            throw new InvalidArgumentException('location_accuracy must be a non-negative number');
+        }
+
+        if ($source !== null) {
+            $source = trim($source);
+            if ($source === '' || ! in_array($source, ['gps', 'manual', 'geocode'], true)) {
+                throw new InvalidArgumentException('location_source must be one of: gps, manual, geocode');
+            }
+        }
+
         DB::statement(
             'UPDATE reports SET location = ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography WHERE id = ?',
             [$longitude, $latitude, $this->id]
         );
+
+        if ($accuracy !== null) {
+            $this->location_accuracy = $accuracy;
+        }
+
+        if ($source !== null) {
+            $this->location_source = $source;
+        }
+
+        if ($accuracy !== null || $source !== null) {
+            $this->saveQuietly();
+        }
     }
 
     /**
@@ -184,13 +221,23 @@ class Report extends Model implements HasMedia
         }
 
         $oldStatus = $this->status;
-        $this->status = $newStatus;
 
-        if ($newStatus === ReportStatus::Rejected->value && $reason !== null) {
-            $this->rejection_reason = $reason;
+        try {
+            $this->allowStatusTransitionWrite = true;
+            $this->status = $newStatus;
+
+            if ($newStatus === ReportStatus::Rejected->value && $reason !== null) {
+                $this->rejection_reason = $reason;
+            }
+
+            if ($newStatus !== ReportStatus::Rejected->value) {
+                $this->rejection_reason = null;
+            }
+
+            $this->save();
+        } finally {
+            $this->allowStatusTransitionWrite = false;
         }
-
-        $this->save();
 
         activity('report_status')
             ->performedOn($this)
@@ -225,6 +272,48 @@ class Report extends Model implements HasMedia
         $current = ReportStatus::tryFrom($this->status);
 
         return $current !== null && $current->canTransitionTo($status);
+    }
+
+    /**
+     * Apply a manual admin override for road-validation decision with an audit note.
+     */
+    public function overrideRoadValidation(string $decision, string $note): void
+    {
+        $allowedDecisions = ['pass', 'fail_off_street', 'fail_low_accuracy', 'fail_both'];
+
+        $decision = trim($decision);
+        if (! in_array($decision, $allowedDecisions, true)) {
+            throw new InvalidArgumentException('Invalid road_validation_decision provided for override');
+        }
+
+        $note = trim($note);
+        if ($note === '') {
+            throw new InvalidArgumentException('Audit note is required for validation override');
+        }
+
+        $oldDecision = $this->road_validation_decision;
+        $oldReason = $this->road_validation_reason;
+        $oldMode = $this->road_validation_mode;
+
+        $this->road_validation_decision = $decision;
+        $this->road_validation_reason = 'admin_override';
+        $this->road_validation_mode = 'admin_override';
+        $this->location_accuracy_passed = ! in_array($decision, ['fail_low_accuracy', 'fail_both'], true);
+        $this->save();
+
+        activity('report_validation_override')
+            ->performedOn($this)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'old_decision' => $oldDecision,
+                'new_decision' => $decision,
+                'old_reason' => $oldReason,
+                'new_reason' => 'admin_override',
+                'old_mode' => $oldMode,
+                'new_mode' => 'admin_override',
+                'audit_note' => $note,
+            ])
+            ->log('Report road validation overridden by admin');
     }
 
     /**

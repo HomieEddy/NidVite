@@ -30,7 +30,7 @@ it('filters geojson by status when requested', function () {
         ->and($features[0]['properties']['status'])->toBe('repaired');
 });
 
-it('filters geojson by neighborhood partial match', function () {
+it('ignores neighborhood filter parameter', function () {
     $plateau = Report::factory()->create([
         'status' => 'verified',
         'neighborhood' => 'Le Plateau-Mont-Royal',
@@ -51,8 +51,7 @@ it('filters geojson by neighborhood partial match', function () {
 
     $features = $response->json('features');
 
-    expect($features)->toHaveCount(1)
-        ->and($features[0]['properties']['neighborhood'])->toBe('Le Plateau-Mont-Royal');
+    expect($features)->toHaveCount(2);
 });
 
 it('ignores invalid status filter and returns all valid non-rejected reports', function () {
@@ -111,7 +110,7 @@ it('excludes spam and rejected reports regardless of filters', function () {
         ->and($features[0]['properties']['status'])->toBe('verified');
 });
 
-it('applies combined status and neighborhood filters', function () {
+it('applies status filter even when neighborhood parameter is provided', function () {
     $match = Report::factory()->create([
         'status' => 'verified',
         'neighborhood' => 'Le Plateau-Mont-Royal',
@@ -142,7 +141,27 @@ it('applies combined status and neighborhood filters', function () {
 
     $features = $response->json('features');
 
-    expect($features)->toHaveCount(1)
-        ->and($features[0]['properties']['status'])->toBe('verified')
-        ->and($features[0]['properties']['neighborhood'])->toBe('Le Plateau-Mont-Royal');
+    expect($features)->toHaveCount(2)
+        ->and(collect($features)->pluck('properties.status')->unique()->all())->toBe(['verified']);
+});
+
+it('returns geojson point coordinates in [lng, lat] order', function () {
+    $report = Report::factory()->create([
+        'status' => 'verified',
+        'is_spam' => false,
+    ]);
+    $report->setLocation(45.5017, -73.5673);
+
+    $response = $this->getJson(route('api.reports.geojson'));
+
+    $response->assertOk();
+
+    $firstFeature = $response->json('features.0');
+
+    expect($firstFeature)
+        ->toHaveKey('geometry.coordinates.0')
+        ->and($firstFeature)
+        ->toHaveKey('geometry.coordinates.1')
+        ->and($firstFeature['geometry']['coordinates'][0])->toBeFloat()->toBe(-73.5673)
+        ->and($firstFeature['geometry']['coordinates'][1])->toBeFloat()->toBe(45.5017);
 });

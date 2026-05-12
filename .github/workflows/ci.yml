@@ -39,6 +39,7 @@ jobs:
         with:
           php-version: '8.2'
           extensions: pdo_pgsql, pgsql, mbstring, intl, exif, bcmath, gd, zip
+          tools: composer:v2, rector
           coverage: none
 
       - name: Get composer cache directory
@@ -54,6 +55,12 @@ jobs:
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Validate composer metadata
+        run: composer validate
+
+      - name: Run quality guard tests
+        run: php artisan test tests/Feature/QualityGateDependencyHygieneTest.php tests/Feature/ArchitectureBoundaryGuardTest.php --colors=never
 
       - name: Copy environment file
         run: cp .env.example .env
@@ -92,6 +99,12 @@ jobs:
       - name: Run PHPStan
         run: ./vendor/bin/phpstan analyse --configuration=phpstan.neon --no-progress --memory-limit=1G
 
+      - name: Run staged PHPStan level 6 gate
+        run: composer quality:phpstan-stage6
+
+      - name: Run Rector dry-run gate
+        run: composer quality:rector-dry-run
+
   tests:
     name: Tests
     runs-on: ubuntu-latest
@@ -120,6 +133,7 @@ jobs:
         with:
           php-version: '8.2'
           extensions: pdo_pgsql, pgsql, mbstring, intl, exif, bcmath, gd, zip
+          tools: composer:v2
           coverage: none
 
       - name: Get composer cache directory

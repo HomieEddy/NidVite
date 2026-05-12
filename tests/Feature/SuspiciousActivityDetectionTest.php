@@ -66,3 +66,49 @@ it('logs geolocation spoofing patterns for unrealistic movement', function () {
     expect($activity)->not->toBeNull();
     expect($activity->severity)->toBe('critical');
 });
+
+it('logs off-street and near-miss road validation signals', function () {
+    config()->set('report_validation.max_road_distance_meters', 35);
+    config()->set('report_validation.near_miss_buffer_meters', 10);
+
+    $report = Report::factory()->create([
+        'road_validation_decision' => 'fail_off_street',
+        'road_validation_reason' => 'off_street',
+        'road_validation_mode' => 'shadow',
+        'road_distance_meters' => 40.0,
+        'location_accuracy_passed' => true,
+    ]);
+
+    event(new ReportCreated($report));
+
+    $this->assertDatabaseHas('suspicious_activities', [
+        'report_id' => $report->getKey(),
+        'type' => 'road_validation_off_street',
+        'severity' => 'high',
+    ]);
+
+    $this->assertDatabaseHas('suspicious_activities', [
+        'report_id' => $report->getKey(),
+        'type' => 'road_validation_near_miss',
+        'severity' => 'medium',
+    ]);
+});
+
+it('logs address-coordinate mismatch when geocoded location fails road validation', function () {
+    $report = Report::factory()->create([
+        'location_source' => 'geocode',
+        'road_validation_decision' => 'fail_both',
+        'road_validation_reason' => 'off_street_and_low_accuracy',
+        'road_validation_mode' => 'shadow',
+        'road_distance_meters' => 120.0,
+        'location_accuracy_passed' => false,
+    ]);
+
+    event(new ReportCreated($report));
+
+    $this->assertDatabaseHas('suspicious_activities', [
+        'report_id' => $report->getKey(),
+        'type' => 'address_coordinate_mismatch',
+        'severity' => 'medium',
+    ]);
+});

@@ -2,11 +2,11 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Widgets\LowStockMaterialsOverview;
 use App\Filament\Widgets\ReportsByNeighborhood;
 use App\Filament\Widgets\ReportsChart;
 use App\Filament\Widgets\ReportsMap;
 use App\Filament\Widgets\ReportsOverview;
+use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\EnforceAdminSessionTimeout;
 use App\Http\Middleware\SetLocale;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
@@ -19,7 +19,6 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
-use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
@@ -47,7 +46,6 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 ReportsMap::class,
                 ReportsOverview::class,
-                LowStockMaterialsOverview::class,
                 ReportsChart::class,
                 ReportsByNeighborhood::class,
             ])

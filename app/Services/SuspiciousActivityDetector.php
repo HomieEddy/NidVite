@@ -11,6 +11,51 @@ class SuspiciousActivityDetector
     {
         $this->detectRapidRepeatSubmission($report);
         $this->detectGeolocationSpoofing($report);
+        $this->detectRoadValidationSignals($report);
+    }
+
+    private function detectRoadValidationSignals(Report $report): void
+    {
+        $decision = (string) ($report->road_validation_decision ?? '');
+        if ($decision === '') {
+            return;
+        }
+
+        $distance = $report->road_distance_meters;
+        $distanceThreshold = (float) config('report_validation.max_road_distance_meters', 35);
+        $nearMissBuffer = (float) config('report_validation.near_miss_buffer_meters', 10);
+
+        if (in_array($decision, ['fail_off_street', 'fail_both'], true)) {
+            $this->storeActivity($report, 'road_validation_off_street', 'high', 'Road validation flagged off-street submission', [
+                'decision' => $decision,
+                'distance_meters' => $distance,
+                'distance_threshold_meters' => $distanceThreshold,
+                'validation_mode' => $report->road_validation_mode,
+            ]);
+
+            if ($report->location_source === 'geocode') {
+                $this->storeActivity($report, 'address_coordinate_mismatch', 'medium', 'Address-geocoded location appears off-street and requires review', [
+                    'decision' => $decision,
+                    'distance_meters' => $distance,
+                    'distance_threshold_meters' => $distanceThreshold,
+                    'location_source' => $report->location_source,
+                ]);
+            }
+        }
+
+        if (
+            $distance !== null
+            && $distance > $distanceThreshold
+            && $distance <= ($distanceThreshold + $nearMissBuffer)
+        ) {
+            $this->storeActivity($report, 'road_validation_near_miss', 'medium', 'Road validation distance is near strict threshold', [
+                'decision' => $decision,
+                'distance_meters' => $distance,
+                'distance_threshold_meters' => $distanceThreshold,
+                'near_miss_buffer_meters' => $nearMissBuffer,
+                'validation_mode' => $report->road_validation_mode,
+            ]);
+        }
     }
 
     private function detectRapidRepeatSubmission(Report $report): void

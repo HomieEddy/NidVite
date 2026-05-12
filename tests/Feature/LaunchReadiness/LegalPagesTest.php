@@ -1,15 +1,11 @@
 <?php
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-uses(RefreshDatabase::class);
-
 it('serves privacy and terms pages in french', function () {
     $this->withSession(['locale' => 'fr']);
 
     $this->get('/confidentialite')
         ->assertOk()
-        ->assertSeeText('Politique de confidentialite');
+        ->assertSeeText('Politique de confidentialité');
 
     $this->get('/conditions')
         ->assertOk()
@@ -26,4 +22,26 @@ it('serves privacy and terms pages in english', function () {
     $this->get('/conditions')
         ->assertOk()
         ->assertSeeText('Terms of Service');
+});
+
+it('falls back to default locale for unsupported locale', function () {
+    $this->withSession(['locale' => 'es']);
+
+    $this->get('/confidentialite')
+        ->assertOk()
+        ->assertSeeText('Politique de confidentialité');
+
+    $this->get('/conditions')
+        ->assertOk()
+        ->assertSeeText('Conditions d\'utilisation');
+});
+
+it('uses default locale behavior when locale is absent', function () {
+    $this->get('/confidentialite')
+        ->assertOk()
+        ->assertSeeText('Politique de confidentialité');
+
+    $this->get('/conditions')
+        ->assertOk()
+        ->assertSeeText('Conditions d\'utilisation');
 });

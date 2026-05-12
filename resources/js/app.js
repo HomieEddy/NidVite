@@ -1,8 +1,19 @@
 import './bootstrap';
+import './report-form-map';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 window.L = L;
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+	iconRetinaUrl: markerIcon2x,
+	iconUrl: markerIcon,
+	shadowUrl: markerShadow,
+});
 
 window.nidviteTracker = function nidviteTracker(errorMsg) {
 	return {
@@ -170,8 +181,55 @@ function bootNidvitePublicPages() {
 	initPublicMapPage();
 }
 
+function getAlpineDataContext(element) {
+	var root = element.closest('[x-data]');
+	if (!root) return null;
+
+	if (root.__x && root.__x.$data) {
+		return root.__x.$data;
+	}
+
+	if (window.Alpine && typeof window.Alpine.$data === 'function') {
+		return window.Alpine.$data(root);
+	}
+
+	return null;
+}
+
+function initReportFormBindings() {
+	document.querySelectorAll('form[data-nidvite-recaptcha]').forEach(function (form) {
+		form.addEventListener('submit', function () {
+			if (window.nidviteSyncRecaptchaToken) {
+				window.nidviteSyncRecaptchaToken();
+			}
+		});
+	});
+
+	document.querySelectorAll('[data-action="geocode-address"]').forEach(function (input) {
+		input.addEventListener('blur', function () {
+			var alpineData = getAlpineDataContext(input);
+			if (alpineData && typeof alpineData.geocodeAddress === 'function') {
+				alpineData.geocodeAddress();
+			}
+		});
+	});
+
+	document.querySelectorAll('[data-action="capture-location"]').forEach(function (button) {
+		button.addEventListener('click', function () {
+			var alpineData = getAlpineDataContext(button);
+			if (alpineData && typeof alpineData.captureLocation === 'function') {
+				alpineData.captureLocation();
+			}
+		});
+	});
+}
+
 if (document.readyState === 'loading') {
-	document.addEventListener('DOMContentLoaded', bootNidvitePublicPages);
+	document.addEventListener('DOMContentLoaded', function () {
+		bootNidvitePublicPages();
+		initReportFormBindings();
+	});
 } else {
 	bootNidvitePublicPages();
+	initReportFormBindings();
 }

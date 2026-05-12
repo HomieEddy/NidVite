@@ -77,6 +77,7 @@ return [
                 'https://www.google.com/recaptcha/',
                 'https://www.gstatic.com/recaptcha/',
                 'https://www.recaptcha.net/recaptcha/',
+                'https://nominatim.openstreetmap.org',
             ],
         ],
 

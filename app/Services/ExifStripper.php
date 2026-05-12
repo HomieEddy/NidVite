@@ -15,9 +15,10 @@ class ExifStripper
      */
     public static function process(UploadedFile $file): string
     {
-        $manager = self::createManager();
-
-        $image = $manager->read($file->getRealPath());
+        $sourcePath = (string) $file->getRealPath();
+        if ($sourcePath === '' || ! is_file($sourcePath)) {
+            throw new RuntimeException('Uploaded image temporary file is unavailable.');
+        }
 
         $extension = strtolower($file->extension());
         $tempPath = tempnam(sys_get_temp_dir(), 'clean_');
@@ -27,16 +28,20 @@ class ExifStripper
         }
 
         $finalPath = $tempPath.'.'.$extension;
+        @unlink($tempPath);
 
         try {
-            $image->encodeByExtension($extension, quality: 90)->save($finalPath);
+            $manager = self::createManager();
+            $manager->read($sourcePath)
+                ->encodeByExtension($extension, quality: 90)
+                ->save($finalPath);
         } catch (\Throwable $e) {
-            @unlink($tempPath);
-            @unlink($finalPath);
-            throw $e;
-        }
+            if (is_file($finalPath)) {
+                @unlink($finalPath);
+            }
 
-        @unlink($tempPath);
+            throw new RuntimeException('Failed to process uploaded image.', 0, $e);
+        }
 
         return $finalPath;
     }

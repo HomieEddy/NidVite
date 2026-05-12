@@ -36,6 +36,9 @@ it('queues critical alerts for admin and manager only', function () {
     expect(EmailDeliveryLog::query()->pluck('user_id')->all())
         ->not->toContain($viewer->id);
 
+    Queue::assertPushed(SendCriticalAlertEmailJob::class, function (SendCriticalAlertEmailJob $job): bool {
+        return $job->afterCommit === true;
+    });
     Queue::assertPushed(SendCriticalAlertEmailJob::class, 2);
 });
 
