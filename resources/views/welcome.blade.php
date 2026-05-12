@@ -3,13 +3,7 @@
 @section('title', config('app.name'))
 
 @section('content')
-@php
-    $locale = app()->getLocale();
-    $description = $locale === 'fr'
-        ? 'Aidez-nous a améliorer les rues de Montréal en signalant les nids-de-poule et en suivant les réparations en cours.'
-        : 'Help us improve Montreal streets by reporting potholes and tracking ongoing repairs.';
-@endphp
-<div x-data="nidviteTracker(@js($locale === 'fr' ? 'Signalement non trouvé' : 'Report not found'))" class="relative flex flex-col min-h-0 overflow-hidden">
+<div x-data="nidviteTracker(@js(__('home.report_not_found')))" class="relative flex flex-col min-h-0 overflow-hidden">
     <div class="pointer-events-none absolute -top-24 -left-16 h-56 w-56 rounded-full bg-amber-300/30 blur-3xl"></div>
     <div class="pointer-events-none absolute top-32 -right-20 h-64 w-64 rounded-full bg-teal-300/20 blur-3xl"></div>
     <div class="flex-1 px-4 py-8 sm:py-12">
@@ -24,7 +18,7 @@
                     </svg>
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-extrabold font-display text-gray-900 tracking-tight">{{ config('app.name') }}</h1>
-                <p class="mt-3 text-base sm:text-lg text-gray-700 leading-relaxed max-w-sm mx-auto">{{ $description }}</p>
+                <p class="mt-3 text-base sm:text-lg text-gray-700 leading-relaxed max-w-sm mx-auto">{{ __('home.description') }}</p>
             </div>
 
             {{-- Action buttons --}}
@@ -34,7 +28,7 @@
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    {{ $locale === 'fr' ? 'Faire un signalement' : 'Report an issue' }}
+                    {{ __('home.actions.report_issue') }}
                 </a>
                 <button type="button"
                         x-show="!showInput"
@@ -43,7 +37,7 @@
                     <svg class="w-6 h-6 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                     </svg>
-                    {{ $locale === 'fr' ? 'Suivre un signalement' : 'Follow up on an issue' }}
+                    {{ __('home.actions.track_report') }}
                 </button>
 
                 {{-- Track input --}}
@@ -52,19 +46,19 @@
                         <div class="relative">
                             <input type="text" x-model="trackingId"
                                 class="block w-full rounded-xl border-gray-300/80 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3.5 pr-20 uppercase tracking-wide"
-                                   placeholder="{{ $locale === 'fr' ? 'Numéro de signalement' : 'Report ID' }}"
+                                   placeholder="{{ __('home.actions.track_placeholder') }}"
                                    x-on:keydown.enter="lookup()">
                             <button type="button"
                                     x-on:click="lookup()"
                                     class="absolute right-2 top-2 bottom-2 px-4 bg-amber-700 text-white text-sm font-semibold rounded-lg hover:bg-amber-800 active:scale-[0.98] transition-all btn-touch interactive-lift">
-                                {{ $locale === 'fr' ? 'OK' : 'Go' }}
+                                {{ __('home.actions.track_submit') }}
                             </button>
                         </div>
                         <p x-show="error" x-text="error" class="text-sm text-red-600"></p>
                     </div>
                     <button type="button" x-on:click="showInput = false; trackingId = ''; error = ''"
                             class="w-full text-sm text-gray-500 hover:text-gray-700 font-medium py-2 btn-touch">
-                        {{ $locale === 'fr' ? 'Annuler' : 'Cancel' }}
+                        {{ __('home.actions.cancel') }}
                     </button>
                 </div>
             </div>
@@ -73,19 +67,19 @@
             <div class="grid grid-cols-2 gap-3">
                 <div class="citizen-card p-4 text-center">
                     <p class="text-2xl sm:text-3xl font-bold text-amber-600">{{ number_format($totalReported) }}</p>
-                    <p class="text-xs sm:text-sm text-gray-500 mt-1 leading-tight">{{ $locale === 'fr' ? 'Signalements à ce jour' : 'Reported to date' }}</p>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1 leading-tight">{{ __('home.stats.reported_to_date') }}</p>
                 </div>
                 <div class="citizen-card p-4 text-center">
                     <p class="text-2xl sm:text-3xl font-bold text-green-600">{{ number_format($totalFixed) }}</p>
-                    <p class="text-xs sm:text-sm text-gray-500 mt-1 leading-tight">{{ $locale === 'fr' ? 'Réparé à ce jour' : 'Fixed to date' }}</p>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1 leading-tight">{{ __('home.stats.fixed_to_date') }}</p>
                 </div>
                 <div class="citizen-card p-4 text-center">
                     <p class="text-2xl sm:text-3xl font-bold text-blue-600">{{ number_format($totalPending) }}</p>
-                    <p class="text-xs sm:text-sm text-gray-500 mt-1 leading-tight">{{ $locale === 'fr' ? 'En attente' : 'Pending fix' }}</p>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1 leading-tight">{{ __('home.stats.pending_fix') }}</p>
                 </div>
                 <div class="citizen-card p-4 text-center">
                     <p class="text-2xl sm:text-3xl font-bold text-teal-700">{{ $velocity }}</p>
-                    <p class="text-xs sm:text-sm text-gray-500 mt-1 leading-tight">{{ $locale === 'fr' ? 'Délai moyen de réparation' : 'Repair velocity' }}</p>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1 leading-tight">{{ __('home.stats.repair_velocity') }}</p>
                 </div>
             </div>
 
@@ -97,7 +91,7 @@
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" x-on:click="modalOpen = false"></div>
         <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto animate-slide-up" x-on:click.away="modalOpen = false">
             <div class="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between rounded-t-3xl z-10">
-                <h2 class="text-lg font-bold text-gray-900">{{ $locale === 'fr' ? 'Votre signalement' : 'Your report' }}</h2>
+                <h2 class="text-lg font-bold text-gray-900">{{ __('home.modal.title') }}</h2>
                 <button type="button" x-on:click="modalOpen = false" class="p-2 rounded-full hover:bg-gray-100 transition btn-touch">
                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -111,7 +105,7 @@
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <p class="mt-3 text-sm text-gray-500">{{ $locale === 'fr' ? 'Chargement...' : 'Loading...' }}</p>
+                    <p class="mt-3 text-sm text-gray-500">{{ __('home.modal.loading') }}</p>
                 </div>
 
                 <template x-if="report && !loading">
@@ -132,27 +126,27 @@
 
                         <div class="space-y-2 text-sm">
                             <div x-show="report.category" class="flex">
-                                <span class="text-gray-500 w-24 shrink-0">{{ $locale === 'fr' ? 'Type' : 'Type' }}</span>
+                                <span class="text-gray-500 w-24 shrink-0">{{ __('home.modal.fields.type') }}</span>
                                 <span class="text-gray-900" x-text="report.category"></span>
                             </div>
                             <div x-show="report.address" class="flex">
-                                <span class="text-gray-500 w-24 shrink-0">{{ $locale === 'fr' ? 'Adresse' : 'Address' }}</span>
+                                <span class="text-gray-500 w-24 shrink-0">{{ __('home.modal.fields.address') }}</span>
                                 <span class="text-gray-900" x-text="report.address"></span>
                             </div>
                             <div x-show="report.created_at" class="flex">
-                                <span class="text-gray-500 w-24 shrink-0">{{ $locale === 'fr' ? 'Date' : 'Date' }}</span>
+                                <span class="text-gray-500 w-24 shrink-0">{{ __('home.modal.fields.date') }}</span>
                                 <span class="text-gray-900" x-text="new Date(report.created_at).toLocaleDateString()"></span>
                             </div>
                         </div>
 
                         <div x-show="report.status === 'rejected'" class="p-4 rounded-xl bg-red-50 border border-red-200">
-                            <p class="font-semibold text-red-900 text-sm">{{ $locale === 'fr' ? 'Signalement rejeté' : 'Report rejected' }}</p>
+                            <p class="font-semibold text-red-900 text-sm">{{ __('home.modal.rejected') }}</p>
                             <p x-show="report.rejection_reason" x-text="report.rejection_reason" class="text-sm text-red-700 mt-1"></p>
                         </div>
 
                         <div x-show="report.status !== 'rejected'">
                             <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-semibold text-gray-700">{{ $locale === 'fr' ? 'Progression' : 'Progress' }}</span>
+                                <span class="text-sm font-semibold text-gray-700">{{ __('home.modal.progress') }}</span>
                                 <span class="text-sm font-bold text-amber-600" x-text="Math.round(report.progress.percent) + '%'"></span>
                             </div>
                             <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
@@ -177,7 +171,7 @@
                                         <span class="text-sm font-medium"
                                               :class="step.done ? (step.current ? 'text-amber-900' : 'text-gray-700') : 'text-gray-400'"
                                               x-text="step.label"></span>
-                                        <span x-show="step.current" class="text-xs text-amber-600 font-semibold ml-auto">{{ $locale === 'fr' ? 'En cours' : 'Current' }}</span>
+                                        <span x-show="step.current" class="text-xs text-amber-600 font-semibold ml-auto">{{ __('home.modal.current') }}</span>
                                     </div>
                                 </template>
                             </div>
@@ -185,7 +179,7 @@
 
                                 <a :href="'/suivi/' + report.tracking_id" target="_blank"
                            class="block w-full text-center py-3 text-sm font-medium text-amber-600 hover:text-amber-700 bg-amber-50 rounded-xl hover:bg-amber-100 transition btn-touch">
-                            {{ $locale === 'fr' ? 'Voir la page complète' : 'View full page' }} →
+                            {{ __('home.modal.full_page') }} →
                         </a>
                     </div>
                 </template>
