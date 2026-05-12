@@ -163,6 +163,43 @@ return [
                     'export_pdf' => 'Exporter PDF',
                     'override_validation' => 'Forcer la validation',
                 ],
+                'saved_views' => [
+                    'actions' => [
+                        'save' => 'Enregistrer la vue',
+                        'update' => 'Mettre a jour la vue',
+                        'load' => 'Charger la vue',
+                        'delete' => 'Supprimer la vue',
+                    ],
+                    'fields' => [
+                        'name' => 'Nom de la vue',
+                        'view' => 'Vue enregistree',
+                        'rename_to' => 'Renommer en (optionnel)',
+                    ],
+                    'feedback' => [
+                        'saved' => 'Vue enregistree.',
+                        'updated' => 'Vue mise a jour.',
+                        'loaded' => 'Vue chargee.',
+                        'deleted' => 'Vue supprimee.',
+                    ],
+                ],
+                'bulk_actions' => [
+                    'duplicate_close' => [
+                        'label' => 'Fermer comme doublon',
+                        'reason' => 'Raison de fermeture du doublon (optionnel)',
+                        'default_reason' => 'Signalement doublon ferme pendant le lot de triage.',
+                    ],
+                    'assign_contractor' => [
+                        'label' => 'Assigner un entrepreneur',
+                        'contractor' => 'Entrepreneur',
+                    ],
+                    'request_more_info' => [
+                        'label' => 'Demander plus d\'infos',
+                        'note' => 'Note de demande',
+                    ],
+                    'feedback' => [
+                        'summary' => 'Lot termine. Traites : :processed, bloques : :blocked.',
+                    ],
+                ],
                 'fields' => [
                     'uuid' => 'UUID',
                     'map' => 'Carte',
