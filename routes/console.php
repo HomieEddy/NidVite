@@ -1,11 +1,15 @@
 <?php
 
+use App\Mail\WeeklyOperationsDigest;
 use App\Models\Report;
+use App\Services\Reports\ReliabilityScoreService;
+use App\Services\Reports\WeeklyOperationsDigestService;
 use Bepsvpt\SecureHeaders\SecureHeaders;
 use Database\Seeders\StagingDemoSeeder;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Storage;
 use Spatie\ScheduleMonitor\Models\MonitoredScheduledTaskLogItem;
@@ -247,6 +251,56 @@ Artisan::command('reports:run-retention', function () {
     return 0;
 })->purpose('Purge raw IPs and archive old reports to cold storage');
 
+Artisan::command('reports:recompute-reliability', function () {
+    $scorer = app(ReliabilityScoreService::class);
+    $updated = 0;
+
+    Report::query()
+        ->orderBy('id')
+        ->chunkById(200, function ($reports) use ($scorer, &$updated): void {
+            foreach ($reports as $report) {
+                $snapshot = $scorer->score($report);
+
+                $report->forceFill([
+                    'reliability_score' => $snapshot['score'],
+                    'reliability_breakdown' => $snapshot['breakdown'],
+                    'reliability_scored_at' => now(),
+                ])->saveQuietly();
+
+                $updated++;
+            }
+        });
+
+    $this->info("Recomputed reliability for {$updated} reports.");
+
+    return 0;
+})->purpose('Recompute reliability score snapshots for all reports');
+
+Artisan::command('reports:send-weekly-digest', function () {
+    $recipients = collect((array) config('operations_digest.recipients', []))
+        ->map(fn ($email): string => trim((string) $email))
+        ->filter(fn (string $email): bool => $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) !== false)
+        ->unique()
+        ->values();
+
+    if ($recipients->isEmpty()) {
+        $this->info('No digest recipients configured; skipping weekly digest send.');
+
+        return 0;
+    }
+
+    $locale = (string) config('operations_digest.locale', 'fr');
+    $summary = app(WeeklyOperationsDigestService::class)->buildSummary(now());
+
+    foreach ($recipients as $recipient) {
+        Mail::to($recipient)->queue(new WeeklyOperationsDigest($summary, $locale));
+    }
+
+    $this->info('Weekly operations digest queued for '.$recipients->count().' recipients.');
+
+    return 0;
+})->purpose('Send weekly operations digest to configured recipients');
+
 Schedule::command('health:schedule-check-heartbeat')
     ->everyMinute()
     ->monitorName('health:schedule-check-heartbeat')
@@ -278,6 +332,14 @@ Schedule::command('reports:run-retention')
     ->daily()
     ->at('02:30')
     ->monitorName('reports:run-retention')
+    ->withoutOverlapping();
+
+Schedule::command('reports:send-weekly-digest')
+    ->weeklyOn(
+        (int) config('operations_digest.day_of_week', 1),
+        (string) config('operations_digest.time', '08:00')
+    )
+    ->monitorName('reports:send-weekly-digest')
     ->withoutOverlapping();
 
 Schedule::command('model:prune', ['--model' => [MonitoredScheduledTaskLogItem::class]])
