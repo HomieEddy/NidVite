@@ -29,7 +29,7 @@ class StreetProximityValidationService
 
         $roadDataAvailable = $distance !== null;
         $roadPassed = ! $roadDataAvailable || $distance <= $distanceThreshold;
-        $accuracyPassed = $accuracy !== null && $accuracy <= $accuracyThreshold;
+        $accuracyPassed = $accuracy !== null && $accuracy >= 0 && $accuracy <= $accuracyThreshold;
 
         if (! $roadDataAvailable && $accuracyPassed) {
             $decision = 'pass';

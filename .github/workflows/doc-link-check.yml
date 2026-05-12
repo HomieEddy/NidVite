@@ -1,0 +1,47 @@
+name: Doc Link Check
+
+on:
+  pull_request:
+    paths:
+      - README.md
+      - docs/**
+      - .github/workflows/doc-link-check.yml
+
+jobs:
+  readme-local-links:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate local markdown links in README
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          missing=0
+          links=$(grep -oE '\[[^]]+\]\(([^)]+)\)' README.md | sed -E 's/.*\(([^)]+)\)/\1/')
+
+          while IFS= read -r link; do
+            [ -z "$link" ] && continue
+
+            case "$link" in
+              http://*|https://*|mailto:*|#*)
+                continue
+                ;;
+            esac
+
+            target="${link%%#*}"
+            if [ ! -e "$target" ]; then
+              echo "Missing README link target: $target"
+              missing=1
+            fi
+          done <<< "$links"
+
+          if [ "$missing" -ne 0 ]; then
+            echo "README contains broken local links."
+            exit 1
+          fi
+
+          echo "README local links validated."

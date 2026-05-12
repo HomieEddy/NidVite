@@ -36,11 +36,11 @@ class ExifStripper
                 ->encodeByExtension($extension, quality: 90)
                 ->save($finalPath);
         } catch (\Throwable $e) {
-            // Fall back to a pass-through copy if image extension support is unavailable.
-            if (! @copy($sourcePath, $finalPath)) {
+            if (is_file($finalPath)) {
                 @unlink($finalPath);
-                throw new RuntimeException('Failed to process uploaded image.', 0, $e);
             }
+
+            throw new RuntimeException('Failed to process uploaded image.', 0, $e);
         }
 
         return $finalPath;

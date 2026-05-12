@@ -63,7 +63,7 @@ class ThrottleReportSubmission
             }
 
             $snapshotName = $this->extractComponentName($component['snapshot'] ?? null);
-            if (str_contains($snapshotName, 'report-form')) {
+            if ($snapshotName === 'report-form') {
                 return true;
             }
         }

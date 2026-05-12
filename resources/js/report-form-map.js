@@ -28,6 +28,8 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
 
         updateMap(lat, lng) {
             if (!this.map) this.initMap();
+            if (!this.map) return;
+
             if (this.marker) this.map.removeLayer(this.marker);
             this.marker = L.marker([lat, lng]).addTo(this.map);
             this.map.setView([lat, lng], 15);

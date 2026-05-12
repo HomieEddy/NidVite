@@ -165,6 +165,7 @@ class ReportsTable
                     ->label(__('filament.admin.resources.reports.actions.override_validation'))
                     ->icon('heroicon-m-shield-check')
                     ->visible(fn (Report $record): bool => auth()->user()?->can('update', $record) ?? false)
+                    ->authorize(fn (Report $record): bool => auth()->user()?->can('update', $record) ?? false)
                     ->form([
                         Select::make('decision')
                             ->label(__('filament.admin.resources.reports.fields.override_decision'))

@@ -9,7 +9,7 @@
             <label class="block text-sm font-semibold text-gray-700">{{ __('report.location') }}</label>
             <p class="text-xs text-gray-500 mb-3">{{ __('report.location_help') }}</p>
 
-            @if ($latitude && $longitude)
+            @if ($latitude !== null && $longitude !== null)
                 <div class="flex items-center space-x-2 mb-3 flex-wrap gap-y-1">
                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -22,7 +22,7 @@
             @endif
             <div id="form-map" class="w-full h-52 rounded-xl border border-amber-100 mb-3" wire:ignore></div>
 
-            <button type="button" x-on:click="captureLocation()"
+            <button type="button" data-action="capture-location"
                 class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-semibold rounded-xl shadow-sm text-white bg-linear-to-r from-amber-700 to-orange-500 hover:from-amber-800 hover:to-orange-600 active:scale-[0.98] transition-all duration-200 btn-touch interactive-lift">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>

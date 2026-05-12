@@ -4,7 +4,7 @@
         <p class="text-amber-100 text-sm mt-1">{{ __('report.subtitle') }}</p>
     </div>
 
-    <form wire:submit="submit" class="p-5 space-y-5" x-on:submit="window.nidviteSyncRecaptchaToken && window.nidviteSyncRecaptchaToken()">
+    <form wire:submit="submit" class="p-5 space-y-5" data-nidvite-recaptcha>
         <x-honeypot :livewireModel="'honeypotData'" />
         <input type="hidden" id="recaptcha-response" wire:model="recaptcha_response">
 

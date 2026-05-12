@@ -45,7 +45,7 @@ class ReportForm
                         ReportStatus::Repaired->value => __('filament.admin.resources.reports.statuses.repaired'),
                         ReportStatus::Rejected->value => __('filament.admin.resources.reports.statuses.rejected'),
                     ])
-                    ->default('received'),
+                    ->default(ReportStatus::Received->value),
                 Select::make('priority')
                     ->label(__('filament.admin.fields_common.priority'))
                     ->options([

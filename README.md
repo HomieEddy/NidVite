@@ -15,16 +15,18 @@ NidVite is a bilingual (FR/EN) web application that lets Montreal citizens repor
 
 ## Tech Stack
 
-- **Backend:** Laravel 11 on PHP 8.2+
-- **Database:** PostgreSQL 15 with PostGIS 3.4
-- **Admin:** Filament v5 with RBAC and 2FA
-- **Frontend:** Livewire 3, Alpine.js, Tailwind CSS
+- **Backend:** Laravel app (see composer files for exact package versions)
+- **Database:** PostgreSQL with PostGIS support (see deploy/runtime docs for exact environment versions)
+- **Admin:** Filament with RBAC and 2FA
+- **Frontend:** Livewire, Alpine.js, Tailwind CSS
 - **Real-time:** Laravel Reverb
 - **Authentication:** Laravel Fortify (TOTP and passkeys)
 - **Email:** Resend
 - **PWA:** Service worker and manifest via laravelpwa
-- **Testing:** Pest 2, PHPStan Level 5, Laravel Pint
+- **Testing:** Pest, PHPStan, Laravel Pint
 - **Deployment:** Railway
+
+Exact dependency versions: see [composer.json](composer.json) and [composer.lock](composer.lock).
 
 ## Key Features
 
@@ -92,7 +94,6 @@ In short: report in under 30 seconds, then follow progress by link until repair 
 - [Security & Privacy](docs/security/SECURITY_PRIVACY.md)
 - [Monitoring](docs/engineering/MONITORING_PACKAGES.md)
 - [Railway Runtime (Phase 5)](docs/process/RAILWAY_PHASE5_RUNTIME.md)
-- [Roadmap](.planning/ROADMAP.md)
 
 ## License
 

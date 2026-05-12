@@ -12,7 +12,7 @@
             @foreach ($photoPreviews as $index => $preview)
                 <div class="relative aspect-square rounded-xl overflow-hidden border border-amber-100 bg-white">
                     <img src="{{ $preview }}" class="w-full h-full object-cover" alt="{{ __('report.photo_preview_alt', ['number' => $index + 1]) }}">
-                    <button type="button" wire:click="removePhoto({{ $index }})"
+                    <button type="button" wire:click="removePhoto({{ $index }})" aria-label="Remove photo"
                         class="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition btn-touch">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>

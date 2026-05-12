@@ -6,8 +6,8 @@ use App\Enums\ReportStatus;
 use App\Models\Report;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
-use RuntimeException;
 
 class MapController extends Controller
 {
@@ -58,39 +58,44 @@ class MapController extends Controller
 
         $reports = $reportsQuery->get();
 
+        $features = [];
+
+        foreach ($reports as $report) {
+            $coordinates = $report->coordinates();
+
+            if ($coordinates === null) {
+                Log::warning('Skipping report without coordinate payload in geojson response.', [
+                    'report_id' => $report->getKey(),
+                ]);
+
+                continue;
+            }
+
+            $longitude = (float) $coordinates['lng'];
+            $latitude = (float) $coordinates['lat'];
+
+            $features[] = [
+                'type' => 'Feature',
+                'geometry' => [
+                    'type' => 'Point',
+                    'coordinates' => [$longitude, $latitude],
+                ],
+                'properties' => [
+                    'tracking_id' => $report->public_tracking_id,
+                    'status' => $report->status,
+                    'status_label' => __("tracking.status.{$report->status}"),
+                    'description' => $report->description,
+                    'address' => $report->address,
+                    'neighborhood' => $report->neighborhood,
+                    'borough' => $report->borough,
+                    'url' => route('report.tracking', $report->public_tracking_id),
+                ],
+            ];
+        }
+
         return response()->json([
             'type' => 'FeatureCollection',
-            'features' => $reports->map(function (Report $report): array {
-                $coordinates = $report->coordinates();
-
-                if ($coordinates === null) {
-                    throw new RuntimeException(sprintf(
-                        'Missing coordinate payload for report id %d in geojson response.',
-                        $report->getKey()
-                    ));
-                }
-
-                $longitude = (float) $coordinates['lng'];
-                $latitude = (float) $coordinates['lat'];
-
-                return [
-                    'type' => 'Feature',
-                    'geometry' => [
-                        'type' => 'Point',
-                        'coordinates' => [$longitude, $latitude],
-                    ],
-                    'properties' => [
-                        'tracking_id' => $report->public_tracking_id,
-                        'status' => $report->status,
-                        'status_label' => __("tracking.status.{$report->status}"),
-                        'description' => $report->description,
-                        'address' => $report->address,
-                        'neighborhood' => $report->neighborhood,
-                        'borough' => $report->borough,
-                        'url' => route('report.tracking', $report->public_tracking_id),
-                    ],
-                ];
-            }),
+            'features' => $features,
         ]);
     }
 }

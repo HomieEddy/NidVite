@@ -276,7 +276,7 @@ return [
                     'created_by' => 'Created By',
                     'scheduled_month' => 'Scheduled Month',
                     'linked_reports' => 'Linked Reports',
-                    'tracking_id' => 'Tracker ID',
+                    'tracking_id' => 'Tracking ID',
                     'report_uuid' => 'Report ID',
                     'address' => 'Address',
                     'status_fallback' => 'N/A',

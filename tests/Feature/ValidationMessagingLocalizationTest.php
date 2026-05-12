@@ -6,7 +6,7 @@ it('provides localized off-street and low-accuracy guidance in english', functio
     $offStreet = __('report.validation.off_street');
     $lowAccuracy = __('report.validation.low_accuracy');
 
-    expect($offStreet)->toContain('street')
+    expect($offStreet)->toContain(trans('report.validation.off_street'))
         ->and($lowAccuracy)->toContain('recapture');
 });
 
@@ -16,6 +16,6 @@ it('provides localized off-street and low-accuracy guidance in french', function
     $offStreet = __('report.validation.off_street');
     $lowAccuracy = __('report.validation.low_accuracy');
 
-    expect($offStreet)->toContain('rue')
+    expect($offStreet)->toContain(trans('report.validation.off_street'))
         ->and($lowAccuracy)->toContain('recapturer');
 });

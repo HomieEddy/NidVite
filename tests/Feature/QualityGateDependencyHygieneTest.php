@@ -20,7 +20,7 @@ it('keeps composer constraints deterministic and avoids unstable branch versions
                 ->not->toContain('*')
                 ->and($value)->not->toContain('dev-')
                 ->and($value)->not->toContain('@dev')
-                ->and($value)->not->toContain(' x-dev');
+                ->and($value)->not->toContain('x-dev');
         }
     }
 });

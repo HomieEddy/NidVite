@@ -44,6 +44,18 @@ it('fails low accuracy when distance passes but accuracy exceeds threshold', fun
     expect($result['should_block'])->toBeTrue();
 });
 
+it('fails low accuracy when accuracy is negative', function () {
+    config()->set('report_validation.mode', 'strict');
+    config()->set('report_validation.max_road_distance_meters', 80);
+    config()->set('report_validation.max_location_accuracy_meters', 50);
+
+    $result = (new StreetProximityValidationService)->validate(45.5017, -73.5673, -1.0);
+
+    expect($result['decision'])->toBe('fail_low_accuracy');
+    expect($result['accuracy_passed'])->toBeFalse();
+    expect($result['should_block'])->toBeTrue();
+});
+
 it('fails both when off street and low accuracy', function () {
     config()->set('report_validation.mode', 'strict');
     config()->set('report_validation.max_road_distance_meters', 5);

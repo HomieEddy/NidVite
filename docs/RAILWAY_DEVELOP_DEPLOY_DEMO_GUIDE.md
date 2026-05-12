@@ -25,14 +25,14 @@ Create one Railway project with these services in the staging environment:
 - Start command: sh deploy/railway/web.sh
 - Health check path: /up
 
-2. Worker service
+1. Worker service
 - Start command: sh deploy/railway/worker.sh
 
-3. Scheduler service
+1. Scheduler service
 - Start command: sh deploy/railway/scheduler.sh
 - If using cron mode, run every minute
 
-4. Data services
+1. Data services
 - PostgreSQL
 - Redis
 
