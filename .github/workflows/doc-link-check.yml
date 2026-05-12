@@ -21,7 +21,7 @@ jobs:
           set -euo pipefail
 
           missing=0
-          links=$(grep -oE '\[[^]]+\]\([^)]+\)' README.md | cut -d'(' -f2- | rev | cut -c2- | rev)
+          links=$(perl -nE 'while(/\[[^\]]+\]\(([^)]+)\)/g){say $1}' README.md)
 
           while IFS= read -r link; do
             [ -z "$link" ] && continue
