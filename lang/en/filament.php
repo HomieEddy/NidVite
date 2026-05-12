@@ -163,6 +163,43 @@ return [
                     'export_pdf' => 'Export PDF',
                     'override_validation' => 'Override Validation',
                 ],
+                'saved_views' => [
+                    'actions' => [
+                        'save' => 'Save View',
+                        'update' => 'Update View',
+                        'load' => 'Load View',
+                        'delete' => 'Delete View',
+                    ],
+                    'fields' => [
+                        'name' => 'View Name',
+                        'view' => 'Saved View',
+                        'rename_to' => 'Rename To (optional)',
+                    ],
+                    'feedback' => [
+                        'saved' => 'Saved view stored.',
+                        'updated' => 'Saved view updated.',
+                        'loaded' => 'Saved view loaded.',
+                        'deleted' => 'Saved view deleted.',
+                    ],
+                ],
+                'bulk_actions' => [
+                    'duplicate_close' => [
+                        'label' => 'Close As Duplicate',
+                        'reason' => 'Duplicate close reason (optional)',
+                        'default_reason' => 'Duplicate report closed during triage batch.',
+                    ],
+                    'assign_contractor' => [
+                        'label' => 'Assign Contractor',
+                        'contractor' => 'Contractor',
+                    ],
+                    'request_more_info' => [
+                        'label' => 'Request More Info',
+                        'note' => 'Request Note',
+                    ],
+                    'feedback' => [
+                        'summary' => 'Batch completed. Processed: :processed, blocked: :blocked.',
+                    ],
+                ],
                 'fields' => [
                     'uuid' => 'UUID',
                     'map' => 'Map',

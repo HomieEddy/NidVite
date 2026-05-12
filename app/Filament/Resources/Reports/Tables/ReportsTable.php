@@ -5,7 +5,9 @@ namespace App\Filament\Resources\Reports\Tables;
 use App\Actions\Reports\OverrideRoadValidationAction;
 use App\Filament\Resources\Reports\ReportResource;
 use App\Models\Report;
+use App\Models\User;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -14,6 +16,7 @@ use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -21,6 +24,9 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Models\Activity as ActivityModel;
 
 class ReportsTable
 {
@@ -34,7 +40,7 @@ class ReportsTable
                     ->label(__('filament.admin.resources.reports.actions.create'))
                     ->url(ReportResource::getUrl('create'))
                     ->icon('heroicon-m-plus')
-                    ->visible(fn (): bool => auth()->user()?->can('create', Report::class) ?? false),
+                    ->visible(fn (): bool => Auth::user()?->can('create', Report::class) ?? false),
             ])
             ->columns([
                 TextColumn::make('reporter_email')
@@ -164,8 +170,8 @@ class ReportsTable
                 Action::make('override_validation')
                     ->label(__('filament.admin.resources.reports.actions.override_validation'))
                     ->icon('heroicon-m-shield-check')
-                    ->visible(fn (Report $record): bool => auth()->user()?->can('update', $record) ?? false)
-                    ->authorize(fn (Report $record): bool => auth()->user()?->can('update', $record) ?? false)
+                    ->visible(fn (Report $record): bool => Auth::user()?->can('update', $record) ?? false)
+                    ->authorize(fn (Report $record): bool => Auth::user()?->can('update', $record) ?? false)
                     ->form([
                         Select::make('decision')
                             ->label(__('filament.admin.resources.reports.fields.override_decision'))
@@ -191,6 +197,358 @@ class ReportsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('duplicate_close')
+                        ->label(__('filament.admin.resources.reports.bulk_actions.duplicate_close.label'))
+                        ->icon('heroicon-o-no-symbol')
+                        ->requiresConfirmation()
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (Collection $records, array $data): void {
+                            $user = Auth::user();
+                            if (! $user) {
+                                return;
+                            }
+
+                            $reason = trim((string) ($data['reason'] ?? ''));
+                            $rejectionReason = $reason !== ''
+                                ? $reason
+                                : __('filament.admin.resources.reports.bulk_actions.duplicate_close.default_reason');
+
+                            $recordIds = $records->modelKeys();
+                            $parent = activity('report_batch')
+                                ->causedBy($user)
+                                ->withProperties([
+                                    'operation' => 'duplicate_close',
+                                    'selected_report_ids' => $recordIds,
+                                ])
+                                ->log('Batch duplicate-close started');
+                            $parentId = $parent instanceof ActivityModel ? $parent->id : null;
+
+                            $processed = 0;
+                            $blocked = [];
+
+                            foreach ($records as $record) {
+                                if (! $record instanceof Report) {
+                                    continue;
+                                }
+
+                                if (! $user->can('update', $record)) {
+                                    $blocked[] = $record->public_tracking_id;
+                                    activity('report_batch_item')
+                                        ->causedBy($user)
+                                        ->performedOn($record)
+                                        ->withProperties([
+                                            'batch_activity_id' => $parentId,
+                                            'operation' => 'duplicate_close',
+                                            'result' => 'blocked',
+                                            'reason' => 'unauthorized',
+                                            'old_status' => $record->status,
+                                            'new_status' => $record->status,
+                                        ])
+                                        ->log('Batch duplicate-close blocked');
+
+                                    continue;
+                                }
+
+                                if (! $record->canTransitionTo('rejected')) {
+                                    $blocked[] = $record->public_tracking_id;
+                                    activity('report_batch_item')
+                                        ->causedBy($user)
+                                        ->performedOn($record)
+                                        ->withProperties([
+                                            'batch_activity_id' => $parentId,
+                                            'operation' => 'duplicate_close',
+                                            'result' => 'blocked',
+                                            'reason' => 'invalid_transition',
+                                            'old_status' => $record->status,
+                                            'new_status' => $record->status,
+                                        ])
+                                        ->log('Batch duplicate-close blocked');
+
+                                    continue;
+                                }
+
+                                $oldStatus = $record->status;
+                                $oldRejectionReason = $record->rejection_reason;
+                                $record->transitionTo('rejected', $rejectionReason);
+                                $record->refresh();
+
+                                activity('report_batch_item')
+                                    ->causedBy($user)
+                                    ->performedOn($record)
+                                    ->withProperties([
+                                        'batch_activity_id' => $parentId,
+                                        'operation' => 'duplicate_close',
+                                        'result' => 'processed',
+                                        'old_status' => $oldStatus,
+                                        'new_status' => $record->status,
+                                        'old_rejection_reason' => $oldRejectionReason,
+                                        'new_rejection_reason' => $rejectionReason,
+                                    ])
+                                    ->log('Batch duplicate-close processed');
+
+                                $processed++;
+                            }
+
+                            if ($parent instanceof ActivityModel) {
+                                $parent->properties = $parent->properties->merge([
+                                    'processed_count' => $processed,
+                                    'blocked_count' => count($blocked),
+                                    'blocked_tracking_ids' => $blocked,
+                                ]);
+                                $parent->save();
+                            }
+
+                            Notification::make()
+                                ->title(__('filament.admin.resources.reports.bulk_actions.feedback.summary', [
+                                    'processed' => $processed,
+                                    'blocked' => count($blocked),
+                                ]))
+                                ->success()
+                                ->send();
+                        })
+                        ->form([
+                            Textarea::make('reason')
+                                ->label(__('filament.admin.resources.reports.bulk_actions.duplicate_close.reason'))
+                                ->maxLength(500),
+                        ]),
+                    BulkAction::make('assign_contractor')
+                        ->label(__('filament.admin.resources.reports.bulk_actions.assign_contractor.label'))
+                        ->icon('heroicon-o-user-plus')
+                        ->requiresConfirmation()
+                        ->deselectRecordsAfterCompletion()
+                        ->form([
+                            Select::make('contractor_user_id')
+                                ->label(__('filament.admin.resources.reports.bulk_actions.assign_contractor.contractor'))
+                                ->options(fn (): array => User::query()
+                                    ->where('is_active', true)
+                                    ->whereHas('role', fn ($query) => $query->where('slug', 'service_worker'))
+                                    ->pluck('name', 'id')
+                                    ->all())
+                                ->searchable()
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $user = Auth::user();
+                            if (! $user) {
+                                return;
+                            }
+
+                            $contractorId = (int) ($data['contractor_user_id'] ?? 0);
+                            if ($contractorId < 1) {
+                                return;
+                            }
+
+                            $parent = activity('report_batch')
+                                ->causedBy($user)
+                                ->withProperties([
+                                    'operation' => 'assign_contractor',
+                                    'selected_report_ids' => $records->modelKeys(),
+                                    'contractor_user_id' => $contractorId,
+                                ])
+                                ->log('Batch assign-contractor started');
+                            $parentId = $parent instanceof ActivityModel ? $parent->id : null;
+
+                            $processed = 0;
+                            $blocked = [];
+
+                            foreach ($records as $record) {
+                                if (! $record instanceof Report) {
+                                    continue;
+                                }
+
+                                if (! $user->can('update', $record)) {
+                                    $blocked[] = $record->public_tracking_id;
+                                    activity('report_batch_item')
+                                        ->causedBy($user)
+                                        ->performedOn($record)
+                                        ->withProperties([
+                                            'batch_activity_id' => $parentId,
+                                            'operation' => 'assign_contractor',
+                                            'result' => 'blocked',
+                                            'reason' => 'unauthorized',
+                                            'old_status' => $record->status,
+                                            'new_status' => $record->status,
+                                        ])
+                                        ->log('Batch assign-contractor blocked');
+
+                                    continue;
+                                }
+
+                                $oldStatus = $record->status;
+                                if ($record->status === 'verified') {
+                                    $record->transitionTo('scheduled');
+                                } elseif (! in_array($record->status, ['scheduled', 'in_progress'], true)) {
+                                    $blocked[] = $record->public_tracking_id;
+                                    activity('report_batch_item')
+                                        ->causedBy($user)
+                                        ->performedOn($record)
+                                        ->withProperties([
+                                            'batch_activity_id' => $parentId,
+                                            'operation' => 'assign_contractor',
+                                            'result' => 'blocked',
+                                            'reason' => 'invalid_transition',
+                                            'old_status' => $oldStatus,
+                                            'new_status' => $record->status,
+                                        ])
+                                        ->log('Batch assign-contractor blocked');
+
+                                    continue;
+                                }
+
+                                $oldContractorId = $record->contractor_user_id;
+                                $record->forceFill(['contractor_user_id' => $contractorId])->save();
+
+                                activity('report_batch_item')
+                                    ->causedBy($user)
+                                    ->performedOn($record)
+                                    ->withProperties([
+                                        'batch_activity_id' => $parentId,
+                                        'operation' => 'assign_contractor',
+                                        'result' => 'processed',
+                                        'old_status' => $oldStatus,
+                                        'new_status' => $record->status,
+                                        'old_contractor_user_id' => $oldContractorId,
+                                        'new_contractor_user_id' => $contractorId,
+                                    ])
+                                    ->log('Batch assign-contractor processed');
+
+                                $processed++;
+                            }
+
+                            if ($parent instanceof ActivityModel) {
+                                $parent->properties = $parent->properties->merge([
+                                    'processed_count' => $processed,
+                                    'blocked_count' => count($blocked),
+                                    'blocked_tracking_ids' => $blocked,
+                                ]);
+                                $parent->save();
+                            }
+
+                            Notification::make()
+                                ->title(__('filament.admin.resources.reports.bulk_actions.feedback.summary', [
+                                    'processed' => $processed,
+                                    'blocked' => count($blocked),
+                                ]))
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('request_more_info')
+                        ->label(__('filament.admin.resources.reports.bulk_actions.request_more_info.label'))
+                        ->icon('heroicon-o-chat-bubble-left-right')
+                        ->requiresConfirmation()
+                        ->deselectRecordsAfterCompletion()
+                        ->form([
+                            Textarea::make('note')
+                                ->label(__('filament.admin.resources.reports.bulk_actions.request_more_info.note'))
+                                ->required()
+                                ->minLength(5)
+                                ->maxLength(1000),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $user = Auth::user();
+                            if (! $user) {
+                                return;
+                            }
+
+                            $note = trim((string) ($data['note'] ?? ''));
+                            if ($note === '') {
+                                return;
+                            }
+
+                            $parent = activity('report_batch')
+                                ->causedBy($user)
+                                ->withProperties([
+                                    'operation' => 'request_more_info',
+                                    'selected_report_ids' => $records->modelKeys(),
+                                    'note_length' => mb_strlen($note),
+                                ])
+                                ->log('Batch request-more-info started');
+                            $parentId = $parent instanceof ActivityModel ? $parent->id : null;
+
+                            $processed = 0;
+                            $blocked = [];
+
+                            foreach ($records as $record) {
+                                if (! $record instanceof Report) {
+                                    continue;
+                                }
+
+                                if (! $user->can('update', $record)) {
+                                    $blocked[] = $record->public_tracking_id;
+                                    activity('report_batch_item')
+                                        ->causedBy($user)
+                                        ->performedOn($record)
+                                        ->withProperties([
+                                            'batch_activity_id' => $parentId,
+                                            'operation' => 'request_more_info',
+                                            'result' => 'blocked',
+                                            'reason' => 'unauthorized',
+                                            'old_status' => $record->status,
+                                            'new_status' => $record->status,
+                                        ])
+                                        ->log('Batch request-more-info blocked');
+
+                                    continue;
+                                }
+
+                                if ($record->isTerminal()) {
+                                    $blocked[] = $record->public_tracking_id;
+                                    activity('report_batch_item')
+                                        ->causedBy($user)
+                                        ->performedOn($record)
+                                        ->withProperties([
+                                            'batch_activity_id' => $parentId,
+                                            'operation' => 'request_more_info',
+                                            'result' => 'blocked',
+                                            'reason' => 'terminal_state',
+                                            'old_status' => $record->status,
+                                            'new_status' => $record->status,
+                                        ])
+                                        ->log('Batch request-more-info blocked');
+
+                                    continue;
+                                }
+
+                                $oldNotes = $record->admin_notes;
+                                $entry = '['.now()->toIso8601String().'] REQUEST_MORE_INFO: '.$note;
+                                $record->forceFill([
+                                    'admin_notes' => trim((string) ($oldNotes ? $oldNotes.PHP_EOL.$entry : $entry)),
+                                ])->save();
+
+                                activity('report_batch_item')
+                                    ->causedBy($user)
+                                    ->performedOn($record)
+                                    ->withProperties([
+                                        'batch_activity_id' => $parentId,
+                                        'operation' => 'request_more_info',
+                                        'result' => 'processed',
+                                        'old_status' => $record->status,
+                                        'new_status' => $record->status,
+                                        'old_admin_notes_length' => mb_strlen((string) $oldNotes),
+                                        'new_admin_notes_length' => mb_strlen((string) $record->admin_notes),
+                                    ])
+                                    ->log('Batch request-more-info processed');
+
+                                $processed++;
+                            }
+
+                            if ($parent instanceof ActivityModel) {
+                                $parent->properties = $parent->properties->merge([
+                                    'processed_count' => $processed,
+                                    'blocked_count' => count($blocked),
+                                    'blocked_tracking_ids' => $blocked,
+                                ]);
+                                $parent->save();
+                            }
+
+                            Notification::make()
+                                ->title(__('filament.admin.resources.reports.bulk_actions.feedback.summary', [
+                                    'processed' => $processed,
+                                    'blocked' => count($blocked),
+                                ]))
+                                ->success()
+                                ->send();
+                        }),
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),

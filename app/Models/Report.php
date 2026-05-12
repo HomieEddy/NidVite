@@ -92,6 +92,7 @@ class Report extends Model implements HasMedia
         'location_accuracy' => 'float',
         'road_distance_meters' => 'float',
         'location_accuracy_passed' => 'boolean',
+        'contractor_user_id' => 'integer',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -121,6 +122,11 @@ class Report extends Model implements HasMedia
     public function category(): BelongsTo
     {
         return $this->belongsTo(ReportCategory::class, 'category_id');
+    }
+
+    public function contractor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'contractor_user_id');
     }
 
     public function repairJobs(): BelongsToMany
