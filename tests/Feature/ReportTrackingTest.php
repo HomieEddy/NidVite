@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\Report;
+use App\Models\ReportFollower;
 use Database\Seeders\ReportCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
 
@@ -92,4 +94,59 @@ it('returns null location in tracking lookup when report has no coordinates', fu
 
     $response->assertOk()
         ->assertJsonPath('location', null);
+});
+
+it('updates notification preference from tracking page', function () {
+    $report = Report::factory()->create([
+        'notification_preference' => 'all',
+    ]);
+
+    $response = $this->post(route('report.tracking.preference.update', ['trackingId' => $report->public_tracking_id]), [
+        'notification_preference' => 'resolved',
+    ]);
+
+    $response->assertRedirect(route('report.tracking', ['trackingId' => $report->public_tracking_id]));
+
+    expect($report->fresh()->notification_preference)->toBe('resolved');
+});
+
+it('deduplicates report followers by report and email', function () {
+    $report = Report::factory()->create();
+
+    $first = $this->post(route('report.followers.store', ['trackingId' => $report->public_tracking_id]), [
+        'email' => 'follow@example.com',
+    ]);
+
+    $first->assertRedirect(route('report.tracking', ['trackingId' => $report->public_tracking_id]));
+
+    $second = $this->post(route('report.followers.store', ['trackingId' => $report->public_tracking_id]), [
+        'email' => 'follow@example.com',
+    ]);
+
+    $second->assertRedirect(route('report.tracking', ['trackingId' => $report->public_tracking_id]));
+
+    expect(ReportFollower::query()->where('report_id', $report->id)->where('email', 'follow@example.com')->count())->toBe(1);
+});
+
+it('unsubscribes follower with signed link', function () {
+    $report = Report::factory()->create();
+
+    $follower = $report->followers()->create([
+        'email' => 'follow@example.com',
+        'preferred_locale' => 'fr',
+        'is_active' => true,
+    ]);
+
+    $url = URL::temporarySignedRoute('report.followers.unsubscribe', now()->addMinutes(10), [
+        'trackingId' => $report->public_tracking_id,
+        'follower' => $follower->id,
+    ]);
+
+    $response = $this->get($url);
+
+    $response->assertRedirect(route('report.tracking', ['trackingId' => $report->public_tracking_id]));
+
+    $follower->refresh();
+    expect($follower->is_active)->toBeFalse();
+    expect($follower->unsubscribed_at)->not->toBeNull();
 });

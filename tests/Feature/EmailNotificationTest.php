@@ -29,6 +29,57 @@ it('sends email notification when report status changes', function () {
     });
 });
 
+it('only sends resolved statuses when reporter preference is resolved', function () {
+    $report = Report::factory()->create([
+        'status' => 'verified',
+        'reporter_email' => 'citizen@example.com',
+        'notification_preference' => 'resolved',
+    ]);
+
+    $report->transitionTo('scheduled');
+
+    Mail::assertNothingQueued();
+
+    Mail::fake();
+    $report->transitionTo('in_progress');
+    $report->transitionTo('repaired');
+
+    Mail::assertQueued(ReportStatusUpdated::class, 1);
+    Mail::assertQueued(ReportStatusUpdated::class, function (ReportStatusUpdated $mail) {
+        return $mail->hasTo('citizen@example.com')
+            && $mail->report->status === 'repaired';
+    });
+});
+
+it('sends follower email once per day and includes signed unsubscribe link', function () {
+    $report = Report::factory()->create([
+        'status' => 'received',
+        'reporter_email' => null,
+    ]);
+
+    $follower = $report->followers()->create([
+        'email' => 'follower@example.com',
+        'preferred_locale' => 'fr',
+        'is_active' => true,
+    ]);
+
+    $report->transitionTo('verified');
+
+    Mail::assertQueued(ReportStatusUpdated::class, function (ReportStatusUpdated $mail) {
+        return $mail->hasTo('follower@example.com')
+            && $mail->unsubscribeUrl !== null
+            && str_contains($mail->unsubscribeUrl, 'signature=');
+    });
+
+    $follower->refresh();
+    expect($follower->last_notified_on?->toDateString())->toBe(now()->toDateString());
+
+    Mail::fake();
+    $report->transitionTo('scheduled');
+
+    Mail::assertNothingQueued();
+});
+
 it('sends email with rejection reason when report is rejected', function () {
     $report = Report::factory()->create([
         'status' => 'received',

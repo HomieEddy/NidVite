@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Report;
+use App\Models\ReportFollower;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ReportTrackingController extends Controller
@@ -19,6 +22,82 @@ class ReportTrackingController extends Controller
         $photoUrls = $report->signedPhotoUrls();
 
         return view('tracking', compact('report', 'location', 'photoUrls'));
+    }
+
+    public function updatePreference(Request $request, string $trackingId): RedirectResponse
+    {
+        $report = Report::where('public_tracking_id', $trackingId)->firstOrFail();
+
+        $validated = $request->validate([
+            'notification_preference' => ['required', 'in:all,major,resolved'],
+        ]);
+
+        $report->update([
+            'notification_preference' => $validated['notification_preference'],
+        ]);
+
+        return redirect()
+            ->route('report.tracking', ['trackingId' => $report->public_tracking_id])
+            ->with('tracking_notice', __('tracking.preferences_saved'));
+    }
+
+    public function follow(Request $request, string $trackingId): RedirectResponse
+    {
+        $report = Report::where('public_tracking_id', $trackingId)->firstOrFail();
+
+        $validated = $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        $email = mb_strtolower(trim((string) $validated['email']));
+
+        $existingFollower = $report->followers()->where('email', $email)->first();
+
+        if ($existingFollower !== null && $existingFollower->is_active) {
+            return redirect()
+                ->route('report.tracking', ['trackingId' => $report->public_tracking_id])
+                ->with('tracking_notice', __('tracking.follow_already_active'));
+        }
+
+        if ($existingFollower !== null) {
+            $existingFollower->update([
+                'is_active' => true,
+                'unsubscribed_at' => null,
+                'preferred_locale' => app()->getLocale(),
+            ]);
+
+            return redirect()
+                ->route('report.tracking', ['trackingId' => $report->public_tracking_id])
+                ->with('tracking_notice', __('tracking.follow_saved'));
+        }
+
+        $report->followers()->create([
+            'email' => $email,
+            'preferred_locale' => app()->getLocale(),
+            'is_active' => true,
+        ]);
+
+        return redirect()
+            ->route('report.tracking', ['trackingId' => $report->public_tracking_id])
+            ->with('tracking_notice', __('tracking.follow_saved'));
+    }
+
+    public function unsubscribe(string $trackingId, ReportFollower $follower): RedirectResponse
+    {
+        $report = Report::where('public_tracking_id', $trackingId)->firstOrFail();
+
+        if ($follower->report_id !== $report->id) {
+            abort(404);
+        }
+
+        $follower->update([
+            'is_active' => false,
+            'unsubscribed_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('report.tracking', ['trackingId' => $report->public_tracking_id])
+            ->with('tracking_notice', __('tracking.unsubscribed'));
     }
 
     public function lookup(string $trackingId): JsonResponse

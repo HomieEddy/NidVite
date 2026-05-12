@@ -20,6 +20,21 @@ Route::get('/suivi/{trackingId}', [ReportTrackingController::class, 'show'])
     ->name('report.tracking')
     ->where('trackingId', 'MTL[A-Z0-9]{8}');
 
+Route::post('/suivi/{trackingId}/preferences', [ReportTrackingController::class, 'updatePreference'])
+    ->name('report.tracking.preference.update')
+    ->where('trackingId', 'MTL[A-Z0-9]{8}')
+    ->middleware('throttle:20,1');
+
+Route::post('/suivi/{trackingId}/follow', [ReportTrackingController::class, 'follow'])
+    ->name('report.followers.store')
+    ->where('trackingId', 'MTL[A-Z0-9]{8}')
+    ->middleware('throttle:20,1');
+
+Route::get('/suivi/{trackingId}/unsubscribe/{follower}', [ReportTrackingController::class, 'unsubscribe'])
+    ->name('report.followers.unsubscribe')
+    ->where('trackingId', 'MTL[A-Z0-9]{8}')
+    ->middleware(['signed', 'throttle:20,1']);
+
 Route::view('/confidentialite', 'pages.privacy')
     ->name('legal.privacy');
 
