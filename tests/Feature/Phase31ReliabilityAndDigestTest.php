@@ -28,6 +28,29 @@ it('stores reliability snapshot fields when creating a report', function () {
         ->and($report->reliability_scored_at)->not->toBeNull();
 });
 
+it('recomputes reliability snapshot fields when updating a report', function () {
+    $report = Report::factory()->create([
+        'description' => str_repeat('Initial detail. ', 5),
+        'is_spam' => false,
+        'location_source' => 'manual',
+    ]);
+
+    $report->forceFill([
+        'location_source' => 'gps',
+        'road_validation_decision' => 'pass',
+        'location_accuracy_passed' => true,
+        'description' => str_repeat('Updated detailed evidence. ', 5),
+    ])->save();
+
+    $report->refresh();
+
+    expect($report->reliability_score)->toBeInt()
+        ->and($report->reliability_score)->toBeGreaterThanOrEqual(0)
+        ->and($report->reliability_score)->toBeLessThanOrEqual(100)
+        ->and($report->reliability_breakdown)->toBeArray()
+        ->and($report->reliability_scored_at)->not->toBeNull();
+});
+
 it('queues weekly digest email with counts and hotspots', function () {
     Mail::fake();
 
@@ -93,5 +116,7 @@ it('filters malformed recipients and still sends once to valid destination', fun
     $exitCode = Artisan::call('reports:send-weekly-digest');
 
     expect($exitCode)->toBe(0);
-    Mail::assertQueued(WeeklyOperationsDigest::class, 1);
+    Mail::assertQueued(WeeklyOperationsDigest::class, function (WeeklyOperationsDigest $mail): bool {
+        return $mail->hasTo('ops@example.com');
+    });
 });

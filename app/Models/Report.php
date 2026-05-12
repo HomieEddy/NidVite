@@ -135,8 +135,10 @@ class Report extends Model implements HasMedia
             return $cache[$key] = $schema->hasColumn($this->getTable(), 'reliability_score')
                 && $schema->hasColumn($this->getTable(), 'reliability_breakdown')
                 && $schema->hasColumn($this->getTable(), 'reliability_scored_at');
-        } catch (Throwable) {
-            return $cache[$key] = false;
+        } catch (Throwable $e) {
+            report($e);
+
+            return false;
         }
     }
 

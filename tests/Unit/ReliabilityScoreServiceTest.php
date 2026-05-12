@@ -7,7 +7,7 @@ use Tests\TestCase;
 uses(TestCase::class);
 
 it('computes deterministic reliability score snapshots', function () {
-    $report = new Report([
+    $report = (new Report)->forceFill([
         'description' => str_repeat('clear pothole details ', 4),
         'is_spam' => false,
         'geofence_passed' => true,
@@ -29,7 +29,7 @@ it('computes deterministic reliability score snapshots', function () {
 });
 
 it('penalizes clearly untrusted signals', function () {
-    $trusted = new Report([
+    $trusted = (new Report)->forceFill([
         'description' => str_repeat('good evidence ', 5),
         'is_spam' => false,
         'geofence_passed' => true,
@@ -38,7 +38,7 @@ it('penalizes clearly untrusted signals', function () {
         'road_validation_decision' => 'pass',
     ]);
 
-    $untrusted = new Report([
+    $untrusted = (new Report)->forceFill([
         'description' => 'bad',
         'is_spam' => true,
         'geofence_passed' => false,
@@ -56,7 +56,7 @@ it('penalizes clearly untrusted signals', function () {
 });
 
 it('handles unknown signal values with safe defaults', function () {
-    $report = new Report([
+    $report = (new Report)->forceFill([
         'description' => '',
         'is_spam' => false,
         'geofence_passed' => false,
@@ -79,7 +79,7 @@ it('clamps score to bounds when config weights are extreme', function () {
     config()->set('reliability_scoring.weights.spam_penalty', 0);
     config()->set('reliability_scoring.weights.description_short_penalty', 0);
 
-    $high = new Report([
+    $high = (new Report)->forceFill([
         'description' => str_repeat('a', 80),
         'is_spam' => false,
         'geofence_passed' => true,
@@ -93,7 +93,7 @@ it('clamps score to bounds when config weights are extreme', function () {
     config()->set('reliability_scoring.base_score', -500);
     config()->set('reliability_scoring.weights.spam_penalty', -500);
 
-    $low = new Report([
+    $low = (new Report)->forceFill([
         'description' => 'x',
         'is_spam' => true,
         'geofence_passed' => false,

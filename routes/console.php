@@ -334,12 +334,12 @@ Schedule::command('reports:run-retention')
     ->monitorName('reports:run-retention')
     ->withoutOverlapping();
 
-$digestDayOfWeek = (int) config('operations_digest.day_of_week', 1);
+$rawDigestDayOfWeek = config('operations_digest.day_of_week', 1);
+$digestDayOfWeek = filter_var($rawDigestDayOfWeek, FILTER_VALIDATE_INT, [
+    'options' => ['min_range' => 0, 'max_range' => 6],
+]);
+$digestDayOfWeek = $digestDayOfWeek === false ? 1 : $digestDayOfWeek;
 $digestTime = (string) config('operations_digest.time', '08:00');
-
-if ($digestDayOfWeek < 0 || $digestDayOfWeek > 6) {
-    $digestDayOfWeek = 1;
-}
 
 if (! preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $digestTime)) {
     $digestTime = '08:00';

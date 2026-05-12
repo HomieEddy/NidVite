@@ -34,7 +34,7 @@ class WeeklyOperationsDigestService
             ->count();
 
         $neighborhoodHotspots = Report::query()
-            ->selectRaw('COALESCE(neighborhood, ?) as neighborhood_key, COUNT(*) as report_count', [self::UNKNOWN_NEIGHBORHOOD_TOKEN])
+            ->selectRaw("COALESCE(NULLIF(TRIM(neighborhood), ''), ?) as neighborhood_key, COUNT(*) as report_count", [self::UNKNOWN_NEIGHBORHOOD_TOKEN])
             ->whereBetween('created_at', [$windowStart, $windowEnd])
             ->groupBy('neighborhood_key')
             ->orderByDesc('report_count')
@@ -47,10 +47,7 @@ class WeeklyOperationsDigestService
             ->values()
             ->all();
 
-        $zoneCounts = [
-            'central' => 0,
-            'default' => 0,
-        ];
+        $zoneCounts = [];
 
         Report::query()
             ->whereBetween('created_at', [$windowStart, $windowEnd])
