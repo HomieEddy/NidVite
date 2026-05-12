@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
@@ -55,6 +56,7 @@ class Report extends Model implements HasMedia
         'public_tracking_id',
         'reporter_email',
         'preferred_locale',
+        'notification_preference',
         'address',
         'neighborhood',
         'borough',
@@ -136,6 +138,11 @@ class Report extends Model implements HasMedia
     public function suspiciousActivities(): HasMany
     {
         return $this->hasMany(SuspiciousActivity::class);
+    }
+
+    public function followers(): HasMany
+    {
+        return $this->hasMany(ReportFollower::class);
     }
 
     /**
@@ -256,12 +263,68 @@ class Report extends Model implements HasMedia
      */
     protected function sendStatusNotification(string $oldStatus): void
     {
-        if ($this->reporter_email === null) {
-            return;
+        $reporterEmail = $this->reporter_email !== null ? mb_strtolower($this->reporter_email) : null;
+        $reporterSent = false;
+
+        if ($reporterEmail !== null) {
+            $preference = $this->notification_preference ?? 'all';
+
+            if ($this->shouldReceiveStatusForPreference($preference, $this->status)) {
+                Mail::to($reporterEmail)
+                    ->send(new ReportStatusUpdated($this, $oldStatus));
+
+                $reporterSent = true;
+            }
         }
 
-        Mail::to($this->reporter_email)
-            ->send(new ReportStatusUpdated($this, $oldStatus));
+        $today = now()->toDateString();
+
+        $this->followers()
+            ->where('is_active', true)
+            ->whereNull('unsubscribed_at')
+            ->where(function (Builder $query) use ($today): void {
+                $query->whereNull('last_notified_on')
+                    ->orWhere('last_notified_on', '<', $today);
+            })
+            ->get()
+            ->each(function (ReportFollower $follower) use ($oldStatus, $reporterEmail, $reporterSent, $today): void {
+                if ($reporterSent && $reporterEmail !== null && $follower->email === $reporterEmail) {
+                    return;
+                }
+
+                Mail::to($follower->email)->send(
+                    new ReportStatusUpdated(
+                        $this,
+                        $oldStatus,
+                        $follower->signedUnsubscribeUrl(),
+                        $follower->preferred_locale
+                    )
+                );
+
+                $follower->forceFill(['last_notified_on' => $today])->save();
+            });
+    }
+
+    protected function shouldReceiveStatusForPreference(string $preference, string $newStatus): bool
+    {
+        if ($preference === 'major') {
+            return in_array($newStatus, [
+                ReportStatus::Verified->value,
+                ReportStatus::Scheduled->value,
+                ReportStatus::InProgress->value,
+                ReportStatus::Repaired->value,
+                ReportStatus::Rejected->value,
+            ], true);
+        }
+
+        if ($preference === 'resolved') {
+            return in_array($newStatus, [
+                ReportStatus::Repaired->value,
+                ReportStatus::Rejected->value,
+            ], true);
+        }
+
+        return true;
     }
 
     /**
@@ -303,7 +366,7 @@ class Report extends Model implements HasMedia
 
         activity('report_validation_override')
             ->performedOn($this)
-            ->causedBy(auth()->user())
+            ->causedBy(Auth::user())
             ->withProperties([
                 'old_decision' => $oldDecision,
                 'new_decision' => $decision,
