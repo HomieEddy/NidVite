@@ -10,7 +10,7 @@ it('keeps report edit status changes routed through transition action', function
 });
 
 it('keeps public report submission routed through SubmitReportAction boundary', function () {
-    $content = (string) file_get_contents(base_path('resources/views/components/⚡report-form.blade.php'));
+    $content = (string) file_get_contents(base_path('resources/views/components/report-form.blade.php'));
 
     expect($content)
         ->toContain('SubmitReportAction')

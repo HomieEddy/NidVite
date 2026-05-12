@@ -94,7 +94,7 @@ resources/
 │   ├── layouts/
 │   │   └── citizen.blade.php      # PWA meta, Inter font, FR/EN switch, mobile nav
 │   ├── components/
-│   │   └── ⚡report-form.blade.php # Anonymous Livewire component (inline class)
+│   │   └── report-form.blade.php # Anonymous Livewire component (inline class)
 │   ├── emails/
 │   │   └── report-status-updated.blade.php  # Markdown email template
 │   └── filament/
@@ -153,7 +153,7 @@ tests/
 The report form uses an anonymous Livewire component (inline class in the Blade file) rather than a traditional `app/Livewire/` class. The `app/Livewire/` directory does not exist.
 
 ```blade
-{{-- resources/views/components/⚡report-form.blade.php --}}
+{{-- resources/views/components/report-form.blade.php --}}
 @php
 new class extends Component {
     use WithFileUploads, UsesSpamProtection;
