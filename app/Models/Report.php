@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ReportStatus;
 use App\Mail\ReportStatusUpdated;
 use App\Models\Concerns\HasReportCoordinates;
+use App\Services\Reports\ReliabilityScoreService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +25,7 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Throwable;
 
 class Report extends Model implements HasMedia
 {
@@ -42,12 +45,16 @@ class Report extends Model implements HasMedia
             if (is_string($fingerprint) && $fingerprint !== '') {
                 $report->device_fingerprint_hash = $fingerprint;
             }
+
+            $report->applyReliabilityScoreSnapshot();
         });
 
         static::updating(function (Report $report): void {
             if ($report->isDirty('status') && ! $report->allowStatusTransitionWrite) {
                 throw new InvalidArgumentException('Direct status writes are not allowed. Use transitionTo().');
             }
+
+            $report->applyReliabilityScoreSnapshot();
         });
     }
 
@@ -93,7 +100,47 @@ class Report extends Model implements HasMedia
         'road_distance_meters' => 'float',
         'location_accuracy_passed' => 'boolean',
         'contractor_user_id' => 'integer',
+        'reliability_score' => 'integer',
+        'reliability_breakdown' => 'array',
+        'reliability_scored_at' => 'datetime',
     ];
+
+    private function applyReliabilityScoreSnapshot(): void
+    {
+        if (! $this->canPersistReliabilitySnapshot()) {
+            return;
+        }
+
+        $snapshot = app(ReliabilityScoreService::class)->score($this);
+
+        $this->reliability_score = $snapshot['score'];
+        $this->reliability_breakdown = $snapshot['breakdown'];
+        $this->reliability_scored_at = now();
+    }
+
+    private function canPersistReliabilitySnapshot(): bool
+    {
+        static $cache = [];
+
+        $connection = $this->getConnectionName() ?? config('database.default');
+        $key = $connection.'|'.$this->getTable();
+
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        try {
+            $schema = Schema::connection($connection);
+
+            return $cache[$key] = $schema->hasColumn($this->getTable(), 'reliability_score')
+                && $schema->hasColumn($this->getTable(), 'reliability_breakdown')
+                && $schema->hasColumn($this->getTable(), 'reliability_scored_at');
+        } catch (Throwable $e) {
+            report($e);
+
+            return false;
+        }
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
