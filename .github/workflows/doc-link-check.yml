@@ -26,11 +26,9 @@ jobs:
           while IFS= read -r link; do
             [ -z "$link" ] && continue
 
-            case "$link" in
-              http://*|https://*|mailto:*|#*)
-                continue
-                ;;
-            esac
+            if [[ "$link" == http://* || "$link" == https://* || "$link" == mailto:* || "$link" == \#* ]]; then
+              continue
+            fi
 
             target="${link%%#*}"
             if [ ! -e "$target" ]; then
