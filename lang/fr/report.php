@@ -41,6 +41,12 @@ return [
     'geolocation_captured' => 'Localisation capturée',
     'geolocation_failed' => 'Impossible d\'obtenir la localisation',
     'geolocation_not_supported' => 'Géolocalisation non prise en charge par votre navigateur',
+    'duplicate_nudge_message' => 'Un signalement ouvert est déjà proche (environ :distance m).',
+    'duplicate_nudge_link' => 'Voir le signalement',
+    'gps_warning_missing' => 'Aucune coordonnée GPS détectée pour le moment. Vous pouvez tout de même soumettre, mais la précision sera réduite.',
+    'gps_warning_weak' => 'Précision GPS faible (plus de :meters m). Vous pouvez soumettre, mais une recapture est recommandée.',
+    'photo_quality_warning' => 'La qualité d\'une photo semble faible (sombre ou floue). Le signalement reste autorisé.',
+    'photo_quality_severe' => 'La qualité des photos est trop faible (très sombre ou très floue). Ajoutez une photo plus nette pour continuer.',
 
     'status' => [
         'received' => 'Reçu',

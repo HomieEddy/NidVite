@@ -28,6 +28,14 @@ return [
     'follow_saved' => 'Le suivi par courriel est activé.',
     'follow_already_active' => 'Cette adresse suit déjà ce signalement.',
     'unsubscribed' => 'Vous avez été désabonné de ce suivi.',
+    'eta_title' => 'Délai estimé',
+    'eta_hint_range' => 'Environ :min à :max jours pour cette étape (:zone).',
+    'eta_hint_done' => 'Ce signalement est déjà marqué comme réparé.',
+    'eta_disclaimer' => 'Indication non contractuelle basée sur la charge de la zone et le statut actuel.',
+    'eta_zone_central' => 'zone centrale',
+    'eta_zone_default' => 'zone standard',
+    'qr_title' => 'Code QR de suivi',
+    'qr_help' => 'Scannez ce code pour ouvrir ce suivi rapidement.',
 
     'status' => [
         'received' => 'Reçu',

@@ -1,5 +1,9 @@
 <?php
 
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use App\Actions\Reports\SubmitReportAction;
 use App\Models\Report;
 use App\Models\ReportCategory;
@@ -55,6 +59,10 @@ new class extends Component
     public bool $submitted = false;
 
     public ?string $submittedTrackingId = null;
+
+    public ?string $submittedTrackingUrl = null;
+
+    public string $submittedTrackingQrSvg = '';
 
     public function mount(): void
     {
@@ -171,6 +179,8 @@ new class extends Component
         );
 
         $this->submittedTrackingId = $report->public_tracking_id;
+        $this->submittedTrackingUrl = route('report.tracking', ['trackingId' => $report->public_tracking_id]);
+        $this->submittedTrackingQrSvg = $this->makeQrSvg($this->submittedTrackingUrl);
         $this->submitted = true;
         $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'recaptcha_response']);
     }
@@ -179,12 +189,32 @@ new class extends Component
     {
         return ReportCategory::where('is_active', true)->orderBy('sort_order')->get();
     }
+
+    private function makeQrSvg(string $content): string
+    {
+        $writer = new Writer(new ImageRenderer(new RendererStyle(168, 1), new SvgImageBackEnd));
+
+        return $writer->writeString($content);
+    }
 } ?>
 
 <div class="relative max-w-3xl mx-auto px-4 py-4 overflow-hidden"
     x-data="window.nidviteReportFormMapData({
         initialLatitude: @js($latitude),
         initialLongitude: @js($longitude),
+        initialAccuracy: @js($location_accuracy),
+        duplicateHintEndpoint: @js(route('api.reports.duplicate-hint')),
+        duplicateNudgeMessage: @js(__('report.duplicate_nudge_message')),
+        duplicateNudgeLink: @js(__('report.duplicate_nudge_link')),
+        gpsWarningAccuracyThreshold: @js((int) config('tracking_experience.evidence.gps_warning_accuracy_meters', 50)),
+        gpsWarningMissingMessage: @js(__('report.gps_warning_missing')),
+        gpsWarningWeakMessage: @js(__('report.gps_warning_weak', ['meters' => (int) config('tracking_experience.evidence.gps_warning_accuracy_meters', 50)])),
+        photoDarkWarningThreshold: @js((int) config('tracking_experience.evidence.photo.dark_warning_threshold', 45)),
+        photoDarkSevereThreshold: @js((int) config('tracking_experience.evidence.photo.dark_severe_threshold', 25)),
+        photoBlurWarningThreshold: @js((int) config('tracking_experience.evidence.photo.blur_warning_threshold', 12)),
+        photoBlurSevereThreshold: @js((int) config('tracking_experience.evidence.photo.blur_severe_threshold', 6)),
+        photoWarningMessage: @js(__('report.photo_quality_warning')),
+        photoSevereMessage: @js(__('report.photo_quality_severe')),
         geolocationNotSupported: @js(__('report.geolocation_not_supported')),
         geolocationFailed: @js(__('report.geolocation_failed')),
     })"

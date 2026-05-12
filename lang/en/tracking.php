@@ -28,6 +28,14 @@ return [
     'follow_saved' => 'Email follow is now active.',
     'follow_already_active' => 'This email is already following this report.',
     'unsubscribed' => 'You have been unsubscribed from this follow.',
+    'eta_title' => 'Estimated timeline',
+    'eta_hint_range' => 'About :min to :max days for this step (:zone).',
+    'eta_hint_done' => 'This report is already marked as repaired.',
+    'eta_disclaimer' => 'Non-binding estimate based on current status and zone load.',
+    'eta_zone_central' => 'central zone',
+    'eta_zone_default' => 'standard zone',
+    'qr_title' => 'Tracking QR code',
+    'qr_help' => 'Scan this code to open this tracking page quickly.',
 
     'status' => [
         'received' => 'Received',

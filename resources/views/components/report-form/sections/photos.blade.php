@@ -6,6 +6,14 @@
     </label>
     <p class="text-xs text-gray-500 mb-3">{{ __('report.photos_help') }}</p>
 
+    <div x-show="photoQualityWarning" x-cloak data-action="photo-quality-warning" class="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <span x-text="photoQualityWarning"></span>
+    </div>
+
+    <div x-show="photoQualitySevere" x-cloak data-action="photo-quality-severe" class="mb-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
+        <span x-text="photoQualitySevere"></span>
+    </div>
+
     {{-- Photo Previews --}}
     @if (count($photoPreviews) > 0)
         <div class="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-3">
@@ -31,7 +39,7 @@
                 </svg>
                 <span class="font-semibold text-gray-700">{{ __('report.photos') }}</span>
             </span>
-            <input type="file" wire:model="photos" multiple accept="image/*" class="hidden">
+            <input type="file" wire:model="photos" x-on:change="onPhotosSelected($event)" multiple accept="image/*" class="hidden">
         </label>
     @endif
 
