@@ -77,6 +77,18 @@ class ReportsTable
                         default => 'gray',
                     })
                     ->sortable(),
+                TextColumn::make('reliability_score')
+                    ->label(__('filament.admin.resources.reports.fields.reliability_score'))
+                    ->badge()
+                    ->formatStateUsing(fn (?int $state): string => $state === null ? '-' : (string) $state)
+                    ->color(fn (?int $state): string => match (true) {
+                        $state === null => 'gray',
+                        $state >= 80 => 'success',
+                        $state >= 60 => 'info',
+                        $state >= 40 => 'warning',
+                        default => 'danger',
+                    })
+                    ->sortable(),
                 TextColumn::make('road_validation_decision')
                     ->label(__('filament.admin.resources.reports.fields.road_validation_status'))
                     ->badge()

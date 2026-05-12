@@ -204,6 +204,8 @@ return [
                     'uuid' => 'UUID',
                     'map' => 'Map',
                     'status' => 'Status',
+                    'reliability_score' => 'Reliability Score',
+                    'reliability_breakdown' => 'Reliability Breakdown',
                     'road_validation_status' => 'Road Validation',
                     'road_distance' => 'Road Distance',
                     'override_decision' => 'Override Decision',

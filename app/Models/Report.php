@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ReportStatus;
 use App\Mail\ReportStatusUpdated;
 use App\Models\Concerns\HasReportCoordinates;
+use App\Services\Reports\ReliabilityScoreService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,12 +43,16 @@ class Report extends Model implements HasMedia
             if (is_string($fingerprint) && $fingerprint !== '') {
                 $report->device_fingerprint_hash = $fingerprint;
             }
+
+            $report->applyReliabilityScoreSnapshot();
         });
 
         static::updating(function (Report $report): void {
             if ($report->isDirty('status') && ! $report->allowStatusTransitionWrite) {
                 throw new InvalidArgumentException('Direct status writes are not allowed. Use transitionTo().');
             }
+
+            $report->applyReliabilityScoreSnapshot();
         });
     }
 
@@ -78,6 +83,9 @@ class Report extends Model implements HasMedia
         'expires_at',
         'location_accuracy',
         'location_source',
+        'reliability_score',
+        'reliability_breakdown',
+        'reliability_scored_at',
     ];
 
     protected $casts = [
@@ -93,7 +101,19 @@ class Report extends Model implements HasMedia
         'road_distance_meters' => 'float',
         'location_accuracy_passed' => 'boolean',
         'contractor_user_id' => 'integer',
+        'reliability_score' => 'integer',
+        'reliability_breakdown' => 'array',
+        'reliability_scored_at' => 'datetime',
     ];
+
+    private function applyReliabilityScoreSnapshot(): void
+    {
+        $snapshot = app(ReliabilityScoreService::class)->score($this);
+
+        $this->reliability_score = $snapshot['score'];
+        $this->reliability_breakdown = $snapshot['breakdown'];
+        $this->reliability_scored_at = now();
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

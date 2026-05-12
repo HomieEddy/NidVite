@@ -204,6 +204,8 @@ return [
                     'uuid' => 'UUID',
                     'map' => 'Carte',
                     'status' => 'Statut',
+                    'reliability_score' => 'Score de fiabilite',
+                    'reliability_breakdown' => 'Details du score de fiabilite',
                     'road_validation_status' => 'Validation routiere',
                     'road_distance' => 'Distance a la route',
                     'override_decision' => 'Decision de remplacement',
