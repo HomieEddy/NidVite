@@ -11,4 +11,6 @@ return [
         'max_travel_minutes' => max(1, (int) env('SUSPICIOUS_GEO_MAX_TRAVEL_MINUTES', 10)),
         'min_distance_meters' => max(1, (int) env('SUSPICIOUS_GEO_MIN_DISTANCE_METERS', 5000)),
     ],
+
+    'retention_days' => max(1, (int) env('SUSPICIOUS_ACTIVITY_RETENTION_DAYS', 180)),
 ];

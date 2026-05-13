@@ -33,10 +33,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Event::listen(Login::class, EnforceAdminConcurrentSessionLimit::class);
-        Event::listen(ReportCreated::class, InvalidatePublicResponseCache::class);
-        Event::listen(ReportCreated::class, DetectSuspiciousReportActivity::class);
-        Event::listen(ReportCreated::class, SendCriticalReportAlerts::class);
+        foreach ([
+            Login::class => [
+                EnforceAdminConcurrentSessionLimit::class,
+            ],
+            ReportCreated::class => [
+                InvalidatePublicResponseCache::class,
+                DetectSuspiciousReportActivity::class,
+                SendCriticalReportAlerts::class,
+            ],
+        ] as $event => $listeners) {
+            foreach ($listeners as $listener) {
+                Event::listen($event, $listener);
+            }
+        }
 
         Health::checks([
             DatabaseCheck::new()->connectionName(config('database.default', 'pgsql')),

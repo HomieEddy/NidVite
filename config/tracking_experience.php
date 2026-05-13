@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'public_api_rate_limit_per_minute' => max(1, (int) env('TRACKING_PUBLIC_API_RATE_LIMIT_PER_MINUTE', 60)),
+
     'eta' => [
         'status_days' => [
             'received' => ['min' => 2, 'max' => 4],

@@ -177,10 +177,10 @@ class SuspiciousActivityDetector
         $latDelta = deg2rad($lat2 - $lat1);
         $lonDelta = deg2rad($lon2 - $lon1);
 
-        $a = sin($latDelta / 2) ** 2
+        $haversineA = sin($latDelta / 2) ** 2
             + cos($lat1Rad) * cos($lat2Rad) * sin($lonDelta / 2) ** 2;
 
-        return 2 * $earthRadius * asin(min(1, sqrt($a)));
+        return 2 * $earthRadius * asin(min(1, sqrt($haversineA)));
     }
 
     private function storeActivity(Report $report, string $type, string $severity, string $reason, array $metadata): void
