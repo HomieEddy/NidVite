@@ -159,7 +159,7 @@
                 type="email"
                 required
                 autocomplete="email"
-                placeholder="citizen@example.com"
+                placeholder="{{ __('report.email_placeholder') }}"
                 class="w-full rounded-lg border-gray-300 focus:border-amber-500 focus:ring-amber-500"
             >
 

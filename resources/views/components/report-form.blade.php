@@ -64,18 +64,21 @@ new class extends Component
 
     public string $submittedTrackingQrSvg = '';
 
+    public ?ReportCategory $potholeCategory = null;
+
     public function mount(): void
     {
         $this->honeypotData = new HoneypotData;
-        $pothole = ReportCategory::where('slug', 'pothole')->first();
-        if ($pothole) {
-            $this->category_id = $pothole->id;
+        $this->potholeCategory = ReportCategory::where('slug', 'pothole')->first();
+
+        if ($this->potholeCategory !== null) {
+            $this->category_id = $this->potholeCategory->id;
         }
     }
 
     public function getPotholeCategoryProperty()
     {
-        return ReportCategory::where('slug', 'pothole')->first();
+        return $this->potholeCategory;
     }
 
     public function getNeighborhoodsProperty(): array
@@ -182,7 +185,11 @@ new class extends Component
         $this->submittedTrackingUrl = route('report.tracking', ['trackingId' => $report->public_tracking_id]);
         $this->submittedTrackingQrSvg = $this->makeQrSvg($this->submittedTrackingUrl);
         $this->submitted = true;
-        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'recaptcha_response']);
+        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'location_accuracy', 'location_source', 'recaptcha_response']);
+
+        if ($this->potholeCategory !== null) {
+            $this->category_id = $this->potholeCategory->id;
+        }
     }
 
     public function getCategoriesProperty()
