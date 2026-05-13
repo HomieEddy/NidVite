@@ -75,4 +75,17 @@ class ReportsByNeighborhood extends ChartWidget
             'labels' => $neighborhoodCosts->pluck('neighborhood')->toArray(),
         ];
     }
+
+    protected function getOptions(): array
+    {
+        return [
+            'scales' => [
+                'x' => [
+                    'ticks' => [
+                        'display' => false,
+                    ],
+                ],
+            ],
+        ];
+    }
 }
