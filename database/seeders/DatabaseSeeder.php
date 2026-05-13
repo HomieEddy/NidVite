@@ -16,13 +16,18 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
-        $this->call([
+        $seeders = [
             RoleSeeder::class,
             ReportCategorySeeder::class,
             MontrealBoundarySeeder::class,
             MontrealRoadSeeder::class,
             AdminUserSeeder::class,
-            TestDataSeeder::class,
-        ]);
+        ];
+
+        if (app()->environment(['local', 'testing'])) {
+            $seeders[] = TestDataSeeder::class;
+        }
+
+        $this->call($seeders);
     }
 }

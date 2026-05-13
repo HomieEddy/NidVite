@@ -1,6 +1,8 @@
 var staticCacheName = "pwa-v" + new Date().getTime();
-var filesToCache = [
+var requiredAssets = [
     '/offline',
+];
+var optionalAssets = [
     '/images/icons/icon-72x72.png',
     '/images/icons/icon-96x96.png',
     '/images/icons/icon-128x128.png',
@@ -17,21 +19,31 @@ self.addEventListener("install", event => {
     event.waitUntil(
         caches.open(staticCacheName)
             .then(cache => {
-                return Promise.all(
-                    filesToCache.map(url => 
-                        fetch(url)
-                            .then(response => {
-                                if (response.ok) {
-                                    return cache.put(url, response);
-                                }
-                            })
-                            .catch(() => {
-                                // Silently skip failed assets
-                            })
-                    )
+                var requiredPromises = requiredAssets.map(url =>
+                    fetch(url).then(response => {
+                        if (!response.ok) {
+                            throw new Error('Required asset failed to cache: ' + url);
+                        }
+
+                        return cache.put(url, response);
+                    })
                 );
+
+                var optionalPromises = optionalAssets.map(url =>
+                    fetch(url)
+                        .then(response => {
+                            if (response.ok) {
+                                return cache.put(url, response);
+                            }
+                        })
+                        .catch(() => {
+                            // Silently skip optional assets.
+                        })
+                );
+
+                return Promise.all(requiredPromises).then(() => Promise.all(optionalPromises));
             })
-    )
+    );
 });
 
 // Clear cache on activate

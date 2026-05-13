@@ -17,6 +17,9 @@ it('adds required secure headers to responses', function () {
 
     expect((string) $response->headers->get('Permissions-Policy'))
         ->toContain('geolocation=(self)');
+
+    expect((string) $response->headers->get('Permissions-Policy'))
+        ->not->toContain('geolocation=*');
 });
 
 it('passes the secure headers ci guard command when configuration is valid', function () {

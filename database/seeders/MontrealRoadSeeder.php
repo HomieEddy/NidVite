@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class MontrealRoadSeeder extends Seeder
 {
@@ -12,24 +13,33 @@ class MontrealRoadSeeder extends Seeder
         DB::table('montreal_roads')->delete();
 
         $geojsonPath = database_path('geo/mtl_geobase.json');
-        $geojson = json_decode(file_get_contents($geojsonPath), true);
-        if (!isset($geojson['features'])) {
-            throw new \RuntimeException('GeoJSON missing features array');
+        $geojsonContents = file_get_contents($geojsonPath);
+        if ($geojsonContents === false) {
+            throw new RuntimeException("Unable to read GeoJSON file at path: {$geojsonPath}");
+        }
+
+        $geojson = json_decode($geojsonContents, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException('Failed to decode GeoJSON: '.json_last_error_msg());
+        }
+
+        if (! isset($geojson['features'])) {
+            throw new RuntimeException('GeoJSON missing features array');
         }
 
         foreach ($geojson['features'] as $feature) {
-            if (!isset($feature['geometry']['type']) || $feature['geometry']['type'] !== 'LineString') {
+            if (! isset($feature['geometry']['type']) || $feature['geometry']['type'] !== 'LineString') {
                 continue;
             }
             $coords = $feature['geometry']['coordinates'];
-            if (!is_array($coords) || count($coords) < 2) {
+            if (! is_array($coords) || count($coords) < 2) {
                 continue;
             }
             // Build WKT string: "LINESTRING(lon lat, lon lat, ...)"
-            $wktCoords = array_map(function($pt) {
-                return $pt[0] . ' ' . $pt[1];
+            $wktCoords = array_map(function ($pt) {
+                return $pt[0].' '.$pt[1];
             }, $coords);
-            $wkt = 'LINESTRING(' . implode(', ', $wktCoords) . ')';
+            $wkt = 'LINESTRING('.implode(', ', $wktCoords).')';
 
             // Prefer ODONYME, fallback to NOM_VOIE, fallback to 'Unnamed'
             $props = $feature['properties'] ?? [];

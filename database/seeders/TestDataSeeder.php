@@ -21,8 +21,6 @@ class TestDataSeeder extends Seeder
 
     private const REJECTED_REPORTS = 10;
 
-
-
     public function run(): void
     {
         if (! app()->environment(['local', 'testing', 'staging'])) {
@@ -192,8 +190,9 @@ class TestDataSeeder extends Seeder
             for ($i = 0; $i < $count; $i++) {
                 $createdAt = now()->subDays(rand(0, 29))->subMinutes(rand(0, 1439));
                 $location = $this->randomMontrealLocation();
-                $streetName = $this->getStreetNameForLocation($location);
-                $borough = $this->getBoroughForLocation($location);
+                $nearestRoad = $this->getNearestRoadForLocation($location);
+                $streetName = $nearestRoad['street_name'];
+                $borough = $nearestRoad['borough'];
 
                 $reportId = DB::table('reports')->insertGetId([
                     'uuid' => (string) Str::uuid(),
@@ -244,7 +243,7 @@ class TestDataSeeder extends Seeder
     private function randomMontrealLocation(): array
     {
         $result = DB::selectOne(
-            "SELECT 
+            'SELECT 
                 ST_Y(point) as lat, 
                 ST_X(point) as lng
             FROM (
@@ -252,7 +251,7 @@ class TestDataSeeder extends Seeder
                 FROM montreal_roads
                 ORDER BY RANDOM()
                 LIMIT 1
-            ) as t"
+            ) as t'
         );
 
         if ($result) {
@@ -262,52 +261,34 @@ class TestDataSeeder extends Seeder
         // Fallback to downtown Montreal if no roads exist
         $offsetLat = random_int(-500, 500) / 10000;
         $offsetLng = random_int(-500, 500) / 10000;
+
         return [round(45.5017 + $offsetLat, 6), round(-73.5673 + $offsetLng, 6)];
     }
 
     /**
-     * Get the street name for a location by finding the nearest road.
+     * Get nearest road metadata for a location.
      *
-     * @param  array{float, float}  $location [lat, lng]
+     * @param  array{float, float}  $location  [lat, lng]
+     * @return array{street_name: string, borough: string}
      */
-    private function getStreetNameForLocation(array $location): string
+    private function getNearestRoadForLocation(array $location): array
     {
         $result = DB::selectOne(
-            "SELECT name FROM montreal_roads
+            'SELECT name, borough FROM montreal_roads
              WHERE ST_DWithin(
                 geom::geography,
                 ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
                 50
              )
              ORDER BY ST_Distance(geom::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography)
-             LIMIT 1",
+             LIMIT 1',
             [$location[1], $location[0], $location[1], $location[0]]
         );
 
-        return $result?->name ? trim($result->name) : 'Unknown Street';
-    }
-
-    /**
-     * Get the borough for a location by finding the nearest road.
-     *
-     * @param  array{float, float}  $location [lat, lng]
-     */
-    private function getBoroughForLocation(array $location): string
-    {
-        $result = DB::selectOne(
-            "SELECT borough FROM montreal_roads
-             WHERE ST_DWithin(
-                geom::geography,
-                ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
-                50
-             )
-             AND borough IS NOT NULL
-             ORDER BY ST_Distance(geom::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography)
-             LIMIT 1",
-            [$location[1], $location[0], $location[1], $location[0]]
-        );
-
-        return $result?->borough ? trim($result->borough) : 'Montreal';
+        return [
+            'street_name' => $result?->name ? trim($result->name) : 'Unknown Street',
+            'borough' => $result?->borough ? trim($result->borough) : 'Montreal',
+        ];
     }
 
     /**

@@ -8,6 +8,7 @@ use Database\Seeders\ReportCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -203,4 +204,77 @@ it('creates report with nullable manual location fields for accurate gps submiss
         ->and($report->borough)->toBeNull();
 
     Event::assertDispatched(ReportCreated::class, fn (ReportCreated $event): bool => $event->report->is($report));
+});
+
+it('rejects missing address for manual fallback submission source', function () {
+    Event::fake([ReportCreated::class]);
+
+    $category = ReportCategory::query()->where('is_active', true)->firstOrFail();
+
+    $validated = [
+        'reporter_email' => 'citizen@example.com',
+        'category_id' => $category->id,
+        'description' => 'Large pothole near crosswalk',
+        'address' => null,
+        'neighborhood' => null,
+        'borough' => null,
+        'manual_location_fallback' => true,
+    ];
+
+    $validation = [
+        'distance_meters' => 1.2,
+        'decision' => 'pass',
+        'reason' => 'pass',
+        'mode' => 'enforce',
+        'accuracy_passed' => true,
+    ];
+
+    expect(fn () => app(SubmitReportAction::class)(
+        $validated,
+        45.501,
+        -73.567,
+        6.5,
+        'manual',
+        [],
+        $validation
+    ))->toThrow(ValidationException::class);
+
+    expect(Report::query()->count())->toBe(0);
+    Event::assertNotDispatched(ReportCreated::class);
+});
+
+it('rejects missing address for non-gps source submission', function () {
+    Event::fake([ReportCreated::class]);
+
+    $category = ReportCategory::query()->where('is_active', true)->firstOrFail();
+
+    $validated = [
+        'reporter_email' => 'citizen@example.com',
+        'category_id' => $category->id,
+        'description' => 'Large pothole near crosswalk',
+        'address' => null,
+        'neighborhood' => null,
+        'borough' => null,
+    ];
+
+    $validation = [
+        'distance_meters' => 1.2,
+        'decision' => 'pass',
+        'reason' => 'pass',
+        'mode' => 'enforce',
+        'accuracy_passed' => true,
+    ];
+
+    expect(fn () => app(SubmitReportAction::class)(
+        $validated,
+        45.501,
+        -73.567,
+        6.5,
+        'cell_tower',
+        [],
+        $validation
+    ))->toThrow(ValidationException::class);
+
+    expect(Report::query()->count())->toBe(0);
+    Event::assertNotDispatched(ReportCreated::class);
 });
