@@ -44,21 +44,16 @@ class ReportTrackingController extends Controller
         $radiusMeters = (int) config('tracking_experience.duplicate_nudge.radius_meters', 50);
         $windowDays = (int) config('tracking_experience.duplicate_nudge.window_days', 30);
         $openStatuses = config('tracking_experience.duplicate_nudge.open_statuses', ['received', 'verified', 'scheduled', 'in_progress']);
+        $distanceExpression = 'ROUND(ST_Distance(location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography))';
 
         $report = Report::query()
             ->select(['id', 'public_tracking_id', 'status', 'address', 'created_at'])
-            ->selectRaw(
-                'ROUND(ST_Distance(location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography)) AS distance_meters',
-                [$longitude, $latitude]
-            )
+            ->selectRaw("{$distanceExpression} AS distance_meters", [$longitude, $latitude])
             ->whereNotNull('location')
             ->whereIn('status', $openStatuses)
             ->where('created_at', '>=', now()->subDays($windowDays))
             ->near($latitude, $longitude, $radiusMeters)
-            ->orderByRaw(
-                'ST_Distance(location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) ASC',
-                [$longitude, $latitude]
-            )
+            ->orderBy('distance_meters')
             ->first();
 
         if ($report === null) {
@@ -198,7 +193,8 @@ class ReportTrackingController extends Controller
 
     private function makeQrSvg(string $content): string
     {
-        $writer = new Writer(new ImageRenderer(new RendererStyle(168, 1), new SvgImageBackEnd));
+        $qrSize = (int) config('tracking_experience.qr.size', 168);
+        $writer = new Writer(new ImageRenderer(new RendererStyle($qrSize, 1), new SvgImageBackEnd));
 
         return $writer->writeString($content);
     }

@@ -199,7 +199,8 @@ new class extends Component
 
     private function makeQrSvg(string $content): string
     {
-        $writer = new Writer(new ImageRenderer(new RendererStyle(168, 1), new SvgImageBackEnd));
+        $qrSize = (int) config('tracking_experience.qr.size', 168);
+        $writer = new Writer(new ImageRenderer(new RendererStyle($qrSize, 1), new SvgImageBackEnd));
 
         return $writer->writeString($content);
     }

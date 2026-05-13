@@ -34,6 +34,10 @@ return [
         'retention_days' => (int) env('TRACKING_FOLLOWER_RETENTION_DAYS', 365),
     ],
 
+    'qr' => [
+        'size' => (int) env('TRACKING_QR_SIZE', 168),
+    ],
+
     'evidence' => [
         'gps_warning_accuracy_meters' => 50,
         'photo' => [

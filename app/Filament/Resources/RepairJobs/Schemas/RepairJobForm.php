@@ -27,20 +27,20 @@ class RepairJobForm
                         modifyQueryUsing: fn (Builder $query) => $query
                             ->where('reports.status', 'received')
                     )
-                    ->getOptionLabelFromRecordUsing(fn (Report $record): string => implode(' | ', array_filter([
+                    ->getOptionLabelFromRecordUsing(fn (Report $record): string => ($label = implode(' | ', array_filter([
                         $record->address,
                         $record->borough,
                         $record->neighborhood,
-                    ])))
+                    ]))) !== '' ? $label : $record->public_tracking_id)
                     ->getOptionLabelsUsing(fn (array $values): array => Report::query()
                         ->whereIn('id', $values)
-                        ->get(['id', 'address', 'borough', 'neighborhood'])
+                        ->get(['id', 'public_tracking_id', 'address', 'borough', 'neighborhood'])
                         ->mapWithKeys(fn (Report $record): array => [
-                            $record->id => implode(' | ', array_filter([
+                            $record->id => ($label = implode(' | ', array_filter([
                                 $record->address,
                                 $record->borough,
                                 $record->neighborhood,
-                            ])),
+                            ]))) !== '' ? $label : $record->public_tracking_id,
                         ])
                         ->all())
                     ->multiple()
