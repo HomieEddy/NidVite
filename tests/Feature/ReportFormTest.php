@@ -60,6 +60,10 @@ it('creates report through SubmitReportAction and dispatches ReportCreated', fun
         'accuracy_passed' => true,
     ];
 
+    if (! extension_loaded('gd') && ! extension_loaded('imagick')) {
+        $this->markTestSkipped('Image processing extension not available in current PHP runtime.');
+    }
+
     $photo = UploadedFile::fake()->image('pothole.jpg');
 
     $report = app(SubmitReportAction::class)(
