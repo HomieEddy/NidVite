@@ -11,29 +11,35 @@ class MontrealRoadSeeder extends Seeder
     {
         DB::table('montreal_roads')->delete();
 
-        $segments = [
-            [
-                'name' => 'Rue Sainte-Catherine O',
-                'source' => 'osm-baseline',
-                'wkt' => 'LINESTRING(-73.5750 45.5008, -73.5652 45.5017, -73.5565 45.5025)',
-            ],
-            [
-                'name' => 'Boulevard Rene-Levesque O',
-                'source' => 'osm-baseline',
-                'wkt' => 'LINESTRING(-73.5780 45.4991, -73.5673 45.5000, -73.5580 45.5008)',
-            ],
-            [
-                'name' => 'Avenue du Parc',
-                'source' => 'osm-baseline',
-                'wkt' => 'LINESTRING(-73.5945 45.5090, -73.5900 45.5135, -73.5855 45.5180)',
-            ],
-        ];
+        $geojsonPath = database_path('geo/mtl_geobase.json');
+        $geojson = json_decode(file_get_contents($geojsonPath), true);
+        if (!isset($geojson['features'])) {
+            throw new \RuntimeException('GeoJSON missing features array');
+        }
 
-        foreach ($segments as $segment) {
+        foreach ($geojson['features'] as $feature) {
+            if (!isset($feature['geometry']['type']) || $feature['geometry']['type'] !== 'LineString') {
+                continue;
+            }
+            $coords = $feature['geometry']['coordinates'];
+            if (!is_array($coords) || count($coords) < 2) {
+                continue;
+            }
+            // Build WKT string: "LINESTRING(lon lat, lon lat, ...)"
+            $wktCoords = array_map(function($pt) {
+                return $pt[0] . ' ' . $pt[1];
+            }, $coords);
+            $wkt = 'LINESTRING(' . implode(', ', $wktCoords) . ')';
+
+            // Prefer ODONYME, fallback to NOM_VOIE, fallback to 'Unnamed'
+            $props = $feature['properties'] ?? [];
+            $name = trim($props['ODONYME'] ?? '') ?: trim($props['NOM_VOIE'] ?? '') ?: 'Unnamed';
+            $borough = trim($props['ARR_GCH'] ?? '') ?: trim($props['ARR_DRT'] ?? '') ?: 'Montreal';
+
             DB::statement(
-                'INSERT INTO montreal_roads (name, source, geom, created_at, updated_at)
-                 VALUES (?, ?, ST_GeomFromText(?, 4326), NOW(), NOW())',
-                [$segment['name'], $segment['source'], $segment['wkt']]
+                'INSERT INTO montreal_roads (name, borough, source, geom, created_at, updated_at)
+                 VALUES (?, ?, ?, ST_GeomFromText(?, 4326), NOW(), NOW())',
+                [$name, $borough, 'mtl_geobase', $wkt]
             );
         }
     }
