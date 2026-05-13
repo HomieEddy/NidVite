@@ -57,50 +57,56 @@ class TestDataSeeder extends Seeder
 
     public function run(): void
     {
-        $this->truncateTestData();
+        if (! app()->environment(['local', 'testing', 'staging'])) {
+            throw new \RuntimeException('TestDataSeeder may only run in local, testing, or staging environments.');
+        }
 
-        $users = $this->createStaffUsers();
+        DB::transaction(function (): void {
+            $this->truncateTestData();
 
-        $potholeCategory = ReportCategory::firstOrCreate(
-            ['slug' => 'pothole'],
-            [
-                'label_en' => 'Pothole',
-                'label_fr' => 'Nid-de-poule',
-                'icon' => 'heroicon-o-exclamation-triangle',
-                'color' => '#d97706',
-                'is_active' => true,
-                'sort_order' => 1,
-            ]
-        );
+            $users = $this->createStaffUsers();
 
-        $asphaltBags = Material::updateOrCreate(
-            ['sku' => 'ASP-001'],
-            [
-                'name' => 'Asphalt bags',
-                'description' => 'Asphalt bags for pothole repairs',
-                'unit' => 'bag',
-                'current_stock' => 10000,
-                'reserved_stock' => 0,
-                'min_stock_alert' => 500,
-                'avg_purchase_price' => 15.50,
-                'last_purchase_price' => 15.50,
-                'location' => 'Main warehouse',
-                'is_active' => true,
-            ]
-        );
+            $potholeCategory = ReportCategory::firstOrCreate(
+                ['slug' => 'pothole'],
+                [
+                    'label_en' => 'Pothole',
+                    'label_fr' => 'Nid-de-poule',
+                    'icon' => 'heroicon-o-exclamation-triangle',
+                    'color' => '#d97706',
+                    'is_active' => true,
+                    'sort_order' => 1,
+                ]
+            );
 
-        $vendors = $this->seedVendors();
+            $asphaltBags = Material::updateOrCreate(
+                ['sku' => 'ASP-001'],
+                [
+                    'name' => 'Asphalt bags',
+                    'description' => 'Asphalt bags for pothole repairs',
+                    'unit' => 'bag',
+                    'current_stock' => 10000,
+                    'reserved_stock' => 0,
+                    'min_stock_alert' => 500,
+                    'avg_purchase_price' => 15.50,
+                    'last_purchase_price' => 15.50,
+                    'location' => 'Main warehouse',
+                    'is_active' => true,
+                ]
+            );
 
-        $reports = $this->seedReports($potholeCategory->id);
-        $jobs = $this->seedJobsForReports($reports, (int) $users['manager']->id, (int) $users['service_worker']->id);
-        $this->seedAsphaltExpenses($jobs, $asphaltBags, $vendors, (int) $users['accountant']->id);
+            $vendors = $this->seedVendors();
 
-        $validReports = self::TOTAL_REPORTS - self::REJECTED_REPORTS;
+            $reports = $this->seedReports($potholeCategory->id);
+            $jobs = $this->seedJobsForReports($reports, (int) $users['manager']->id, (int) $users['service_worker']->id);
+            $this->seedAsphaltExpenses($jobs, $asphaltBags, $vendors, (int) $users['accountant']->id);
 
-        $this->command?->info('TestDataSeeder completed.');
-        $this->command?->info('Reports: '.$reports->count()." ({$validReports} valid + ".self::REJECTED_REPORTS.' rejected)');
-        $this->command?->info('Jobs: '.$jobs->count());
-        $this->command?->info('Expenses: '.$jobs->count().' (asphalt bags only)');
+            $validReports = self::TOTAL_REPORTS - self::REJECTED_REPORTS;
+
+            $this->command?->info('TestDataSeeder completed.');
+            $this->command?->info('Reports: '.$reports->count()." ({$validReports} valid + ".self::REJECTED_REPORTS.' rejected)');
+            $this->command?->info('Jobs: '.$jobs->count());
+            $this->command?->info('Expenses: '.$jobs->count().' (asphalt bags only)');
+        });
     }
 
     /**

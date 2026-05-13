@@ -29,12 +29,18 @@ class RepairJob extends Model
                 return;
             }
 
-            if ($job->getOriginal('status') === 'completed' || $job->status !== 'completed') {
+            if ($job->status !== 'completed' || $job->getOriginal('status') === 'completed') {
+                return;
+            }
+
+            // If the job was previously completed and later reopened, do not post inventory twice.
+            if ($job->getOriginal('completed_at') !== null) {
                 return;
             }
 
             $job->loadMissing('jobMaterials.material');
 
+            /** @var \Illuminate\Database\Eloquent\Collection<int, User> $recipients */
             $recipients = User::query()
                 ->where('is_active', true)
                 ->whereHas('role', fn ($query) => $query->whereIn('slug', ['admin', 'manager']))

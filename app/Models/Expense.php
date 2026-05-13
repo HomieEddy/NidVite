@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 class Expense extends Model
 {
@@ -20,11 +21,13 @@ class Expense extends Model
             $gstRate = (float) ($expense->gst_rate ?? 0.05);
             $qstRate = (float) ($expense->qst_rate ?? 0.0998);
             $combinedTaxRate = round($gstRate + $qstRate, 4);
+            $taxAmount = round($subtotal * $combinedTaxRate, 2);
+            $total = round($subtotal + $taxAmount, 2);
 
-            $expense->subtotal = $subtotal;
-            $expense->tax_rate = $combinedTaxRate;
-            $expense->tax_amount = round($subtotal * $combinedTaxRate, 2);
-            $expense->total = round($subtotal + (float) $expense->tax_amount, 2);
+            $expense->subtotal = number_format($subtotal, 2, '.', '');
+            $expense->tax_rate = number_format($combinedTaxRate, 4, '.', '');
+            $expense->tax_amount = number_format($taxAmount, 2, '.', '');
+            $expense->total = number_format($total, 2, '.', '');
         });
 
         static::saved(function (Expense $expense): void {
@@ -32,7 +35,9 @@ class Expense extends Model
                 return;
             }
 
-            $expense->repairJob?->applyEqualCostAllocation();
+            DB::afterCommit(function () use ($expense): void {
+                $expense->repairJob?->applyEqualCostAllocation();
+            });
         });
     }
 
