@@ -1,6 +1,6 @@
 # Retroactive Code Review Debt Details
 
-Generated: 2026-05-12 18:52:38 -04:00
+Generated: 2026-05-13 00:17:16 -04:00
 
 ## [#46](https://github.com/HomieEddy/NidVite/pull/46) - Phase 30: Admin Triage Productivity
 
@@ -229,7 +229,7 @@ Generated: 2026-05-12 18:52:38 -04:00
   Comment: _­ƒº╣ Nitpick_ | _­ƒöÁ Trivial_ | _ÔÜí Quick win_  **Overly broad `*` selector in reduced-motion query may cause performance issues.**  The `*` selector applies `animation-duration` and `transition-duration` overrides to every element in th...
 - Path: resources/js/app.js, Line: 153, Author: coderabbitai
   Comment: _ÔÜá´©Å Potential issue_ | _­ƒƒá Major_ | _ÔÜí Quick win_  **Add `rel` to the popupÔÇÖs `target="_blank"` link.**  This opens a new tab without clearing `window.opener`. Set `rel="noopener noreferrer"` on the generated anchor as well.  <det...
-- Path: resources/views/components/ÔÜíreport-form.blade.php, Line: 310, Author: coderabbitai
+- Path: resources/views/components/report-form.blade.php, Line: 310, Author: coderabbitai
   Comment: _ÔÜá´©Å Potential issue_ | _­ƒƒí Minor_ | _ÔÜí Quick win_  **Hardcoded bilingual string should use translation key.**  This line uses an inline locale check instead of a translation key, which is inconsistent with the rest of the file and v...
 - Path: resources/views/filament/components/language-toggle.blade.php, Line: 8, Author: coderabbitai
   Comment: _­ƒº╣ Nitpick_ | _­ƒöÁ Trivial_ | _­ƒÆñ Low value_  <details> <summary>­ƒº® Analysis chain</summary>  ­ƒÅü Script executed:  ```shell #!/bin/bash # Find the locale.switch route definition rg -n "locale\.switch|locale\.switch|name\('locale" ...
