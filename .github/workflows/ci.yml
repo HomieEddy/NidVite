@@ -57,7 +57,7 @@ jobs:
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Validate composer metadata
-        run: composer validate
+        run: composer validate --strict
 
       - name: Run quality guard tests
         run: php artisan test tests/Feature/QualityGateDependencyHygieneTest.php tests/Feature/ArchitectureBoundaryGuardTest.php --colors=never
