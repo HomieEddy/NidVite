@@ -10,6 +10,7 @@ it('adds required secure headers to responses', function () {
     $response->assertHeader('Strict-Transport-Security');
     $response->assertHeader('X-Frame-Options', 'sameorigin');
     $response->assertHeader('X-Content-Type-Options', 'nosniff');
+    $response->assertHeader('Permissions-Policy');
 
     expect((string) $response->headers->get('Strict-Transport-Security'))
         ->toContain('max-age=');

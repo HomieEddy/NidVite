@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\RepairJobs\Pages;
 
 use App\Filament\Resources\RepairJobs\RepairJobResource;
+use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Support\Facades\Auth;
 
 class CreateRepairJob extends CreateRecord
 {
@@ -16,7 +16,7 @@ class CreateRepairJob extends CreateRecord
      */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['created_by'] = Auth::id();
+        $data['created_by'] = Filament::auth()->id();
 
         return $data;
     }

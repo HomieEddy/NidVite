@@ -16,6 +16,10 @@ class StagingDemoSeeder extends Seeder
             throw new RuntimeException('StagingDemoSeeder can only run in staging/testing environments.');
         }
 
+        if (app()->environment('staging') && empty(config('admin-auth.staging_demo_seed_password'))) {
+            throw new RuntimeException('staging_demo_seed_password must be configured for staging environment');
+        }
+
         $demoPassword = (string) (config('admin-auth.staging_demo_seed_password') ?: Str::password(24));
 
         DB::transaction(function () use ($demoPassword): void {

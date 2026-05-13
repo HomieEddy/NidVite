@@ -33,7 +33,7 @@ return [
     ],
 
     'followers' => [
-        'retention_days' => (int) env('TRACKING_FOLLOWER_RETENTION_DAYS', 365),
+        'retention_days' => max(1, (int) env('TRACKING_FOLLOWER_RETENTION_DAYS', 365)),
     ],
 
     'qr' => [
