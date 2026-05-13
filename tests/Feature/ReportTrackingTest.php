@@ -210,3 +210,49 @@ it('unsubscribes follower with signed link', function () {
     expect($follower->is_active)->toBeFalse();
     expect($follower->unsubscribed_at)->not->toBeNull();
 });
+
+it('rejects tampered unsubscribe signed links', function () {
+    $report = Report::factory()->create();
+
+    $follower = $report->followers()->create([
+        'email' => 'follow@example.com',
+        'preferred_locale' => 'fr',
+        'is_active' => true,
+    ]);
+
+    $url = URL::temporarySignedRoute('report.followers.unsubscribe', now()->addMinutes(10), [
+        'trackingId' => $report->public_tracking_id,
+        'follower' => $follower->id,
+    ]);
+
+    $response = $this->get($url.'&tampered=1');
+
+    $response->assertForbidden();
+
+    $follower->refresh();
+    expect($follower->is_active)->toBeTrue();
+    expect($follower->unsubscribed_at)->toBeNull();
+});
+
+it('rejects expired unsubscribe signed links', function () {
+    $report = Report::factory()->create();
+
+    $follower = $report->followers()->create([
+        'email' => 'follow@example.com',
+        'preferred_locale' => 'fr',
+        'is_active' => true,
+    ]);
+
+    $url = URL::temporarySignedRoute('report.followers.unsubscribe', now()->subMinute(), [
+        'trackingId' => $report->public_tracking_id,
+        'follower' => $follower->id,
+    ]);
+
+    $response = $this->get($url);
+
+    $response->assertForbidden();
+
+    $follower->refresh();
+    expect($follower->is_active)->toBeTrue();
+    expect($follower->unsubscribed_at)->toBeNull();
+});
