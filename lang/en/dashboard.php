@@ -29,6 +29,7 @@ return [
     'last_7_days' => 'Last 7 days',
     'last_90_days' => 'Last 90 days',
     'map_filter_status' => 'Status',
+    'map_filter_borough' => 'Borough',
     'map_filter_neighborhood' => 'Neighborhood',
     'map_filter_neighborhood_placeholder' => 'Type neighborhood name',
     'map_filter_all' => 'All',
