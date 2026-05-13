@@ -53,6 +53,18 @@
                 </select>
             </div>
 
+            <div style="display: flex; flex-direction: column; min-width: 220px;">
+                <label for="admin-map-borough-filter" style="font-size: 0.75rem; color: #4b5563; margin-bottom: 0.25rem;">
+                    {{ __('dashboard.map_filter_borough') }}
+                </label>
+                <select id="admin-map-borough-filter" wire:model="selectedBorough" class="admin-map-filter-control">
+                    <option value="">{{ __('dashboard.map_filter_all') }}</option>
+                    @foreach ($this->getAvailableBoroughs() as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <button id="admin-map-apply-filter" type="button" wire:click="applyFilters" class="admin-map-filter-control">
                 {{ __('dashboard.map_apply_filters') }}
             </button>
