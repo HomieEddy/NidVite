@@ -97,17 +97,19 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                 return;
             }
 
+            const wire = this.$wire;
+
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     const accuracy = position.coords.accuracy;
 
-                    $wire.manual_location_fallback = false;
-                    $wire.latitude = lat;
-                    $wire.longitude = lng;
-                    $wire.location_accuracy = accuracy;
-                    $wire.location_source = 'gps';
+                    wire.manual_location_fallback = false;
+                    wire.latitude = lat;
+                    wire.longitude = lng;
+                    wire.location_accuracy = accuracy;
+                    wire.location_source = 'gps';
 
                     setTimeout(() => {
                         this.updateMap(lat, lng);
@@ -119,8 +121,8 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                     this.reverseGeocode(lat, lng);
                 },
                 () => {
-                    $wire.manual_location_fallback = true;
-                    $wire.location_source = 'manual';
+                    wire.manual_location_fallback = true;
+                    wire.location_source = 'manual';
                     this.gpsWarning = settings.geolocationFailed || localizedDefault('Unable to get your location.', 'Impossible d\'obtenir votre position.');
                     alert(settings.geolocationFailed || localizedDefault('Unable to get your location.', 'Impossible d\'obtenir votre position.'));
                 }
@@ -128,6 +130,7 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
         },
 
         reverseGeocode(lat, lng) {
+            const wire = this.$wire;
             const reverseUrl = buildNominatimUrl('reverse', {
                 format: 'json',
                 lat: String(lat),
@@ -147,30 +150,30 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                     const streetAddress = (houseNumber ? `${houseNumber}, ` : '') + road;
 
                     if (streetAddress.trim() !== '') {
-                        $wire.address = streetAddress.trim();
+                        wire.address = streetAddress.trim();
                     } else {
                         const parts = data.display_name.split(',');
                         if (parts[0]) {
-                            $wire.address = parts[0].trim();
+                            wire.address = parts[0].trim();
                         }
                     }
 
                     if (addr.suburb) {
-                        $wire.neighborhood = addr.suburb;
+                        wire.neighborhood = addr.suburb;
                     } else if (addr.neighbourhood) {
-                        $wire.neighborhood = addr.neighbourhood;
+                        wire.neighborhood = addr.neighbourhood;
                     } else if (addr.quarter) {
-                        $wire.neighborhood = addr.quarter;
+                        wire.neighborhood = addr.quarter;
                     }
 
                     if (addr.city_district) {
-                        $wire.borough = addr.city_district;
+                        wire.borough = addr.city_district;
                     } else if (addr.borough) {
-                        $wire.borough = addr.borough;
+                        wire.borough = addr.borough;
                     } else if (addr.city) {
-                        $wire.borough = addr.city;
+                        wire.borough = addr.city;
                     } else if (addr.county) {
-                        $wire.borough = addr.county;
+                        wire.borough = addr.county;
                     }
                 })
                 .catch(() => {});
@@ -178,6 +181,8 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
 
         geocodeAddress() {
             if (this.geocoding) return;
+
+            const wire = this.$wire;
 
             const el = this.$refs.addressInput;
             if (!el) return;
@@ -216,10 +221,10 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                         accuracy = Math.max(Math.abs(latErr), Math.abs(lngErr)) * 111320;
                     }
 
-                    $wire.latitude = lat;
-                    $wire.longitude = lng;
-                    $wire.location_accuracy = accuracy;
-                    $wire.location_source = 'geocode';
+                    wire.latitude = lat;
+                    wire.longitude = lng;
+                    wire.location_accuracy = accuracy;
+                    wire.location_source = 'geocode';
 
                     setTimeout(() => {
                         this.updateMap(lat, lng);
