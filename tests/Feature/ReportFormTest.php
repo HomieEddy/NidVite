@@ -32,6 +32,15 @@ it('renders duplicate, gps, and photo quality client-side hooks on report form',
         ->assertSee('data-action="photo-quality-severe"', false);
 });
 
+it('hides manual location fields until gps fallback is needed', function () {
+    $response = $this->get('/signaler');
+
+    $response->assertOk()
+        ->assertDontSee('id="report_address"', false)
+        ->assertDontSee('id="neighborhood"', false)
+        ->assertDontSee('id="borough"', false);
+});
+
 it('has active report categories for the form', function () {
     $categories = ReportCategory::where('is_active', true)->get();
 

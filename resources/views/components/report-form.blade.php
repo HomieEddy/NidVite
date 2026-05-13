@@ -49,6 +49,8 @@ new class extends Component
 
     public ?string $location_source = null;
 
+    public bool $manual_location_fallback = false;
+
     #[Validate('nullable|array|max:5')]
     public array $photos = [];
 
@@ -109,8 +111,12 @@ new class extends Component
 
     public function shouldShowManualLocationFields(): bool
     {
-        if ($this->latitude === null || $this->longitude === null) {
+        if ($this->manual_location_fallback) {
             return true;
+        }
+
+        if ($this->latitude === null || $this->longitude === null) {
+            return false;
         }
 
         if (($this->location_source ?? '') !== 'gps') {
@@ -206,7 +212,7 @@ new class extends Component
         $this->submittedTrackingUrl = route('report.tracking', ['trackingId' => $report->public_tracking_id]);
         $this->submittedTrackingQrSvg = $this->makeQrSvg($this->submittedTrackingUrl);
         $this->submitted = true;
-        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'location_accuracy', 'location_source', 'recaptcha_response']);
+        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'location_accuracy', 'location_source', 'manual_location_fallback', 'recaptcha_response']);
 
         if ($this->potholeCategory !== null) {
             $this->category_id = $this->potholeCategory->id;

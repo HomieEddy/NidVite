@@ -14,6 +14,9 @@ it('adds required secure headers to responses', function () {
 
     expect((string) $response->headers->get('Strict-Transport-Security'))
         ->toContain('max-age=');
+
+    expect((string) $response->headers->get('Permissions-Policy'))
+        ->toContain('geolocation=(self)');
 });
 
 it('passes the secure headers ci guard command when configuration is valid', function () {

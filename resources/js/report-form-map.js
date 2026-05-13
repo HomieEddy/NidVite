@@ -103,6 +103,7 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                     const lng = position.coords.longitude;
                     const accuracy = position.coords.accuracy;
 
+                    $wire.manual_location_fallback = false;
                     $wire.latitude = lat;
                     $wire.longitude = lng;
                     $wire.location_accuracy = accuracy;
@@ -118,6 +119,9 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                     this.reverseGeocode(lat, lng);
                 },
                 () => {
+                    $wire.manual_location_fallback = true;
+                    $wire.location_source = 'manual';
+                    this.gpsWarning = settings.geolocationFailed || localizedDefault('Unable to get your location.', 'Impossible d\'obtenir votre position.');
                     alert(settings.geolocationFailed || localizedDefault('Unable to get your location.', 'Impossible d\'obtenir votre position.'));
                 }
             );
