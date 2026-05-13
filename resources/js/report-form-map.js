@@ -3,6 +3,16 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
     const locale = document.documentElement.lang || 'en';
     const isFrench = locale.toLowerCase().startsWith('fr');
 
+    const parseOptionalNumber = (value) => {
+        if (value === null || value === undefined || value === '') {
+            return null;
+        }
+
+        const parsed = Number(value);
+
+        return Number.isFinite(parsed) ? parsed : null;
+    };
+
     const localizedDefault = (enMessage, frMessage) => (isFrench ? frMessage : enMessage);
 
     const buildNominatimUrl = (path, params) => {
@@ -59,15 +69,15 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                 maxZoom: 19,
             }).addTo(this.map);
 
-            const initialLatitude = Number(settings.initialLatitude);
-            const initialLongitude = Number(settings.initialLongitude);
+            const initialLatitude = parseOptionalNumber(settings.initialLatitude);
+            const initialLongitude = parseOptionalNumber(settings.initialLongitude);
 
-            if (Number.isFinite(initialLatitude) && Number.isFinite(initialLongitude)) {
+            if (initialLatitude !== null && initialLongitude !== null) {
                 this.updateMap(initialLatitude, initialLongitude);
                 this.updateDuplicateNudge(initialLatitude, initialLongitude);
             }
 
-            this.updateGpsWarning(initialLatitude, initialLongitude, Number(settings.initialAccuracy));
+            this.updateGpsWarning(initialLatitude, initialLongitude, parseOptionalNumber(settings.initialAccuracy));
 
             this.mapReady = true;
         },
