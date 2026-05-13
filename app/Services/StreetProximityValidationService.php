@@ -22,7 +22,7 @@ class StreetProximityValidationService
             $distance = MontrealRoad::distanceToNearestMeters($latitude, $longitude);
         } catch (\Throwable $exception) {
             Log::warning('Street proximity lookup unavailable; continuing with fallback.', [
-                'message' => $exception->getMessage(),
+                'exception_class' => $exception::class,
             ]);
             $distance = null;
         }

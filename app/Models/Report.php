@@ -286,7 +286,7 @@ class Report extends Model implements HasMedia
             $this->allowStatusTransitionWrite = true;
             $this->status = $newStatus;
 
-            if ($newStatus === ReportStatus::Rejected->value && $reason !== null) {
+            if ($newStatus === ReportStatus::Rejected->value) {
                 $this->rejection_reason = $reason;
             }
 

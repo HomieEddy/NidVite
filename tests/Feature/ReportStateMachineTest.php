@@ -105,6 +105,18 @@ describe('Report state machine', function () {
             ->and($report->fresh()->rejection_reason)->toBe('Out of service area');
     });
 
+    it('clears stale rejection reason when rejecting without a reason', function () {
+        $report = createReport([
+            'status' => 'received',
+            'rejection_reason' => 'Legacy reason',
+        ]);
+
+        $report->transitionTo('rejected');
+
+        expect($report->fresh()->status)->toBe('rejected')
+            ->and($report->fresh()->rejection_reason)->toBeNull();
+    });
+
     it('allows full forward progression to repaired', function () {
         $report = createReport(['status' => 'received']);
 
