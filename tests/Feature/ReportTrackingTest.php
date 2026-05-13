@@ -172,6 +172,7 @@ it('updates notification preference from tracking page', function () {
 
 it('deduplicates report followers by report and email', function () {
     $report = Report::factory()->create();
+    config()->set('tracking_experience.followers.retention_days', 30);
 
     $first = $this->post(route('report.followers.store', ['trackingId' => $report->public_tracking_id]), [
         'email' => 'follow@example.com',
@@ -186,6 +187,12 @@ it('deduplicates report followers by report and email', function () {
     $second->assertRedirect(route('report.tracking', ['trackingId' => $report->public_tracking_id]));
 
     expect(ReportFollower::query()->where('report_id', $report->id)->where('email', 'follow@example.com')->count())->toBe(1);
+
+    $follower = ReportFollower::query()->where('report_id', $report->id)->where('email', 'follow@example.com')->first();
+    expect($follower)->not->toBeNull();
+    expect($follower->expires_at)->not->toBeNull();
+    expect($follower->expires_at?->greaterThan(now()->addDays(29)))->toBeTrue();
+    expect($follower->expires_at?->lessThanOrEqualTo(now()->addDays(30)->addMinute()))->toBeTrue();
 });
 
 it('unsubscribes follower with signed link', function () {

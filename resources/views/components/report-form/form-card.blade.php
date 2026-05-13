@@ -1,5 +1,5 @@
 <div class="citizen-card overflow-hidden animate-slide-up relative">
-    <div class="bg-linear-to-r from-amber-700 via-amber-600 to-orange-500 px-5 py-5">
+    <div class="bg-gradient-to-r from-amber-700 via-amber-600 to-orange-500 px-5 py-5">
         <h1 class="text-xl font-extrabold font-display text-white">{{ __('report.title') }}</h1>
         <p class="text-amber-100 text-sm mt-1">{{ __('report.subtitle') }}</p>
     </div>

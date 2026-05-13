@@ -30,6 +30,10 @@ return [
         'open_statuses' => ['received', 'verified', 'scheduled', 'in_progress'],
     ],
 
+    'followers' => [
+        'retention_days' => (int) env('TRACKING_FOLLOWER_RETENTION_DAYS', 365),
+    ],
+
     'evidence' => [
         'gps_warning_accuracy_meters' => 50,
         'photo' => [

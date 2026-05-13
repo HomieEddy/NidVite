@@ -335,6 +335,10 @@ class Report extends Model implements HasMedia
         $this->followers()
             ->where('is_active', true)
             ->whereNull('unsubscribed_at')
+            ->where(function (Builder $query): void {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
             ->where(function (Builder $query) use ($today): void {
                 $query->whereNull('last_notified_on')
                     ->orWhere('last_notified_on', '<', $today);

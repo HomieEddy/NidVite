@@ -217,6 +217,7 @@ new class extends Component
         photoSevereMessage: @js(__('report.photo_quality_severe')),
         geolocationNotSupported: @js(__('report.geolocation_not_supported')),
         geolocationFailed: @js(__('report.geolocation_failed')),
+        nominatimContactEmail: @js(config('services.nominatim.contact_email')),
     })"
     x-init="$nextTick(() => { setTimeout(() => initMap(), 100); })">
     <div class="pointer-events-none absolute -top-24 -left-16 h-52 w-52 rounded-full bg-amber-300/25 blur-3xl"></div>

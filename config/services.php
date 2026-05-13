@@ -35,4 +35,8 @@ return [
         'enabled' => env('RECAPTCHA_ENABLED', env('APP_ENV', 'production') !== 'local'),
     ],
 
+    'nominatim' => [
+        'contact_email' => env('NOMINATIM_CONTACT_EMAIL'),
+    ],
+
 ];

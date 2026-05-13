@@ -4,13 +4,11 @@ namespace App\Filament\Resources\RepairJobs\Schemas;
 
 use App\Models\Report;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 
 class RepairJobForm
 {
@@ -18,8 +16,6 @@ class RepairJobForm
     {
         return $schema
             ->components([
-                Hidden::make('created_by')
-                    ->default(fn (): int => Auth::id() ?? throw new \RuntimeException('Authenticated user required for created_by.')),
                 TextInput::make('title')
                     ->label(__('filament.admin.fields_common.title'))
                     ->required(),

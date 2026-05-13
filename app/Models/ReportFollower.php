@@ -18,12 +18,14 @@ class ReportFollower extends Model
         'preferred_locale',
         'is_active',
         'unsubscribed_at',
+        'expires_at',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'unsubscribed_at' => 'datetime',
         'last_notified_on' => 'date',
+        'expires_at' => 'datetime',
     ];
 
     public function report(): BelongsTo

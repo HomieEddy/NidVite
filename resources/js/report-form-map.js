@@ -1,5 +1,38 @@
 window.nidviteReportFormMapData = function reportFormMapData(options) {
     const settings = options || {};
+    const locale = document.documentElement.lang || 'en';
+    const isFrench = locale.toLowerCase().startsWith('fr');
+
+    const localizedDefault = (enMessage, frMessage) => (isFrench ? frMessage : enMessage);
+
+    const buildNominatimUrl = (path, params) => {
+        const url = new URL(`https://nominatim.openstreetmap.org/${path}`);
+        const searchParams = new URLSearchParams(params);
+
+        searchParams.set('accept-language', locale);
+
+        if (settings.nominatimContactEmail) {
+            searchParams.set('email', settings.nominatimContactEmail);
+        }
+
+        url.search = searchParams.toString();
+
+        return url.toString();
+    };
+
+    const fetchJsonWithTimeout = (url, timeoutMs = 6000) => {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+        return fetch(url, {
+            signal: controller.signal,
+            headers: {
+                'Accept-Language': locale,
+            },
+        }).finally(() => {
+            window.clearTimeout(timeout);
+        });
+    };
 
     return {
         map: null,
@@ -8,7 +41,7 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
         geocoding: false,
         duplicateNudge: null,
         duplicateNudgeText: '',
-        duplicateNudgeLinkText: settings.duplicateNudgeLink || 'View existing report',
+        duplicateNudgeLinkText: settings.duplicateNudgeLink || localizedDefault('View existing report', 'Voir le signalement existant'),
         gpsWarning: '',
         photoQualityWarning: '',
         photoQualitySevere: '',
@@ -26,12 +59,15 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                 maxZoom: 19,
             }).addTo(this.map);
 
-            if (settings.initialLatitude && settings.initialLongitude) {
-                this.updateMap(settings.initialLatitude, settings.initialLongitude);
-                this.updateDuplicateNudge(settings.initialLatitude, settings.initialLongitude);
+            const initialLatitude = Number(settings.initialLatitude);
+            const initialLongitude = Number(settings.initialLongitude);
+
+            if (Number.isFinite(initialLatitude) && Number.isFinite(initialLongitude)) {
+                this.updateMap(initialLatitude, initialLongitude);
+                this.updateDuplicateNudge(initialLatitude, initialLongitude);
             }
 
-            this.updateGpsWarning(settings.initialLatitude, settings.initialLongitude, settings.initialAccuracy);
+            this.updateGpsWarning(initialLatitude, initialLongitude, Number(settings.initialAccuracy));
 
             this.mapReady = true;
         },
@@ -47,7 +83,7 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
 
         captureLocation() {
             if (!navigator.geolocation) {
-                alert(settings.geolocationNotSupported || 'Geolocation not supported');
+                alert(settings.geolocationNotSupported || localizedDefault('Geolocation is not supported by this browser.', 'La geolocalisation n\'est pas prise en charge par ce navigateur.'));
                 return;
             }
 
@@ -72,22 +108,21 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                     this.reverseGeocode(lat, lng);
                 },
                 () => {
-                    alert(settings.geolocationFailed || 'Unable to get location');
+                    alert(settings.geolocationFailed || localizedDefault('Unable to get your location.', 'Impossible d\'obtenir votre position.'));
                 }
             );
         },
 
         reverseGeocode(lat, lng) {
-            const lang = document.documentElement.lang || 'en';
+            const reverseUrl = buildNominatimUrl('reverse', {
+                format: 'json',
+                lat: String(lat),
+                lon: String(lng),
+                addressdetails: '1',
+                zoom: '18',
+            });
 
-            fetch(
-                'https://nominatim.openstreetmap.org/reverse?format=json&lat='
-                    + lat
-                    + '&lon='
-                    + lng
-                    + '&addressdetails=1&zoom=18&accept-language='
-                    + lang
-            )
+            fetchJsonWithTimeout(reverseUrl)
                 .then((r) => r.json())
                 .then((data) => {
                     if (!data || !data.display_name || !data.address) return;
@@ -138,11 +173,19 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
 
             this.geocoding = true;
 
-            fetch(
-                'https://nominatim.openstreetmap.org/search?format=json&q='
-                    + encodeURIComponent(q)
-                    + '&city=Montreal&country=Canada&countrycodes=ca&limit=1&addressdetails=1&bounded=1&viewbox=-74.01,45.72,-73.40,45.41'
-            )
+            const searchUrl = buildNominatimUrl('search', {
+                format: 'json',
+                q,
+                city: 'Montreal',
+                country: 'Canada',
+                countrycodes: 'ca',
+                limit: '1',
+                addressdetails: '1',
+                bounded: '1',
+                viewbox: '-74.01,45.72,-73.40,45.41',
+            });
+
+            fetchJsonWithTimeout(searchUrl)
                 .then((r) => r.json())
                 .then((data) => {
                     this.geocoding = false;
@@ -189,7 +232,7 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                 longitude: String(lng),
             });
 
-            fetch(`${settings.duplicateHintEndpoint}?${params.toString()}`)
+            fetchJsonWithTimeout(`${settings.duplicateHintEndpoint}?${params.toString()}`, 3000)
                 .then((response) => {
                     if (!response.ok) {
                         throw new Error('duplicate_hint_failed');
@@ -203,7 +246,7 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                     }
 
                     this.duplicateNudge = payload.report;
-                    this.duplicateNudgeText = (settings.duplicateNudgeMessage || 'A nearby open report already exists (:distance m).')
+                    this.duplicateNudgeText = (settings.duplicateNudgeMessage || localizedDefault('A nearby open report already exists (:distance m).', 'Un signalement ouvert existe deja a proximite (:distance m).'))
                         .replace(':distance', payload.report.distance_meters);
                 })
                 .catch(() => {});
@@ -213,14 +256,14 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
             this.gpsWarning = '';
 
             if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-                this.gpsWarning = settings.gpsWarningMissingMessage || 'No GPS coordinates detected yet.';
+                this.gpsWarning = settings.gpsWarningMissingMessage || localizedDefault('No GPS coordinates detected yet.', 'Aucune coordonnee GPS detectee pour le moment.');
                 return;
             }
 
             const threshold = Number(settings.gpsWarningAccuracyThreshold || 50);
 
             if (Number.isFinite(accuracy) && Number(accuracy) > threshold) {
-                this.gpsWarning = settings.gpsWarningWeakMessage || 'GPS precision is weak.';
+                this.gpsWarning = settings.gpsWarningWeakMessage || localizedDefault('GPS precision is weak.', 'La precision GPS est faible.');
             }
         },
 
@@ -247,13 +290,13 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                     const severe = results.find((result) => result && result.severe);
                     if (severe) {
                         this.hasSeverePhotoIssue = true;
-                        this.photoQualitySevere = settings.photoSevereMessage || 'Photo quality is too poor to submit.';
+                        this.photoQualitySevere = settings.photoSevereMessage || localizedDefault('Photo quality is too poor to submit.', 'La qualite de la photo est trop faible pour soumettre.');
                         return;
                     }
 
                     const warning = results.find((result) => result && result.warning);
                     if (warning) {
-                        this.photoQualityWarning = settings.photoWarningMessage || 'Photo quality may be low.';
+                        this.photoQualityWarning = settings.photoWarningMessage || localizedDefault('Photo quality may be low.', 'La qualite de la photo peut etre faible.');
                     }
                 })
                 .catch(() => {});

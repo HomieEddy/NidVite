@@ -106,6 +106,8 @@ class ReportTrackingController extends Controller
         ]);
 
         $email = mb_strtolower(trim((string) $validated['email']));
+        $retentionDays = max(1, (int) config('tracking_experience.followers.retention_days', 365));
+        $expiresAt = now()->addDays($retentionDays);
 
         $alreadyActive = $report->followers()
             ->where('email', $email)
@@ -120,10 +122,11 @@ class ReportTrackingController extends Controller
                     'preferred_locale' => app()->getLocale(),
                     'is_active' => true,
                     'unsubscribed_at' => null,
+                    'expires_at' => $expiresAt,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ],
-            ], ['report_id', 'email'], ['preferred_locale', 'is_active', 'unsubscribed_at', 'updated_at']);
+            ], ['report_id', 'email'], ['preferred_locale', 'is_active', 'unsubscribed_at', 'expires_at', 'updated_at']);
         }
 
         return redirect()
