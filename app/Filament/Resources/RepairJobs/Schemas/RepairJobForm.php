@@ -45,7 +45,7 @@ class RepairJobForm
                                 'reports.borough',
                                 'reports.neighborhood',
                             ])
-                            ->where('reports.status', 'received')
+                            ->where('reports.status', 'verified')
                     )
                     ->getOptionLabelFromRecordUsing(fn (Report $record): string => ($label = implode(' | ', array_filter([
                         $record->public_tracking_id,
@@ -71,7 +71,7 @@ class RepairJobForm
                     ->preload()
                     ->required(fn (string $operation): bool => $operation === 'create')
                     ->minItems(fn (string $operation): ?int => $operation === 'create' ? 1 : null)
-                    ->helperText(__('filament.admin.resources.repair_jobs.helper.select_received_reports')),
+                    ->helperText(__('filament.admin.resources.repair_jobs.helper.select_verified_reports')),
                 Textarea::make('description')
                     ->label(__('filament.admin.fields_common.description'))
                     ->columnSpanFull(),

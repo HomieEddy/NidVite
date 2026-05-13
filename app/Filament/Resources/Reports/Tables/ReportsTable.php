@@ -183,6 +183,35 @@ class ReportsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('verify')
+                    ->label(__('filament.admin.resources.reports.actions.verify'))
+                    ->icon('heroicon-m-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn (Report $record): bool => (Auth::user()?->can('update', $record) ?? false)
+                        && $record->canTransitionTo('verified'))
+                    ->authorize(fn (Report $record): bool => Auth::user()?->can('update', $record) ?? false)
+                    ->action(function (Report $record): void {
+                        $record->transitionTo('verified');
+                    }),
+                Action::make('reject')
+                    ->label(__('filament.admin.resources.reports.actions.reject'))
+                    ->icon('heroicon-m-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (Report $record): bool => (Auth::user()?->can('update', $record) ?? false)
+                        && $record->canTransitionTo('rejected'))
+                    ->authorize(fn (Report $record): bool => Auth::user()?->can('update', $record) ?? false)
+                    ->form([
+                        Textarea::make('reason')
+                            ->label(__('filament.admin.fields_common.rejection_reason'))
+                            ->maxLength(500),
+                    ])
+                    ->action(function (Report $record, array $data): void {
+                        $reason = trim((string) ($data['reason'] ?? ''));
+
+                        $record->transitionTo('rejected', $reason !== '' ? $reason : null);
+                    }),
                 Action::make('override_validation')
                     ->label(__('filament.admin.resources.reports.actions.override_validation'))
                     ->icon('heroicon-m-shield-check')
