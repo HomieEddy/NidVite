@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             MontrealBoundarySeeder::class,
             MontrealRoadSeeder::class,
             AdminUserSeeder::class,
+            TestDataSeeder::class,
         ]);
     }
 }
