@@ -30,6 +30,12 @@ it('returns 404 for invalid tracking id', function () {
     $this->get('/suivi/invalid-tracking-id')->assertStatus(404);
 });
 
+it('returns 404 json payload for invalid tracking lookup id', function () {
+    $response = $this->getJson(route('api.reports.lookup', ['trackingId' => 'invalid-tracking-id']));
+
+    $response->assertNotFound();
+});
+
 it('shows correct timeline for received report', function () {
     $report = Report::factory()->create(['status' => 'received']);
 
