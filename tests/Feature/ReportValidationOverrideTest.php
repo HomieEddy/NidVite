@@ -19,6 +19,18 @@ it('requires an audit note for road validation override', function () {
         ->toThrow(InvalidArgumentException::class, 'Audit note is required for validation override');
 });
 
+it('rejects unknown road validation decisions during override', function () {
+    $report = Report::factory()->create([
+        'road_validation_decision' => 'pass',
+        'road_validation_reason' => 'pass',
+        'road_validation_mode' => 'shadow',
+        'location_accuracy_passed' => true,
+    ]);
+
+    expect(fn () => $report->overrideRoadValidation('invalid_decision', 'Audit note'))
+        ->toThrow(InvalidArgumentException::class, 'Invalid road_validation_decision provided for override');
+});
+
 it('stores override metadata and logs audit activity', function () {
     $report = Report::factory()->create([
         'road_validation_decision' => 'pass',

@@ -21,6 +21,9 @@ it('keeps composer constraints deterministic and avoids unstable branch versions
                 ->and($value)->not->toContain('dev-')
                 ->and($value)->not->toContain('@dev')
                 ->and($value)->not->toContain('x-dev');
+
+            expect((bool) preg_match('/(^|[^a-z0-9])\d+\.x-dev($|[^a-z0-9])/i', $value))
+                ->toBeFalse();
         }
     }
 });
