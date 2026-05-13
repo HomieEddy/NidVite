@@ -9,7 +9,9 @@
         <input type="hidden" id="recaptcha-response" wire:model="recaptcha_response">
 
         @include('components.report-form.sections.contact-and-description')
-        @include('components.report-form.sections.neighborhood-and-borough')
+        @if ($this->shouldShowManualLocationFields())
+            @include('components.report-form.sections.neighborhood-and-borough')
+        @endif
         @include('components.report-form.sections.location')
         @include('components.report-form.sections.photos')
         @include('components.report-form.sections.submit')

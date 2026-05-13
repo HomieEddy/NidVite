@@ -49,6 +49,8 @@ new class extends Component
 
     public ?string $location_source = null;
 
+    public bool $manual_location_fallback = false;
+
     #[Validate('nullable|array|max:5')]
     public array $photos = [];
 
@@ -107,17 +109,42 @@ new class extends Component
         $this->photoPreviews = array_values($this->photoPreviews);
     }
 
+    public function shouldShowManualLocationFields(): bool
+    {
+        if ($this->manual_location_fallback) {
+            return true;
+        }
+
+        if ($this->latitude === null || $this->longitude === null) {
+            return false;
+        }
+
+        if (($this->location_source ?? '') !== 'gps') {
+            return true;
+        }
+
+        $maxAccuracyMeters = (float) config('report_validation.max_location_accuracy_meters', 50);
+
+        if ($this->location_accuracy === null) {
+            return true;
+        }
+
+        return $this->location_accuracy > $maxAccuracyMeters;
+    }
+
     public function submit(): void
     {
         $this->protectAgainstSpam();
 
         $recaptchaEnabled = (bool) config('services.recaptcha.enabled', true);
+        $manualLocationFieldsRequired = $this->shouldShowManualLocationFields();
+        $addressRule = $manualLocationFieldsRequired ? 'required|string|max:500' : 'nullable|string|max:500';
 
         $validated = $this->validate([
             'reporter_email' => 'required|email|max:255',
             'category_id' => 'required|exists:report_categories,id',
             'description' => 'required|string|max:2000',
-            'address' => 'required|string|max:500',
+            'address' => $addressRule,
             'neighborhood' => 'nullable|string|max:100',
             'borough' => 'nullable|string|max:100',
             'photos' => 'nullable|array|max:5',
@@ -185,7 +212,7 @@ new class extends Component
         $this->submittedTrackingUrl = route('report.tracking', ['trackingId' => $report->public_tracking_id]);
         $this->submittedTrackingQrSvg = $this->makeQrSvg($this->submittedTrackingUrl);
         $this->submitted = true;
-        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'location_accuracy', 'location_source', 'recaptcha_response']);
+        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'location_accuracy', 'location_source', 'manual_location_fallback', 'recaptcha_response']);
 
         if ($this->potholeCategory !== null) {
             $this->category_id = $this->potholeCategory->id;

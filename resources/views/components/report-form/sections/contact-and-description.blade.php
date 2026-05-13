@@ -43,14 +43,16 @@
 </div>
 
 {{-- Address --}}
-<div>
-    <label for="report_address" class="block text-sm font-semibold text-gray-700 mb-1.5">
-        {{ __('report.address') }}
-        <span class="text-red-500">*</span>
-    </label>
-    <p class="text-xs text-gray-500 mb-2">{{ __('report.address_help') }}</p>
-    <input id="report_address" type="text" wire:model="address" x-ref="addressInput" data-action="geocode-address"
-        class="block w-full rounded-xl border-amber-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 bg-white/90"
-        placeholder="{{ __('report.address_placeholder') }}">
-    @error('address') <span class="mt-1.5 text-sm text-red-600">{{ $message }}</span> @enderror
-</div>
+@if ($this->shouldShowManualLocationFields())
+    <div>
+        <label for="report_address" class="block text-sm font-semibold text-gray-700 mb-1.5">
+            {{ __('report.address') }}
+            <span class="text-red-500">*</span>
+        </label>
+        <p class="text-xs text-gray-500 mb-2">{{ __('report.address_help') }}</p>
+        <input id="report_address" type="text" wire:model="address" x-ref="addressInput" data-action="geocode-address"
+            class="block w-full rounded-xl border-amber-100 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3 bg-white/90"
+            placeholder="{{ __('report.address_placeholder') }}">
+        @error('address') <span class="mt-1.5 text-sm text-red-600">{{ $message }}</span> @enderror
+    </div>
+@endif

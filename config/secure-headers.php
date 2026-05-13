@@ -34,9 +34,9 @@ return [
             'origins' => [],
         ],
         'geolocation' => [
-            'none' => true,
+            'none' => false,
             '*' => false,
-            'self' => false,
+            'self' => true,
             'origins' => [],
         ],
     ],

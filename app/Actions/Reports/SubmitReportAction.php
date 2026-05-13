@@ -26,6 +26,12 @@ class SubmitReportAction
         array $photos,
         array $validation
     ): Report {
+        if (($locationSource ?? '') !== 'gps' && blank($validated['address'] ?? null)) {
+            throw ValidationException::withMessages([
+                'address' => [__('report.validation.address_required')],
+            ]);
+        }
+
         /** @var array<int, array{path: string, originalName: string}> $preparedPhotos */
         $preparedPhotos = [];
 
@@ -65,7 +71,7 @@ class SubmitReportAction
                     'preferred_locale' => app()->getLocale(),
                     'category_id' => (int) $validated['category_id'],
                     'description' => (string) $validated['description'],
-                    'address' => (string) $validated['address'],
+                    'address' => filled($validated['address'] ?? null) ? (string) $validated['address'] : null,
                     'neighborhood' => filled($validated['neighborhood'] ?? null) ? (string) $validated['neighborhood'] : null,
                     'borough' => filled($validated['borough'] ?? null) ? (string) $validated['borough'] : null,
                 ]);
