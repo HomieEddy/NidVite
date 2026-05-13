@@ -44,8 +44,7 @@ it('clears response cache when a report is created', function () {
 it('registers and executes the opcache clear command', function () {
     expect(Artisan::all())->toHaveKey('ops:opcache-clear');
 
-    // Runtime behavior varies between CI/local PHP builds; assert command executes deterministically.
     $exitCode = Artisan::call('ops:opcache-clear');
 
-    expect($exitCode)->toBeIn([0, 1]);
+    expect($exitCode)->toBe(0);
 });
