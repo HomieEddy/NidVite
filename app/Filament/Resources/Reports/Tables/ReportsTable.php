@@ -43,6 +43,10 @@ class ReportsTable
                     ->visible(fn (): bool => Auth::user()?->can('create', Report::class) ?? false),
             ])
             ->columns([
+                TextColumn::make('public_tracking_id')
+                    ->label(__('filament.admin.resources.reports.fields.tracking_id'))
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('reporter_email')
                     ->searchable()
                     ->sortable(),
