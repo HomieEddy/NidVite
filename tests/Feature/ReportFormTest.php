@@ -156,3 +156,42 @@ it('rejects negative location accuracy in SubmitReportAction without persisting 
     expect(Report::query()->count())->toBe(0);
     Event::assertNotDispatched(ReportCreated::class);
 });
+
+it('creates report with nullable manual location fields for accurate gps submissions', function () {
+    Event::fake([ReportCreated::class]);
+
+    $category = ReportCategory::query()->where('is_active', true)->firstOrFail();
+
+    $validated = [
+        'reporter_email' => 'citizen@example.com',
+        'category_id' => $category->id,
+        'description' => 'Large pothole near crosswalk',
+        'address' => null,
+        'neighborhood' => null,
+        'borough' => null,
+    ];
+
+    $validation = [
+        'distance_meters' => 1.2,
+        'decision' => 'pass',
+        'reason' => 'pass',
+        'mode' => 'enforce',
+        'accuracy_passed' => true,
+    ];
+
+    $report = app(SubmitReportAction::class)(
+        $validated,
+        45.501,
+        -73.567,
+        6.5,
+        'gps',
+        [],
+        $validation
+    );
+
+    expect($report->address)->toBeNull()
+        ->and($report->neighborhood)->toBeNull()
+        ->and($report->borough)->toBeNull();
+
+    Event::assertDispatched(ReportCreated::class, fn (ReportCreated $event): bool => $event->report->is($report));
+});
