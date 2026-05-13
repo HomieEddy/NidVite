@@ -84,3 +84,75 @@ it('creates report through SubmitReportAction and dispatches ReportCreated', fun
     Event::assertDispatched(ReportCreated::class, fn (ReportCreated $event): bool => $event->report->is($report)
     );
 });
+
+it('rejects invalid location source in SubmitReportAction without persisting report', function () {
+    Event::fake([ReportCreated::class]);
+
+    $category = ReportCategory::query()->where('is_active', true)->firstOrFail();
+
+    $validated = [
+        'reporter_email' => 'citizen@example.com',
+        'category_id' => $category->id,
+        'description' => 'Large pothole near crosswalk',
+        'address' => '123 Rue Saint-Catherine',
+        'neighborhood' => 'Ville-Marie',
+        'borough' => 'Ville-Marie',
+    ];
+
+    $validation = [
+        'distance_meters' => 1.2,
+        'decision' => 'pass',
+        'reason' => 'pass',
+        'mode' => 'enforce',
+        'accuracy_passed' => true,
+    ];
+
+    expect(fn () => app(SubmitReportAction::class)(
+        $validated,
+        45.501,
+        -73.567,
+        7.5,
+        'invalid_source',
+        [],
+        $validation
+    ))->toThrow(\InvalidArgumentException::class);
+
+    expect(Report::query()->count())->toBe(0);
+    Event::assertNotDispatched(ReportCreated::class);
+});
+
+it('rejects negative location accuracy in SubmitReportAction without persisting report', function () {
+    Event::fake([ReportCreated::class]);
+
+    $category = ReportCategory::query()->where('is_active', true)->firstOrFail();
+
+    $validated = [
+        'reporter_email' => 'citizen@example.com',
+        'category_id' => $category->id,
+        'description' => 'Large pothole near crosswalk',
+        'address' => '123 Rue Saint-Catherine',
+        'neighborhood' => 'Ville-Marie',
+        'borough' => 'Ville-Marie',
+    ];
+
+    $validation = [
+        'distance_meters' => 1.2,
+        'decision' => 'pass',
+        'reason' => 'pass',
+        'mode' => 'enforce',
+        'accuracy_passed' => true,
+    ];
+
+    expect(fn () => app(SubmitReportAction::class)(
+        $validated,
+        45.501,
+        -73.567,
+        -0.5,
+        'gps',
+        [],
+        $validation
+    ))->toThrow(\InvalidArgumentException::class);
+
+    expect(Report::query()->count())->toBe(0);
+    Event::assertNotDispatched(ReportCreated::class);
+});
