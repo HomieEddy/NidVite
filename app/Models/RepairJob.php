@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Notifications\LowStockMaterialAlertNotification;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,7 +41,7 @@ class RepairJob extends Model
 
             $job->loadMissing('jobMaterials.material');
 
-            /** @var \Illuminate\Database\Eloquent\Collection<int, User> $recipients */
+            /** @var Collection<int, User> $recipients */
             $recipients = User::query()
                 ->where('is_active', true)
                 ->whereHas('role', fn ($query) => $query->whereIn('slug', ['admin', 'manager']))

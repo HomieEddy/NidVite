@@ -27,5 +27,5 @@ it('fails fast when admin role is missing', function () {
     config()->set('admin-auth.admin_seed_password', 'seed-admin-password');
 
     expect(fn () => app(AdminUserSeeder::class)->run())
-    ->toThrow(\RuntimeException::class, 'Admin role is required before running AdminUserSeeder.');
+        ->toThrow(RuntimeException::class, 'Admin role is required before running AdminUserSeeder.');
 });

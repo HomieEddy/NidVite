@@ -42,7 +42,7 @@ it('prevents direct staging demo seeder execution outside staging and testing', 
     app()->detectEnvironment(fn () => 'local');
 
     expect(fn () => app(StagingDemoSeeder::class)->run())
-        ->toThrow(\RuntimeException::class, 'StagingDemoSeeder can only run in staging/testing environments.');
+        ->toThrow(RuntimeException::class, 'StagingDemoSeeder can only run in staging/testing environments.');
 });
 
 it('uses configured staging demo password instead of hardcoded shared credentials', function () {

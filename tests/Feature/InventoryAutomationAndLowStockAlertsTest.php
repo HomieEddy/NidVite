@@ -1,13 +1,14 @@
 <?php
 
+use App\Filament\Widgets\LowStockMaterialsOverview;
 use App\Models\JobMaterial;
 use App\Models\Material;
 use App\Models\RepairJob;
 use App\Models\Role;
 use App\Models\User;
-use App\Filament\Widgets\LowStockMaterialsOverview;
 use App\Notifications\LowStockMaterialAlertNotification;
 use Database\Seeders\RoleSeeder;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -175,7 +176,7 @@ it('counts low stock based on available stock in dashboard widget', function () 
     $widget = new class extends LowStockMaterialsOverview
     {
         /**
-         * @return array<int, \Filament\Widgets\StatsOverviewWidget\Stat>
+         * @return array<int, Stat>
          */
         public function exposedStats(): array
         {

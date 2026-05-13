@@ -115,7 +115,7 @@ it('rejects invalid location source in SubmitReportAction without persisting rep
         'invalid_source',
         [],
         $validation
-    ))->toThrow(\InvalidArgumentException::class);
+    ))->toThrow(InvalidArgumentException::class);
 
     expect(Report::query()->count())->toBe(0);
     Event::assertNotDispatched(ReportCreated::class);
@@ -151,7 +151,7 @@ it('rejects negative location accuracy in SubmitReportAction without persisting 
         'gps',
         [],
         $validation
-    ))->toThrow(\InvalidArgumentException::class);
+    ))->toThrow(InvalidArgumentException::class);
 
     expect(Report::query()->count())->toBe(0);
     Event::assertNotDispatched(ReportCreated::class);
