@@ -7,6 +7,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -14,6 +15,18 @@ class RepairJobForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $latestSelectedReportCreatedAt = function (Get $get): ?string {
+            $reportIds = array_values(array_filter((array) $get('reports')));
+
+            if ($reportIds === []) {
+                return null;
+            }
+
+            return Report::query()
+                ->whereIn('id', $reportIds)
+                ->max('created_at');
+        };
+
         return $schema
             ->components([
                 TextInput::make('title')
@@ -35,6 +48,7 @@ class RepairJobForm
                             ->where('reports.status', 'received')
                     )
                     ->getOptionLabelFromRecordUsing(fn (Report $record): string => ($label = implode(' | ', array_filter([
+                        $record->public_tracking_id,
                         $record->address,
                         $record->borough,
                         $record->neighborhood,
@@ -44,6 +58,7 @@ class RepairJobForm
                         ->get(['id', 'public_tracking_id', 'address', 'borough', 'neighborhood'])
                         ->mapWithKeys(fn (Report $record): array => [
                             $record->id => ($label = implode(' | ', array_filter([
+                                $record->public_tracking_id,
                                 $record->address,
                                 $record->borough,
                                 $record->neighborhood,
@@ -51,6 +66,7 @@ class RepairJobForm
                         ])
                         ->all())
                     ->multiple()
+                    ->live()
                     ->searchable()
                     ->preload()
                     ->required(fn (string $operation): bool => $operation === 'create')
@@ -60,11 +76,26 @@ class RepairJobForm
                     ->label(__('filament.admin.fields_common.description'))
                     ->columnSpanFull(),
                 DateTimePicker::make('scheduled_at')
-                    ->label(__('filament.admin.fields_common.scheduled_at')),
+                    ->label(__('filament.admin.fields_common.scheduled_at'))
+                    ->minDate($latestSelectedReportCreatedAt)
+                    ->rules(fn (Get $get): array => ($minimumDate = $latestSelectedReportCreatedAt($get)) === null
+                        ? []
+                        : ['after_or_equal:'.$minimumDate])
+                    ->live(),
                 DateTimePicker::make('started_at')
-                    ->label(__('filament.admin.fields_common.started_at')),
+                    ->label(__('filament.admin.fields_common.started_at'))
+                    ->minDate(fn (Get $get): ?string => $get('scheduled_at') ?? $latestSelectedReportCreatedAt($get))
+                    ->rules(fn (Get $get): array => ($minimumDate = $get('scheduled_at') ?? $latestSelectedReportCreatedAt($get)) === null
+                        ? []
+                        : ['after_or_equal:'.$minimumDate])
+                    ->live(),
                 DateTimePicker::make('completed_at')
-                    ->label(__('filament.admin.fields_common.completed_at')),
+                    ->label(__('filament.admin.fields_common.completed_at'))
+                    ->minDate(fn (Get $get): ?string => $get('started_at') ?? $get('scheduled_at') ?? $latestSelectedReportCreatedAt($get))
+                    ->rules(fn (Get $get): array => ($minimumDate = $get('started_at') ?? $get('scheduled_at') ?? $latestSelectedReportCreatedAt($get)) === null
+                        ? []
+                        : ['after_or_equal:'.$minimumDate])
+                    ->live(),
                 Select::make('status')
                     ->label(__('filament.admin.fields_common.status'))
                     ->options([
