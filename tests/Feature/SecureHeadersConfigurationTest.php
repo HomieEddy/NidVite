@@ -24,3 +24,9 @@ it('fails the secure headers ci guard command when configuration is invalid', fu
 
     $this->artisan('security:check-headers')->assertExitCode(1);
 });
+
+it('fails the secure headers ci guard command when x-frame-options is invalid', function () {
+    Config::set('secure-headers.x-frame-options', 'allowall');
+
+    $this->artisan('security:check-headers')->assertExitCode(1);
+});
