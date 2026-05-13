@@ -31,13 +31,14 @@ it('caches only welcome and public map pages', function () {
 });
 
 it('clears response cache when a report is created', function () {
-    ResponseCache::shouldReceive('clear')->atLeast()->once();
+    ResponseCache::shouldReceive('forget')
+        ->atLeast()
+        ->once()
+        ->with(['/', '/carte']);
 
     $report = Report::factory()->create();
 
     event(new ReportCreated($report));
-
-    expect(true)->toBeTrue();
 });
 
 it('registers and executes the opcache clear command', function () {
