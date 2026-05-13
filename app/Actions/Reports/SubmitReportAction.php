@@ -65,7 +65,7 @@ class SubmitReportAction
                     'preferred_locale' => app()->getLocale(),
                     'category_id' => (int) $validated['category_id'],
                     'description' => (string) $validated['description'],
-                    'address' => (string) $validated['address'],
+                    'address' => filled($validated['address'] ?? null) ? (string) $validated['address'] : null,
                     'neighborhood' => filled($validated['neighborhood'] ?? null) ? (string) $validated['neighborhood'] : null,
                     'borough' => filled($validated['borough'] ?? null) ? (string) $validated['borough'] : null,
                 ]);
