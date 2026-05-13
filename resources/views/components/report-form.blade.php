@@ -129,7 +129,22 @@ new class extends Component
             return true;
         }
 
-        return $this->location_accuracy > $maxAccuracyMeters;
+        if ($this->location_accuracy > $maxAccuracyMeters) {
+            return true;
+        }
+
+        $normalizedNeighborhood = mb_strtolower(trim($this->neighborhood));
+        $normalizedBorough = mb_strtolower(trim($this->borough));
+
+        if ($normalizedNeighborhood === '' || in_array($normalizedNeighborhood, ['montreal', 'n/a'], true)) {
+            return true;
+        }
+
+        if ($normalizedBorough === '' || in_array($normalizedBorough, ['montreal', 'n/a'], true)) {
+            return true;
+        }
+
+        return false;
     }
 
     public function submit(): void

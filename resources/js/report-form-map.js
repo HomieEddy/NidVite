@@ -15,6 +15,26 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
 
     const localizedDefault = (enMessage, frMessage) => (isFrench ? frMessage : enMessage);
 
+    const normalizeLocationValue = (value) => {
+        if (value === null || value === undefined) {
+            return '';
+        }
+
+        const normalized = String(value).trim();
+
+        if (normalized === '') {
+            return '';
+        }
+
+        const lowered = normalized.toLowerCase();
+
+        if (lowered === 'montreal' || lowered === 'n/a') {
+            return '';
+        }
+
+        return normalized;
+    };
+
     const buildNominatimUrl = (path, params) => {
         const url = new URL(`https://nominatim.openstreetmap.org/${path}`);
         const searchParams = new URLSearchParams(params);
@@ -158,22 +178,17 @@ window.nidviteReportFormMapData = function reportFormMapData(options) {
                         }
                     }
 
-                    if (addr.suburb) {
-                        wire.neighborhood = addr.suburb;
-                    } else if (addr.neighbourhood) {
-                        wire.neighborhood = addr.neighbourhood;
-                    } else if (addr.quarter) {
-                        wire.neighborhood = addr.quarter;
-                    }
+                    const candidateNeighborhood = normalizeLocationValue(addr.suburb)
+                        || normalizeLocationValue(addr.neighbourhood)
+                        || normalizeLocationValue(addr.quarter);
+                    const candidateBorough = normalizeLocationValue(addr.city_district)
+                        || normalizeLocationValue(addr.borough);
 
-                    if (addr.city_district) {
-                        wire.borough = addr.city_district;
-                    } else if (addr.borough) {
-                        wire.borough = addr.borough;
-                    } else if (addr.city) {
-                        wire.borough = addr.city;
-                    } else if (addr.county) {
-                        wire.borough = addr.county;
+                    wire.neighborhood = candidateNeighborhood;
+                    wire.borough = candidateBorough;
+
+                    if (candidateNeighborhood === '' || candidateBorough === '') {
+                        wire.manual_location_fallback = true;
                     }
                 })
                 .catch(() => {});
