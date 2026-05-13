@@ -170,12 +170,14 @@ return [
                 ],
                 'saved_views' => [
                     'actions' => [
+                        'menu' => 'Saved Views',
                         'save' => 'Save View',
                         'update' => 'Update View',
                         'load' => 'Load View',
                         'delete' => 'Delete View',
                     ],
                     'fields' => [
+                        'operation' => 'Operation',
                         'name' => 'View Name',
                         'view' => 'Saved View',
                         'rename_to' => 'Rename To (optional)',

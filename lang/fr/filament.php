@@ -170,12 +170,14 @@ return [
                 ],
                 'saved_views' => [
                     'actions' => [
+                        'menu' => 'Vues enregistrees',
                         'save' => 'Enregistrer la vue',
                         'update' => 'Mettre a jour la vue',
                         'load' => 'Charger la vue',
                         'delete' => 'Supprimer la vue',
                     ],
                     'fields' => [
+                        'operation' => 'Operation',
                         'name' => 'Nom de la vue',
                         'view' => 'Vue enregistree',
                         'rename_to' => 'Renommer en (optionnel)',
