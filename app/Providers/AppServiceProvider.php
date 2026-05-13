@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Events\ReportCreated;
 use App\Health\Checks\MailConfigurationCheck;
+use App\Listeners\AutoTriageCreatedReport;
 use App\Listeners\DetectSuspiciousReportActivity;
 use App\Listeners\EnforceAdminConcurrentSessionLimit;
 use App\Listeners\InvalidatePublicResponseCache;
@@ -40,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
             ReportCreated::class => [
                 InvalidatePublicResponseCache::class,
                 DetectSuspiciousReportActivity::class,
+                AutoTriageCreatedReport::class,
                 SendCriticalReportAlerts::class,
             ],
         ] as $event => $listeners) {
