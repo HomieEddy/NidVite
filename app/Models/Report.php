@@ -27,6 +27,11 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Throwable;
 
+/**
+ * @property float|null $latitude Dynamic property added by withCoordinates() scope
+ * @property float|null $longitude Dynamic property added by withCoordinates() scope
+ * @property float|null $avg_days Aggregated average days from query
+ */
 class Report extends Model implements HasMedia
 {
     use HasFactory, HasReportCoordinates, InteractsWithMedia, LogsActivity, SoftDeletes;
@@ -286,7 +291,7 @@ class Report extends Model implements HasMedia
             $this->allowStatusTransitionWrite = true;
             $this->status = $newStatus;
 
-            if ($newStatus === ReportStatus::Rejected->value && $reason !== null) {
+            if ($newStatus === ReportStatus::Rejected->value) {
                 $this->rejection_reason = $reason;
             }
 
@@ -335,6 +340,10 @@ class Report extends Model implements HasMedia
         $this->followers()
             ->where('is_active', true)
             ->whereNull('unsubscribed_at')
+            ->where(function (Builder $query): void {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
             ->where(function (Builder $query) use ($today): void {
                 $query->whereNull('last_notified_on')
                     ->orWhere('last_notified_on', '<', $today);

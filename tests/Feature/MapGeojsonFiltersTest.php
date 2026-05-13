@@ -5,6 +5,18 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
+it('serves standard public map when embed query flag is absent', function () {
+    $response = $this->get(route('map.public'));
+
+    $response->assertOk()->assertViewIs('map');
+});
+
+it('serves embed map template when embed query flag is present', function () {
+    $response = $this->get(route('map.public', ['embed' => 1]));
+
+    $response->assertOk()->assertViewIs('map-embed');
+});
+
 it('filters geojson by status when requested', function () {
     $received = Report::factory()->create([
         'status' => 'received',

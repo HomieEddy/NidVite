@@ -64,18 +64,21 @@ new class extends Component
 
     public string $submittedTrackingQrSvg = '';
 
+    public ?ReportCategory $potholeCategory = null;
+
     public function mount(): void
     {
         $this->honeypotData = new HoneypotData;
-        $pothole = ReportCategory::where('slug', 'pothole')->first();
-        if ($pothole) {
-            $this->category_id = $pothole->id;
+        $this->potholeCategory = ReportCategory::where('slug', 'pothole')->first();
+
+        if ($this->potholeCategory !== null) {
+            $this->category_id = $this->potholeCategory->id;
         }
     }
 
     public function getPotholeCategoryProperty()
     {
-        return ReportCategory::where('slug', 'pothole')->first();
+        return $this->potholeCategory;
     }
 
     public function getNeighborhoodsProperty(): array
@@ -182,7 +185,11 @@ new class extends Component
         $this->submittedTrackingUrl = route('report.tracking', ['trackingId' => $report->public_tracking_id]);
         $this->submittedTrackingQrSvg = $this->makeQrSvg($this->submittedTrackingUrl);
         $this->submitted = true;
-        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'recaptcha_response']);
+        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'location_accuracy', 'location_source', 'recaptcha_response']);
+
+        if ($this->potholeCategory !== null) {
+            $this->category_id = $this->potholeCategory->id;
+        }
     }
 
     public function getCategoriesProperty()
@@ -192,7 +199,8 @@ new class extends Component
 
     private function makeQrSvg(string $content): string
     {
-        $writer = new Writer(new ImageRenderer(new RendererStyle(168, 1), new SvgImageBackEnd));
+        $qrSize = (int) config('tracking_experience.qr.size', 168);
+        $writer = new Writer(new ImageRenderer(new RendererStyle($qrSize, 1), new SvgImageBackEnd));
 
         return $writer->writeString($content);
     }
@@ -217,6 +225,7 @@ new class extends Component
         photoSevereMessage: @js(__('report.photo_quality_severe')),
         geolocationNotSupported: @js(__('report.geolocation_not_supported')),
         geolocationFailed: @js(__('report.geolocation_failed')),
+        nominatimContactEmail: @js(config('services.nominatim.contact_email')),
     })"
     x-init="$nextTick(() => { setTimeout(() => initMap(), 100); })">
     <div class="pointer-events-none absolute -top-24 -left-16 h-52 w-52 rounded-full bg-amber-300/25 blur-3xl"></div>

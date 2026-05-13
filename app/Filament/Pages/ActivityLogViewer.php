@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\User;
 use BackedEnum;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -118,25 +119,42 @@ class ActivityLogViewer extends Page implements HasTable
                     ->toggleable(),
             ])
             ->filters([
-                SelectFilter::make('causer_id')
+                Filter::make('causer_id')
                     ->label(__('filament.activity_log.filters.user'))
-                    ->options(
-                        User::query()
-                            ->orderBy('name')
-                            ->pluck('name', 'id')
-                            ->all()
-                    ),
-                SelectFilter::make('description')
+                    ->schema([
+                        TextInput::make('value')
+                            ->placeholder(__('filament.activity_log.columns.user')),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $value = trim((string) ($data['value'] ?? ''));
+
+                        if ($value === '') {
+                            return $query;
+                        }
+
+                        return $query->where(function (Builder $nested) use ($value): void {
+                            $nested->where('causer_id', 'like', "%{$value}%")
+                                ->orWhereHasMorph('causer', [User::class], function (Builder $causerQuery) use ($value): void {
+                                    $causerQuery->where('name', 'like', "%{$value}%")
+                                        ->orWhere('email', 'like', "%{$value}%");
+                                });
+                        });
+                    }),
+                Filter::make('description')
                     ->label(__('filament.activity_log.filters.action'))
-                    ->options(
-                        Activity::query()
-                            ->select('description')
-                            ->whereNotNull('description')
-                            ->distinct()
-                            ->orderBy('description')
-                            ->pluck('description', 'description')
-                            ->all()
-                    ),
+                    ->schema([
+                        TextInput::make('value')
+                            ->placeholder(__('filament.activity_log.columns.action')),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $value = trim((string) ($data['value'] ?? ''));
+
+                        if ($value === '') {
+                            return $query;
+                        }
+
+                        return $query->where('description', 'like', "%{$value}%");
+                    }),
                 SelectFilter::make('event')
                     ->label(__('filament.activity_log.filters.event'))
                     ->options(

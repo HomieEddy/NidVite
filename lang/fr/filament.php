@@ -44,6 +44,11 @@ return [
             'severity' => 'Severite',
             'date' => 'Periode',
         ],
+        'values' => [
+            'severity_critical' => 'CRITIQUE',
+            'severity_high' => 'ELEVEE',
+            'severity_medium' => 'MOYENNE',
+        ],
     ],
 
     'notifications' => [
@@ -191,6 +196,7 @@ return [
                     'assign_contractor' => [
                         'label' => 'Assigner un entrepreneur',
                         'contractor' => 'Entrepreneur',
+                        'invalid_contractor' => 'L\'entrepreneur selectionne est invalide ou inactif.',
                     ],
                     'request_more_info' => [
                         'label' => 'Demander plus d\'infos',

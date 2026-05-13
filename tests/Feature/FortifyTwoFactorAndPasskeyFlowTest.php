@@ -20,6 +20,7 @@ it('keeps two-factor management endpoints behind authentication', function () {
 });
 
 it('allows authenticated users to enable and disable two-factor authentication', function () {
+    /** @var User $admin */
     $admin = User::factory()->create([
         'role_id' => Role::where('slug', 'admin')->value('id'),
         'is_active' => true,
@@ -41,6 +42,7 @@ it('allows authenticated users to enable and disable two-factor authentication',
 });
 
 it('returns passkey registration options for authenticated users', function () {
+    /** @var User $admin */
     $admin = User::factory()->create([
         'role_id' => Role::where('slug', 'admin')->value('id'),
         'is_active' => true,
@@ -59,4 +61,24 @@ it('returns passkey registration options for authenticated users', function () {
 
     expect(is_array($payload))->toBeTrue();
     expect($challenge)->not->toBeNull();
+});
+
+it('requires authentication for passkey registration options', function () {
+    $response = $this->getJson(route('passkey.registration-options'));
+
+    expect($response->getStatusCode())->toBe(401);
+});
+
+it('rejects unsupported method on passkey registration options endpoint', function () {
+    /** @var User $admin */
+    $admin = User::factory()->create([
+        'role_id' => Role::where('slug', 'admin')->value('id'),
+        'is_active' => true,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->postJson(route('passkey.registration-options'));
+
+    expect($response->getStatusCode())->toBe(405);
 });

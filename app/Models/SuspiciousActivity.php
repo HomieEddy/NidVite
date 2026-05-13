@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SuspiciousActivity extends Model
 {
-    use HasFactory;
+    use HasFactory, Prunable;
 
     protected $fillable = [
         'report_id',
@@ -20,7 +22,23 @@ class SuspiciousActivity extends Model
 
     protected $casts = [
         'metadata' => 'array',
+        'expires_at' => 'datetime',
     ];
+
+    public function prunable(): Builder
+    {
+        $retentionDays = max(1, (int) config('activity_intelligence.retention_days', 180));
+
+        return static::query()
+            ->where(function (Builder $query): void {
+                $query->whereNotNull('expires_at')
+                    ->where('expires_at', '<=', now());
+            })
+            ->orWhere(function (Builder $query) use ($retentionDays): void {
+                $query->whereNull('expires_at')
+                    ->where('created_at', '<=', now()->subDays($retentionDays));
+            });
+    }
 
     public function report(): BelongsTo
     {

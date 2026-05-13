@@ -80,6 +80,24 @@ it('sends follower email once per day and includes signed unsubscribe link', fun
     Mail::assertNothingQueued();
 });
 
+it('does not send email to expired followers', function () {
+    $report = Report::factory()->create([
+        'status' => 'received',
+        'reporter_email' => null,
+    ]);
+
+    $report->followers()->create([
+        'email' => 'follower@example.com',
+        'preferred_locale' => 'fr',
+        'is_active' => true,
+        'expires_at' => now()->subDay(),
+    ]);
+
+    $report->transitionTo('verified');
+
+    Mail::assertNothingQueued();
+});
+
 it('sends email with rejection reason when report is rejected', function () {
     $report = Report::factory()->create([
         'status' => 'received',

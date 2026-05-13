@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'public_api_rate_limit_per_minute' => max(1, (int) env('TRACKING_PUBLIC_API_RATE_LIMIT_PER_MINUTE', 60)),
+
     'eta' => [
         'status_days' => [
             'received' => ['min' => 2, 'max' => 4],
@@ -28,6 +30,14 @@ return [
         'radius_meters' => 50,
         'window_days' => 30,
         'open_statuses' => ['received', 'verified', 'scheduled', 'in_progress'],
+    ],
+
+    'followers' => [
+        'retention_days' => max(1, (int) env('TRACKING_FOLLOWER_RETENTION_DAYS', 365)),
+    ],
+
+    'qr' => [
+        'size' => (int) env('TRACKING_QR_SIZE', 168),
     ],
 
     'evidence' => [

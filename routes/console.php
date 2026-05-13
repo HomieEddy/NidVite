@@ -19,6 +19,13 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Artisan::command('ops:opcache-clear', function () {
+    if (PHP_SAPI === 'cli') {
+        $this->warn('Running in CLI mode: opcache_reset() would only affect the CLI runtime cache, not PHP-FPM workers.');
+        $this->info('No PHP-FPM OPcache reset was attempted from CLI.');
+
+        return 0;
+    }
+
     if (! function_exists('opcache_reset')) {
         $this->warn('OPcache extension is not enabled for this PHP runtime.');
 

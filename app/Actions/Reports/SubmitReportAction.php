@@ -58,28 +58,38 @@ class SubmitReportAction
             }
         }
 
-        $report = DB::transaction(function () use ($validated, $latitude, $longitude, $locationAccuracy, $locationSource, $validation): Report {
-            $report = Report::create([
-                'reporter_email' => (string) $validated['reporter_email'],
-                'preferred_locale' => app()->getLocale(),
-                'category_id' => (int) $validated['category_id'],
-                'description' => (string) $validated['description'],
-                'address' => (string) $validated['address'],
-                'neighborhood' => filled($validated['neighborhood'] ?? null) ? (string) $validated['neighborhood'] : null,
-                'borough' => filled($validated['borough'] ?? null) ? (string) $validated['borough'] : null,
-            ]);
+        try {
+            $report = DB::transaction(function () use ($validated, $latitude, $longitude, $locationAccuracy, $locationSource, $validation): Report {
+                $report = Report::create([
+                    'reporter_email' => (string) $validated['reporter_email'],
+                    'preferred_locale' => app()->getLocale(),
+                    'category_id' => (int) $validated['category_id'],
+                    'description' => (string) $validated['description'],
+                    'address' => (string) $validated['address'],
+                    'neighborhood' => filled($validated['neighborhood'] ?? null) ? (string) $validated['neighborhood'] : null,
+                    'borough' => filled($validated['borough'] ?? null) ? (string) $validated['borough'] : null,
+                ]);
 
-            $report->road_distance_meters = $validation['distance_meters'];
-            $report->road_validation_decision = $validation['decision'];
-            $report->road_validation_reason = $validation['reason'];
-            $report->road_validation_mode = $validation['mode'];
-            $report->location_accuracy_passed = (bool) $validation['accuracy_passed'];
-            $report->save();
+                $report->road_distance_meters = $validation['distance_meters'];
+                $report->road_validation_decision = $validation['decision'];
+                $report->road_validation_reason = $validation['reason'];
+                $report->road_validation_mode = $validation['mode'];
+                $report->location_accuracy_passed = (bool) $validation['accuracy_passed'];
+                $report->save();
 
-            $report->setLocation($latitude, $longitude, $locationAccuracy, $locationSource);
+                $report->setLocation($latitude, $longitude, $locationAccuracy, $locationSource);
 
-            return $report;
-        });
+                return $report;
+            });
+        } catch (\Throwable $e) {
+            foreach ($preparedPhotos as $preparedPhoto) {
+                if (is_file($preparedPhoto['path'])) {
+                    @unlink($preparedPhoto['path']);
+                }
+            }
+
+            throw $e;
+        }
 
         try {
             foreach ($preparedPhotos as $preparedPhoto) {
@@ -96,6 +106,13 @@ class SubmitReportAction
                 if (is_file($preparedPhoto['path'])) {
                     @unlink($preparedPhoto['path']);
                 }
+            }
+
+            try {
+                $report->clearMediaCollection('report-photos');
+                $report->forceDelete();
+            } catch (\Throwable $cleanupException) {
+                report($cleanupException);
             }
 
             report($e);

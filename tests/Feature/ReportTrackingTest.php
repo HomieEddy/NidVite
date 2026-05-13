@@ -30,6 +30,12 @@ it('returns 404 for invalid tracking id', function () {
     $this->get('/suivi/invalid-tracking-id')->assertStatus(404);
 });
 
+it('returns 404 json payload for invalid tracking lookup id', function () {
+    $response = $this->getJson(route('api.reports.lookup', ['trackingId' => 'invalid-tracking-id']));
+
+    $response->assertNotFound();
+});
+
 it('shows correct timeline for received report', function () {
     $report = Report::factory()->create(['status' => 'received']);
 
@@ -172,6 +178,7 @@ it('updates notification preference from tracking page', function () {
 
 it('deduplicates report followers by report and email', function () {
     $report = Report::factory()->create();
+    config()->set('tracking_experience.followers.retention_days', 30);
 
     $first = $this->post(route('report.followers.store', ['trackingId' => $report->public_tracking_id]), [
         'email' => 'follow@example.com',
@@ -186,6 +193,12 @@ it('deduplicates report followers by report and email', function () {
     $second->assertRedirect(route('report.tracking', ['trackingId' => $report->public_tracking_id]));
 
     expect(ReportFollower::query()->where('report_id', $report->id)->where('email', 'follow@example.com')->count())->toBe(1);
+
+    $follower = ReportFollower::query()->where('report_id', $report->id)->where('email', 'follow@example.com')->first();
+    expect($follower)->not->toBeNull();
+    expect($follower->expires_at)->not->toBeNull();
+    expect($follower->expires_at?->greaterThan(now()->addDays(29)))->toBeTrue();
+    expect($follower->expires_at?->lessThanOrEqualTo(now()->addDays(30)->addMinute()))->toBeTrue();
 });
 
 it('unsubscribes follower with signed link', function () {
@@ -209,4 +222,50 @@ it('unsubscribes follower with signed link', function () {
     $follower->refresh();
     expect($follower->is_active)->toBeFalse();
     expect($follower->unsubscribed_at)->not->toBeNull();
+});
+
+it('rejects tampered unsubscribe signed links', function () {
+    $report = Report::factory()->create();
+
+    $follower = $report->followers()->create([
+        'email' => 'follow@example.com',
+        'preferred_locale' => 'fr',
+        'is_active' => true,
+    ]);
+
+    $url = URL::temporarySignedRoute('report.followers.unsubscribe', now()->addMinutes(10), [
+        'trackingId' => $report->public_tracking_id,
+        'follower' => $follower->id,
+    ]);
+
+    $response = $this->get($url.'&tampered=1');
+
+    $response->assertForbidden();
+
+    $follower->refresh();
+    expect($follower->is_active)->toBeTrue();
+    expect($follower->unsubscribed_at)->toBeNull();
+});
+
+it('rejects expired unsubscribe signed links', function () {
+    $report = Report::factory()->create();
+
+    $follower = $report->followers()->create([
+        'email' => 'follow@example.com',
+        'preferred_locale' => 'fr',
+        'is_active' => true,
+    ]);
+
+    $url = URL::temporarySignedRoute('report.followers.unsubscribe', now()->subMinute(), [
+        'trackingId' => $report->public_tracking_id,
+        'follower' => $follower->id,
+    ]);
+
+    $response = $this->get($url);
+
+    $response->assertForbidden();
+
+    $follower->refresh();
+    expect($follower->is_active)->toBeTrue();
+    expect($follower->unsubscribed_at)->toBeNull();
 });

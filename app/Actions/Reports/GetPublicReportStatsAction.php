@@ -12,28 +12,35 @@ class GetPublicReportStatsAction
      */
     public function __invoke(string $locale): array
     {
-        $visibleReports = Report::query()
+        $pendingStatuses = [
+            ReportStatus::Received->value,
+            ReportStatus::Verified->value,
+            ReportStatus::Scheduled->value,
+            ReportStatus::InProgress->value,
+        ];
+
+        $stats = Report::query()
             ->where('is_spam', false)
             ->where('status', '!=', ReportStatus::Rejected->value)
-            ->whereNotNull('location');
+            ->whereNotNull('location')
+            ->selectRaw(
+                'COUNT(*) AS total_reported,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS total_fixed,
+                SUM(CASE WHEN status IN (?, ?, ?, ?) THEN 1 ELSE 0 END) AS total_pending,
+                AVG(CASE WHEN status = ? AND completed_at IS NOT NULL AND created_at IS NOT NULL
+                    THEN EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400 END) AS avg_days',
+                [
+                    ReportStatus::Repaired->value,
+                    ...$pendingStatuses,
+                    ReportStatus::Repaired->value,
+                ]
+            )
+            ->first();
 
-        $totalReported = (clone $visibleReports)->count();
-        $totalFixed = (clone $visibleReports)->where('status', ReportStatus::Repaired->value)->count();
-        $totalPending = (clone $visibleReports)
-            ->whereIn('status', [
-                ReportStatus::Received->value,
-                ReportStatus::Verified->value,
-                ReportStatus::Scheduled->value,
-                ReportStatus::InProgress->value,
-            ])
-            ->count();
-
-        $avgDays = (clone $visibleReports)
-            ->where('status', ReportStatus::Repaired->value)
-            ->whereNotNull('completed_at')
-            ->whereNotNull('created_at')
-            ->selectRaw('AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400) as avg_days')
-            ->value('avg_days');
+        $totalReported = (int) ($stats?->total_reported ?? 0);
+        $totalFixed = (int) ($stats?->total_fixed ?? 0);
+        $totalPending = (int) ($stats?->total_pending ?? 0);
+        $avgDays = $stats?->avg_days;
 
         $velocity = null;
         if ($avgDays !== null) {

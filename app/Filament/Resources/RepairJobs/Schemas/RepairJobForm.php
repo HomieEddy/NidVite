@@ -4,13 +4,11 @@ namespace App\Filament\Resources\RepairJobs\Schemas;
 
 use App\Models\Report;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 
 class RepairJobForm
 {
@@ -18,8 +16,6 @@ class RepairJobForm
     {
         return $schema
             ->components([
-                Hidden::make('created_by')
-                    ->default(fn (): int => Auth::id() ?? throw new \RuntimeException('Authenticated user required for created_by.')),
                 TextInput::make('title')
                     ->label(__('filament.admin.fields_common.title'))
                     ->required(),
@@ -31,20 +27,20 @@ class RepairJobForm
                         modifyQueryUsing: fn (Builder $query) => $query
                             ->where('reports.status', 'received')
                     )
-                    ->getOptionLabelFromRecordUsing(fn (Report $record): string => implode(' | ', array_filter([
+                    ->getOptionLabelFromRecordUsing(fn (Report $record): string => ($label = implode(' | ', array_filter([
                         $record->address,
                         $record->borough,
                         $record->neighborhood,
-                    ])))
+                    ]))) !== '' ? $label : $record->public_tracking_id)
                     ->getOptionLabelsUsing(fn (array $values): array => Report::query()
                         ->whereIn('id', $values)
-                        ->get(['id', 'address', 'borough', 'neighborhood'])
+                        ->get(['id', 'public_tracking_id', 'address', 'borough', 'neighborhood'])
                         ->mapWithKeys(fn (Report $record): array => [
-                            $record->id => implode(' | ', array_filter([
+                            $record->id => ($label = implode(' | ', array_filter([
                                 $record->address,
                                 $record->borough,
                                 $record->neighborhood,
-                            ])),
+                            ]))) !== '' ? $label : $record->public_tracking_id,
                         ])
                         ->all())
                     ->multiple()

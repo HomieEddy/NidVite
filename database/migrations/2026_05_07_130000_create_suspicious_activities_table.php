@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('severity', 20)->index();
             $table->string('reason', 500);
             $table->json('metadata')->nullable();
+            $table->timestamp('expires_at')->nullable()->index();
             $table->timestamps();
 
             $table->index(['created_at', 'type']);

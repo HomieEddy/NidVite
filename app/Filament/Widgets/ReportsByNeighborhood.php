@@ -11,14 +11,18 @@ class ReportsByNeighborhood extends ChartWidget
 
     protected static ?int $sort = 60;
 
-    protected ?string $heading = null;
-
-    protected ?string $description = null;
-
-    public function __construct()
+    public function getHeading(): string
     {
-        $this->heading = __('dashboard.neighborhood_cost_analysis');
-        $this->description = __('dashboard.last_30_days');
+        return __('dashboard.neighborhood_cost_analysis');
+    }
+
+    public function getDescription(): ?string
+    {
+        return match ($this->filter) {
+            '7d' => __('dashboard.last_7_days'),
+            '90d' => __('dashboard.last_90_days'),
+            default => __('dashboard.last_30_days'),
+        };
     }
 
     protected function getType(): string
@@ -41,12 +45,6 @@ class ReportsByNeighborhood extends ChartWidget
             '7d' => 7,
             '90d' => 90,
             default => 30,
-        };
-
-        $this->description = match ($this->filter) {
-            '7d' => __('dashboard.last_7_days'),
-            '90d' => __('dashboard.last_90_days'),
-            default => __('dashboard.last_30_days'),
         };
 
         $start = now()->subDays($days - 1)->startOfDay();

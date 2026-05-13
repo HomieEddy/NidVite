@@ -44,21 +44,16 @@ class ReportTrackingController extends Controller
         $radiusMeters = (int) config('tracking_experience.duplicate_nudge.radius_meters', 50);
         $windowDays = (int) config('tracking_experience.duplicate_nudge.window_days', 30);
         $openStatuses = config('tracking_experience.duplicate_nudge.open_statuses', ['received', 'verified', 'scheduled', 'in_progress']);
+        $distanceExpression = 'ROUND(ST_Distance(location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography))';
 
         $report = Report::query()
             ->select(['id', 'public_tracking_id', 'status', 'address', 'created_at'])
-            ->selectRaw(
-                'ROUND(ST_Distance(location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography)) AS distance_meters',
-                [$longitude, $latitude]
-            )
+            ->selectRaw("{$distanceExpression} AS distance_meters", [$longitude, $latitude])
             ->whereNotNull('location')
             ->whereIn('status', $openStatuses)
             ->where('created_at', '>=', now()->subDays($windowDays))
             ->near($latitude, $longitude, $radiusMeters)
-            ->orderByRaw(
-                'ST_Distance(location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) ASC',
-                [$longitude, $latitude]
-            )
+            ->orderBy('distance_meters')
             ->first();
 
         if ($report === null) {
@@ -102,40 +97,36 @@ class ReportTrackingController extends Controller
         $report = Report::where('public_tracking_id', $trackingId)->firstOrFail();
 
         $validated = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', 'email', 'max:255'],
         ]);
 
         $email = mb_strtolower(trim((string) $validated['email']));
+        $retentionDays = max(1, (int) config('tracking_experience.followers.retention_days', 365));
+        $expiresAt = now()->addDays($retentionDays);
 
-        $existingFollower = $report->followers()->where('email', $email)->first();
+        $alreadyActive = $report->followers()
+            ->where('email', $email)
+            ->where('is_active', true)
+            ->exists();
 
-        if ($existingFollower !== null && $existingFollower->is_active) {
-            return redirect()
-                ->route('report.tracking', ['trackingId' => $report->public_tracking_id])
-                ->with('tracking_notice', __('tracking.follow_already_active'));
+        if (! $alreadyActive) {
+            ReportFollower::upsert([
+                [
+                    'report_id' => $report->id,
+                    'email' => $email,
+                    'preferred_locale' => app()->getLocale(),
+                    'is_active' => true,
+                    'unsubscribed_at' => null,
+                    'expires_at' => $expiresAt,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            ], ['report_id', 'email'], ['preferred_locale', 'is_active', 'unsubscribed_at', 'expires_at', 'updated_at']);
         }
-
-        if ($existingFollower !== null) {
-            $existingFollower->update([
-                'is_active' => true,
-                'unsubscribed_at' => null,
-                'preferred_locale' => app()->getLocale(),
-            ]);
-
-            return redirect()
-                ->route('report.tracking', ['trackingId' => $report->public_tracking_id])
-                ->with('tracking_notice', __('tracking.follow_saved'));
-        }
-
-        $report->followers()->create([
-            'email' => $email,
-            'preferred_locale' => app()->getLocale(),
-            'is_active' => true,
-        ]);
 
         return redirect()
             ->route('report.tracking', ['trackingId' => $report->public_tracking_id])
-            ->with('tracking_notice', __('tracking.follow_saved'));
+            ->with('tracking_notice', __($alreadyActive ? 'tracking.follow_already_active' : 'tracking.follow_saved'));
     }
 
     public function unsubscribe(string $trackingId, ReportFollower $follower): RedirectResponse
@@ -202,7 +193,8 @@ class ReportTrackingController extends Controller
 
     private function makeQrSvg(string $content): string
     {
-        $writer = new Writer(new ImageRenderer(new RendererStyle(168, 1), new SvgImageBackEnd));
+        $qrSize = (int) config('tracking_experience.qr.size', 168);
+        $writer = new Writer(new ImageRenderer(new RendererStyle($qrSize, 1), new SvgImageBackEnd));
 
         return $writer->writeString($content);
     }

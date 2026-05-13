@@ -20,9 +20,7 @@ class MapController extends Controller
             return view('map-embed');
         }
 
-        return view('map', [
-            'embedded' => $request->boolean('embed'),
-        ]);
+        return view('map');
     }
 
     /**

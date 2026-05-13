@@ -350,6 +350,21 @@ class ReportsTable
                                 return;
                             }
 
+                            $isEligibleContractor = User::query()
+                                ->whereKey($contractorId)
+                                ->where('is_active', true)
+                                ->whereHas('role', fn ($query) => $query->where('slug', 'service_worker'))
+                                ->exists();
+
+                            if (! $isEligibleContractor) {
+                                Notification::make()
+                                    ->title(__('filament.admin.resources.reports.bulk_actions.assign_contractor.invalid_contractor'))
+                                    ->danger()
+                                    ->send();
+
+                                return;
+                            }
+
                             $parent = activity('report_batch')
                                 ->causedBy($user)
                                 ->withProperties([

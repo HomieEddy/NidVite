@@ -44,6 +44,11 @@ return [
             'severity' => 'Severity',
             'date' => 'Date range',
         ],
+        'values' => [
+            'severity_critical' => 'CRITICAL',
+            'severity_high' => 'HIGH',
+            'severity_medium' => 'MEDIUM',
+        ],
     ],
 
     'notifications' => [
@@ -191,6 +196,7 @@ return [
                     'assign_contractor' => [
                         'label' => 'Assign Contractor',
                         'contractor' => 'Contractor',
+                        'invalid_contractor' => 'Selected contractor is invalid or inactive.',
                     ],
                     'request_more_info' => [
                         'label' => 'Request More Info',

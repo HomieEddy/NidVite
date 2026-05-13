@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Route;
 use Spatie\Health\Http\Controllers\HealthCheckJsonResultsController;
 use Spatie\ResponseCache\Middlewares\CacheResponse;
 
+$publicApiThrottle = sprintf('%d,1', max(1, (int) config('tracking_experience.public_api_rate_limit_per_minute', 60)));
+
 Route::get('/', [HomeController::class, 'index'])->when(! app()->environment('staging'), function ($route) {
     $route->middleware(CacheResponse::class);
 });
@@ -49,23 +51,23 @@ Route::get('/carte', [MapController::class, 'index'])
 
 Route::get('/api/reports/geojson', [MapController::class, 'geojson'])
     ->name('api.reports.geojson')
-    ->middleware('throttle:60,1');
+    ->middleware('throttle:'.$publicApiThrottle);
 
 Route::get('/api/reports/{trackingId}/lookup', [ReportTrackingController::class, 'lookup'])
     ->name('api.reports.lookup')
     ->where('trackingId', 'MTL[A-Z0-9]{8}')
-    ->middleware('throttle:60,1');
+    ->middleware('throttle:'.$publicApiThrottle);
 
 Route::get('/api/reports/duplicate-hint', [ReportTrackingController::class, 'duplicateHint'])
     ->name('api.reports.duplicate-hint')
-    ->middleware('throttle:60,1');
+    ->middleware('throttle:'.$publicApiThrottle);
 
 Route::get('/health', HealthCheckJsonResultsController::class)
     ->name('health.json');
 
 Route::get('/media/{media}', SignedMediaController::class)
     ->name('media.signed')
-    ->middleware(['signed', 'throttle:60,1']);
+    ->middleware(['signed', 'throttle:'.$publicApiThrottle]);
 
 Route::get('/locale/{locale}', function (string $locale) {
     if (in_array($locale, ['fr', 'en'], true)) {

@@ -10,7 +10,8 @@
 
 <div class="pt-2">
     <button type="submit"
-        class="w-full flex justify-center items-center px-6 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-lg text-white bg-linear-to-r from-amber-700 to-orange-500 hover:from-amber-800 hover:to-orange-600 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 btn-touch interactive-lift"
+        class="w-full flex justify-center items-center px-6 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-lg text-white bg-gradient-to-r from-amber-700 to-orange-500 hover:from-amber-800 hover:to-orange-600 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 btn-touch interactive-lift"
+        x-bind:disabled="hasSeverePhotoIssue"
         wire:loading.attr="disabled"
         wire:target="submit">
         <span wire:loading.remove wire:target="submit">{{ __('report.submit') }}</span>
