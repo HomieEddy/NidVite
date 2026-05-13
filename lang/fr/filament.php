@@ -166,6 +166,8 @@ return [
                     'close' => 'Fermer',
                     'export_excel' => 'Exporter Excel',
                     'export_pdf' => 'Exporter PDF',
+                    'verify' => 'Verifier',
+                    'reject' => 'Rejeter',
                     'override_validation' => 'Forcer la validation',
                 ],
                 'saved_views' => [
@@ -210,6 +212,7 @@ return [
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
+                    'tracking_id' => 'ID de suivi',
                     'map' => 'Carte',
                     'status' => 'Statut',
                     'reliability_score' => 'Score de fiabilite',
@@ -337,6 +340,7 @@ return [
                 ],
                 'helper' => [
                     'select_received_reports' => 'Selectionnez au moins un signalement recu a assigner a cette intervention.',
+                    'select_verified_reports' => 'Selectionnez au moins un signalement verifie a assigner a cette intervention.',
                     'not_scheduled' => 'Non planifie',
                 ],
             ],

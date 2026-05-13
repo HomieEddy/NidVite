@@ -166,6 +166,8 @@ return [
                     'close' => 'Close',
                     'export_excel' => 'Export Excel',
                     'export_pdf' => 'Export PDF',
+                    'verify' => 'Verify',
+                    'reject' => 'Reject',
                     'override_validation' => 'Override Validation',
                 ],
                 'saved_views' => [
@@ -210,6 +212,7 @@ return [
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
+                    'tracking_id' => 'Tracking ID',
                     'map' => 'Map',
                     'status' => 'Status',
                     'reliability_score' => 'Reliability Score',
@@ -337,6 +340,7 @@ return [
                 ],
                 'helper' => [
                     'select_received_reports' => 'Select at least one received report to assign to this job.',
+                    'select_verified_reports' => 'Select at least one verified report to assign to this job.',
                     'not_scheduled' => 'Not scheduled',
                 ],
             ],
