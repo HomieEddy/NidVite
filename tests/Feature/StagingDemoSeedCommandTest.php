@@ -1,8 +1,8 @@
 <?php
 
+use App\Models\Report;
 use App\Models\User;
 use Database\Seeders\StagingDemoSeeder;
-use App\Models\Report;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 
