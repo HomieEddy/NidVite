@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('preferred_locale', 5)->default('fr');
             $table->boolean('is_active')->default(true);
             $table->timestamp('unsubscribed_at')->nullable();
+            $table->timestamp('expires_at')->nullable()->index();
             $table->date('last_notified_on')->nullable();
             $table->timestamps();
 

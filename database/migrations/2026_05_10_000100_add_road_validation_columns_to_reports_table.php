@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('reports', function (Blueprint $table) {
-            $table->float('road_distance_meters')->nullable()->after('location_source');
+            $table->decimal('road_distance_meters', 10, 2)->nullable()->after('location_source');
             $table->string('road_validation_decision', 50)->nullable()->after('road_distance_meters');
             $table->string('road_validation_reason', 100)->nullable()->after('road_validation_decision');
             $table->string('road_validation_mode', 20)->nullable()->after('road_validation_reason');
