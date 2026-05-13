@@ -391,6 +391,7 @@ return [
         'modals' => [
             'report_location' => [
                 'address' => 'Address:',
+                'report_map' => 'Report map',
                 'not_specified' => 'Not specified',
                 'coordinates' => 'Coordinates:',
                 'hint' => 'Open the location in a new tab to view the full interactive map.',

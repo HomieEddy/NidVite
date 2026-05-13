@@ -391,6 +391,7 @@ return [
         'modals' => [
             'report_location' => [
                 'address' => 'Adresse :',
+                'report_map' => 'Carte du signalement',
                 'not_specified' => 'Non precisee',
                 'coordinates' => 'Coordonnees :',
                 'hint' => 'Ouvrez la localisation dans un nouvel onglet pour voir la carte interactive complete.',
