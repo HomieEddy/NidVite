@@ -100,6 +100,24 @@ function initPublicMapPage() {
 		rejected: '#ef4444',
 	};
 
+	var normalizeLocationPiece = function (value) {
+		if (value === null || value === undefined) {
+			return '';
+		}
+
+		var text = String(value).trim();
+		if (!text) {
+			return '';
+		}
+
+		var lowered = text.toLowerCase();
+		if (lowered === 'montreal' || lowered === 'n/a') {
+			return '';
+		}
+
+		return text;
+	};
+
 	fetch(geojsonUrl)
 		.then(function (response) {
 			return response.json();
@@ -148,8 +166,22 @@ function initPublicMapPage() {
 				popupEl.appendChild(titleEl);
 
 				var hoodEl = document.createElement('p');
-				hoodEl.textContent = props.neighborhood || '';
-				popupEl.appendChild(hoodEl);
+				var neighborhood = normalizeLocationPiece(props.neighborhood);
+				var borough = normalizeLocationPiece(props.borough);
+				var locationParts = [];
+
+				if (neighborhood) {
+					locationParts.push(neighborhood);
+				}
+
+				if (borough && borough.toLowerCase() !== neighborhood.toLowerCase()) {
+					locationParts.push(borough);
+				}
+
+				if (locationParts.length > 0) {
+					hoodEl.textContent = locationParts.join(', ');
+					popupEl.appendChild(hoodEl);
+				}
 
 				var descEl = document.createElement('p');
 				descEl.textContent = props.description
