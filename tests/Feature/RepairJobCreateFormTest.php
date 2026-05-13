@@ -25,7 +25,7 @@ beforeEach(function () {
 
 it('shows the report tracking id and defaults status to planned on the create page', function () {
     $report = Report::factory()->create([
-        'status' => 'received',
+        'status' => 'verified',
         'created_at' => now()->subDays(2),
         'updated_at' => now()->subDays(2),
     ]);
@@ -37,13 +37,13 @@ it('shows the report tracking id and defaults status to planned on the create pa
 
 it('limits scheduled_at to the latest linked report date', function () {
     $olderReport = Report::factory()->create([
-        'status' => 'received',
+        'status' => 'verified',
         'created_at' => now()->subDays(4),
         'updated_at' => now()->subDays(4),
     ]);
 
     $newerReport = Report::factory()->create([
-        'status' => 'received',
+        'status' => 'verified',
         'created_at' => now()->subDay(),
         'updated_at' => now()->subDay(),
     ]);
