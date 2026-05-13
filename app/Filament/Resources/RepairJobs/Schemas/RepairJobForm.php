@@ -25,6 +25,13 @@ class RepairJobForm
                         'reports',
                         'public_tracking_id',
                         modifyQueryUsing: fn (Builder $query) => $query
+                            ->select([
+                                'reports.id',
+                                'reports.public_tracking_id',
+                                'reports.address',
+                                'reports.borough',
+                                'reports.neighborhood',
+                            ])
                             ->where('reports.status', 'received')
                     )
                     ->getOptionLabelFromRecordUsing(fn (Report $record): string => ($label = implode(' | ', array_filter([
