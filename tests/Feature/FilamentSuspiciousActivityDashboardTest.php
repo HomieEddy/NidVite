@@ -6,6 +6,7 @@ use App\Models\SuspiciousActivity;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
@@ -36,6 +37,28 @@ it('forbids non-admin users from accessing suspicious activity dashboard', funct
     $this->actingAs($viewer);
 
     expect(SuspiciousActivityDashboard::canAccess())->toBeFalse();
+});
+
+it('forbids guest access to suspicious activity dashboard', function () {
+    Auth::logout();
+
+    expect(SuspiciousActivityDashboard::canAccess())->toBeFalse();
+});
+
+it('forbids manager, service worker, and accountant roles from suspicious dashboard', function () {
+    $restrictedSlugs = ['manager', 'service_worker', 'accountant'];
+
+    foreach ($restrictedSlugs as $slug) {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'role_id' => Role::where('slug', $slug)->value('id'),
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user);
+
+        expect(SuspiciousActivityDashboard::canAccess())->toBeFalse();
+    }
 });
 
 it('shows suspicious activity rows in the dashboard table', function () {
