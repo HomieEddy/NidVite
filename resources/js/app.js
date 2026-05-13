@@ -197,30 +197,39 @@ function getAlpineDataContext(element) {
 }
 
 function initReportFormBindings() {
-	document.querySelectorAll('form[data-nidvite-recaptcha]').forEach(function (form) {
-		form.addEventListener('submit', function () {
-			if (window.nidviteSyncRecaptchaToken) {
-				window.nidviteSyncRecaptchaToken();
-			}
-		});
-	});
+	if (window.__nidviteReportFormBindingsInitialized) {
+		return;
+	}
 
-	document.querySelectorAll('[data-action="geocode-address"]').forEach(function (input) {
-		input.addEventListener('blur', function () {
-			var alpineData = getAlpineDataContext(input);
-			if (alpineData && typeof alpineData.geocodeAddress === 'function') {
-				alpineData.geocodeAddress();
-			}
-		});
-	});
+	window.__nidviteReportFormBindingsInitialized = true;
 
-	document.querySelectorAll('[data-action="capture-location"]').forEach(function (button) {
-		button.addEventListener('click', function () {
-			var alpineData = getAlpineDataContext(button);
-			if (alpineData && typeof alpineData.captureLocation === 'function') {
-				alpineData.captureLocation();
-			}
-		});
+	document.addEventListener('submit', function (event) {
+		var form = event.target && event.target.closest ? event.target.closest('form[data-nidvite-recaptcha]') : null;
+		if (!form) return;
+
+		if (window.nidviteSyncRecaptchaToken) {
+			window.nidviteSyncRecaptchaToken();
+		}
+	}, true);
+
+	document.addEventListener('blur', function (event) {
+		var input = event.target && event.target.closest ? event.target.closest('[data-action="geocode-address"]') : null;
+		if (!input) return;
+
+		var alpineData = getAlpineDataContext(input);
+		if (alpineData && typeof alpineData.geocodeAddress === 'function') {
+			alpineData.geocodeAddress();
+		}
+	}, true);
+
+	document.addEventListener('click', function (event) {
+		var button = event.target && event.target.closest ? event.target.closest('[data-action="capture-location"]') : null;
+		if (!button) return;
+
+		var alpineData = getAlpineDataContext(button);
+		if (alpineData && typeof alpineData.captureLocation === 'function') {
+			alpineData.captureLocation();
+		}
 	});
 }
 
