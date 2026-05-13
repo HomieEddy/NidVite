@@ -1,8 +1,6 @@
 var staticCacheName = "pwa-v" + new Date().getTime();
 var filesToCache = [
     '/offline',
-    '/css/app.css',
-    '/js/app.js',
     '/images/icons/icon-72x72.png',
     '/images/icons/icon-96x96.png',
     '/images/icons/icon-128x128.png',
@@ -19,7 +17,19 @@ self.addEventListener("install", event => {
     event.waitUntil(
         caches.open(staticCacheName)
             .then(cache => {
-                return cache.addAll(filesToCache);
+                return Promise.all(
+                    filesToCache.map(url => 
+                        fetch(url)
+                            .then(response => {
+                                if (response.ok) {
+                                    return cache.put(url, response);
+                                }
+                            })
+                            .catch(() => {
+                                // Silently skip failed assets
+                            })
+                    )
+                );
             })
     )
 });
