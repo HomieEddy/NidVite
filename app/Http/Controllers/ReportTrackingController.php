@@ -102,40 +102,33 @@ class ReportTrackingController extends Controller
         $report = Report::where('public_tracking_id', $trackingId)->firstOrFail();
 
         $validated = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', 'email', 'max:255'],
         ]);
 
         $email = mb_strtolower(trim((string) $validated['email']));
 
-        $existingFollower = $report->followers()->where('email', $email)->first();
+        $alreadyActive = $report->followers()
+            ->where('email', $email)
+            ->where('is_active', true)
+            ->exists();
 
-        if ($existingFollower !== null && $existingFollower->is_active) {
-            return redirect()
-                ->route('report.tracking', ['trackingId' => $report->public_tracking_id])
-                ->with('tracking_notice', __('tracking.follow_already_active'));
+        if (! $alreadyActive) {
+            ReportFollower::upsert([
+                [
+                    'report_id' => $report->id,
+                    'email' => $email,
+                    'preferred_locale' => app()->getLocale(),
+                    'is_active' => true,
+                    'unsubscribed_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            ], ['report_id', 'email'], ['preferred_locale', 'is_active', 'unsubscribed_at', 'updated_at']);
         }
-
-        if ($existingFollower !== null) {
-            $existingFollower->update([
-                'is_active' => true,
-                'unsubscribed_at' => null,
-                'preferred_locale' => app()->getLocale(),
-            ]);
-
-            return redirect()
-                ->route('report.tracking', ['trackingId' => $report->public_tracking_id])
-                ->with('tracking_notice', __('tracking.follow_saved'));
-        }
-
-        $report->followers()->create([
-            'email' => $email,
-            'preferred_locale' => app()->getLocale(),
-            'is_active' => true,
-        ]);
 
         return redirect()
             ->route('report.tracking', ['trackingId' => $report->public_tracking_id])
-            ->with('tracking_notice', __('tracking.follow_saved'));
+            ->with('tracking_notice', __($alreadyActive ? 'tracking.follow_already_active' : 'tracking.follow_saved'));
     }
 
     public function unsubscribe(string $trackingId, ReportFollower $follower): RedirectResponse
