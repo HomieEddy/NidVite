@@ -192,7 +192,11 @@ class TestDataSeeder extends Seeder
                 $location = $this->randomMontrealLocation();
                 $nearestRoad = $this->getNearestRoadForLocation($location);
                 $streetName = $nearestRoad['street_name'];
-                $borough = $nearestRoad['borough'];
+                $borough = trim($nearestRoad['borough']);
+
+                if ($borough === '' || in_array(mb_strtolower($borough), ['montreal', 'n/a'], true)) {
+                    $borough = null;
+                }
 
                 $reportId = DB::table('reports')->insertGetId([
                     'uuid' => (string) Str::uuid(),
@@ -204,7 +208,7 @@ class TestDataSeeder extends Seeder
                     'category_id' => $potholeCategoryId,
                     'description' => 'Pothole reported on road surface.',
                     'address' => rand(100, 9999).' '.$streetName,
-                    'neighborhood' => 'Montreal',
+                    'neighborhood' => $borough,
                     'borough' => $borough,
                     'geofence_passed' => true,
                     'is_spam' => false,
