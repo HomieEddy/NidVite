@@ -27,6 +27,11 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Throwable;
 
+/**
+ * @property float|null $latitude Dynamic property added by withCoordinates() scope
+ * @property float|null $longitude Dynamic property added by withCoordinates() scope
+ * @property float|null $avg_days Aggregated average days from query
+ */
 class Report extends Model implements HasMedia
 {
     use HasFactory, HasReportCoordinates, InteractsWithMedia, LogsActivity, SoftDeletes;
