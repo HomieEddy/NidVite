@@ -191,6 +191,7 @@ return [
                     'assign_contractor' => [
                         'label' => 'Assign Contractor',
                         'contractor' => 'Contractor',
+                        'invalid_contractor' => 'Selected contractor is invalid or inactive.',
                     ],
                     'request_more_info' => [
                         'label' => 'Request More Info',

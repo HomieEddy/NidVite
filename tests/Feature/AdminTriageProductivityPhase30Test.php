@@ -168,6 +168,68 @@ it('bulk assign-contractor sets contractor and only transitions verified reports
         ->and($parent?->properties['blocked_count'])->toBe(1);
 });
 
+it('bulk assign-contractor ignores invalid contractor ids from tampered payloads', function () {
+    /** @var User $admin */
+    $admin = User::factory()->create([
+        'role_id' => Role::where('slug', 'admin')->value('id'),
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($admin);
+
+    /** @var User $inactiveContractor */
+    $inactiveContractor = User::factory()->create([
+        'role_id' => Role::where('slug', 'service_worker')->value('id'),
+        'is_active' => false,
+    ]);
+
+    $verified = Report::factory()->create(['status' => 'verified']);
+
+    Livewire::test(ListReports::class)
+        ->callTableBulkAction('assign_contractor', [$verified], [
+            'contractor_user_id' => $inactiveContractor->id,
+        ]);
+
+    expect($verified->fresh()->status)->toBe('verified')
+        ->and($verified->fresh()->contractor_user_id)->toBeNull();
+});
+
+it('bulk assign-contractor blocks non-admin users from mutating reports', function () {
+    /** @var User $viewer */
+    $viewer = User::factory()->create([
+        'role_id' => Role::where('slug', 'viewer')->value('id'),
+        'is_active' => true,
+    ]);
+
+    /** @var User $contractor */
+    $contractor = User::factory()->create([
+        'role_id' => Role::where('slug', 'service_worker')->value('id'),
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($viewer);
+
+    $verified = Report::factory()->create(['status' => 'verified']);
+
+    Livewire::test(ListReports::class)
+        ->callTableBulkAction('assign_contractor', [$verified], [
+            'contractor_user_id' => $contractor->id,
+        ]);
+
+    expect($verified->fresh()->status)->toBe('verified')
+        ->and($verified->fresh()->contractor_user_id)->toBeNull();
+
+    $parent = Activity::query()
+        ->where('log_name', 'report_batch')
+        ->where('description', 'Batch assign-contractor started')
+        ->latest('id')
+        ->first();
+
+    expect($parent)->not->toBeNull()
+        ->and($parent?->properties['processed_count'])->toBe(0)
+        ->and($parent?->properties['blocked_count'])->toBe(1);
+});
+
 it('bulk request-more-info appends note and blocks terminal rows', function () {
     /** @var User $admin */
     $admin = User::factory()->create([
