@@ -21,39 +21,7 @@ class TestDataSeeder extends Seeder
 
     private const REJECTED_REPORTS = 10;
 
-    /** @var array<array{float, float}> */
-    private array $montrealCenters = [
-        [45.5017, -73.5673], // Ville-Marie
-        [45.5242, -73.5810], // Plateau
-        [45.5510, -73.6100], // Rosemont
-        [45.5600, -73.5850], // Villeray
-        [45.5300, -73.6200], // Outremont
-        [45.4750, -73.6150], // NDG
-        [45.4650, -73.6000], // Cote-des-Neiges
-        [45.5800, -73.5600], // Ahuntsic
-        [45.5550, -73.6350], // Saint-Laurent
-        [45.5100, -73.6400], // Snowdon
-    ];
 
-    private array $streets = [
-        'Rue Sainte-Catherine',
-        'Boulevard Saint-Laurent',
-        'Rue Sherbrooke',
-        'Boulevard Rene-Levesque',
-        'Rue Ontario',
-        'Rue Saint-Denis',
-        'Rue Jean-Talon',
-        'Avenue Laurier',
-    ];
-
-    private array $boroughs = [
-        'Ville-Marie',
-        'Le Plateau-Mont-Royal',
-        'Rosemont-La Petite-Patrie',
-        'Villeray-Saint-Michel-Parc-Extension',
-        'Cote-des-Neiges-Notre-Dame-de-Grace',
-        'Ahuntsic-Cartierville',
-    ];
 
     public function run(): void
     {
@@ -224,6 +192,8 @@ class TestDataSeeder extends Seeder
             for ($i = 0; $i < $count; $i++) {
                 $createdAt = now()->subDays(rand(0, 29))->subMinutes(rand(0, 1439));
                 $location = $this->randomMontrealLocation();
+                $streetName = $this->getStreetNameForLocation($location);
+                $borough = $this->getBoroughForLocation($location);
 
                 $reportId = DB::table('reports')->insertGetId([
                     'uuid' => (string) Str::uuid(),
@@ -234,9 +204,9 @@ class TestDataSeeder extends Seeder
                     'priority' => 'normal',
                     'category_id' => $potholeCategoryId,
                     'description' => 'Pothole reported on road surface.',
-                    'address' => rand(100, 9999).' '.$this->streets[array_rand($this->streets)],
+                    'address' => rand(100, 9999).' '.$streetName,
                     'neighborhood' => 'Montreal',
-                    'borough' => $this->boroughs[array_rand($this->boroughs)],
+                    'borough' => $borough,
                     'geofence_passed' => true,
                     'is_spam' => false,
                     'first_scheduled_at' => in_array($status, ['scheduled', 'repaired'], true)
@@ -267,26 +237,77 @@ class TestDataSeeder extends Seeder
     }
 
     /**
-     * Generate a realistic location spread across Montreal.
+     * Generate a realistic location on an actual Montreal street.
      *
      * @return array{float, float} [lat, lng]
      */
     private function randomMontrealLocation(): array
     {
-        $center = $this->montrealCenters[array_rand($this->montrealCenters)];
+        $result = DB::selectOne(
+            "SELECT 
+                ST_Y(point) as lat, 
+                ST_X(point) as lng
+            FROM (
+                SELECT ST_LineInterpolatePoint(geom, random()) as point
+                FROM montreal_roads
+                ORDER BY RANDOM()
+                LIMIT 1
+            ) as t"
+        );
 
-        // About 100m to 1400m offset around a borough center.
-        $offsetLat = random_int(-120, 120) / 10000;
-        $offsetLng = random_int(-170, 170) / 10000;
+        if ($result) {
+            return [round($result->lat, 6), round($result->lng, 6)];
+        }
 
-        $lat = $center[0] + $offsetLat;
-        $lng = $center[1] + $offsetLng;
+        // Fallback to downtown Montreal if no roads exist
+        $offsetLat = random_int(-500, 500) / 10000;
+        $offsetLng = random_int(-500, 500) / 10000;
+        return [round(45.5017 + $offsetLat, 6), round(-73.5673 + $offsetLng, 6)];
+    }
 
-        // Keep points within a broad Montreal bounding box.
-        $lat = max(45.40, min(45.70, $lat));
-        $lng = max(-73.95, min(-73.45, $lng));
+    /**
+     * Get the street name for a location by finding the nearest road.
+     *
+     * @param  array{float, float}  $location [lat, lng]
+     */
+    private function getStreetNameForLocation(array $location): string
+    {
+        $result = DB::selectOne(
+            "SELECT name FROM montreal_roads
+             WHERE ST_DWithin(
+                geom::geography,
+                ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
+                50
+             )
+             ORDER BY ST_Distance(geom::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography)
+             LIMIT 1",
+            [$location[1], $location[0], $location[1], $location[0]]
+        );
 
-        return [round($lat, 6), round($lng, 6)];
+        return $result?->name ? trim($result->name) : 'Unknown Street';
+    }
+
+    /**
+     * Get the borough for a location by finding the nearest road.
+     *
+     * @param  array{float, float}  $location [lat, lng]
+     */
+    private function getBoroughForLocation(array $location): string
+    {
+        $result = DB::selectOne(
+            "SELECT borough FROM montreal_roads
+             WHERE ST_DWithin(
+                geom::geography,
+                ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
+                50
+             )
+             AND borough IS NOT NULL
+             ORDER BY ST_Distance(geom::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography)
+             LIMIT 1",
+            [$location[1], $location[0], $location[1], $location[0]]
+        );
+
+        return $result?->borough ? trim($result->borough) : 'Montreal';
     }
 
     /**
