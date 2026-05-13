@@ -18,7 +18,7 @@ class LowStockMaterialsOverview extends StatsOverviewWidget
         $lowStockCount = Material::query()
             ->where('is_active', true)
             ->where('min_stock_alert', '>', 0)
-            ->whereColumn('current_stock', '<', 'min_stock_alert')
+            ->whereRaw('(current_stock - COALESCE(reserved_stock, 0)) < min_stock_alert')
             ->count();
 
         return [

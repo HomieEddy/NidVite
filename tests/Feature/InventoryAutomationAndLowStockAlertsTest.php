@@ -5,6 +5,7 @@ use App\Models\Material;
 use App\Models\RepairJob;
 use App\Models\Role;
 use App\Models\User;
+use App\Filament\Widgets\LowStockMaterialsOverview;
 use App\Notifications\LowStockMaterialAlertNotification;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -148,4 +149,42 @@ it('sends low-stock notifications to active admin and manager when threshold is 
 
     expect((float) $material->current_stock)->toBe(7.0)
         ->and((float) $material->reserved_stock)->toBe(1.0);
+});
+
+it('counts low stock based on available stock in dashboard widget', function () {
+    Material::query()->create([
+        'sku' => 'MAT-401',
+        'name' => 'Cold Patch',
+        'unit' => 'bag',
+        'current_stock' => 20,
+        'reserved_stock' => 18,
+        'min_stock_alert' => 5,
+        'is_active' => true,
+    ]);
+
+    Material::query()->create([
+        'sku' => 'MAT-402',
+        'name' => 'Aggregate',
+        'unit' => 'kg',
+        'current_stock' => 20,
+        'reserved_stock' => 4,
+        'min_stock_alert' => 5,
+        'is_active' => true,
+    ]);
+
+    $widget = new class extends LowStockMaterialsOverview
+    {
+        /**
+         * @return array<int, \Filament\Widgets\StatsOverviewWidget\Stat>
+         */
+        public function exposedStats(): array
+        {
+            return $this->getStats();
+        }
+    };
+
+    $stats = $widget->exposedStats();
+
+    expect($stats)->toHaveCount(1);
+    expect((int) $stats[0]->getValue())->toBe(1);
 });

@@ -44,6 +44,11 @@ return [
             'severity' => 'Severity',
             'date' => 'Date range',
         ],
+        'values' => [
+            'severity_critical' => 'CRITICAL',
+            'severity_high' => 'HIGH',
+            'severity_medium' => 'MEDIUM',
+        ],
     ],
 
     'notifications' => [

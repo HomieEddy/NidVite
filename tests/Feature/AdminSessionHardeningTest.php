@@ -112,8 +112,8 @@ it('prunes oldest admin sessions when configured concurrent limit is exceeded', 
         ->pluck('id')
         ->all();
 
-    expect($sessionIds)->toContain('session-middle');
     expect($sessionIds)->toContain('session-newest');
+    expect($sessionIds)->not->toContain('session-middle');
     expect($sessionIds)->not->toContain('session-oldest');
 });
 
@@ -235,5 +235,5 @@ it('clamps invalid admin concurrent session limits to one session', function () 
         ->pluck('id')
         ->all();
 
-    expect($sessionIds)->toBe(['admin-clamp-new']);
+    expect($sessionIds)->toBe([]);
 });

@@ -44,6 +44,11 @@ return [
             'severity' => 'Severite',
             'date' => 'Periode',
         ],
+        'values' => [
+            'severity_critical' => 'CRITIQUE',
+            'severity_high' => 'ELEVEE',
+            'severity_medium' => 'MOYENNE',
+        ],
     ],
 
     'notifications' => [

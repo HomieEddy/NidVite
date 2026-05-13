@@ -90,9 +90,9 @@ class SuspiciousActivityDashboard extends Page implements HasTable
                 SelectFilter::make('severity')
                     ->label(__('filament.suspicious_activity.filters.severity'))
                     ->options([
-                        'critical' => 'CRITICAL',
-                        'high' => 'HIGH',
-                        'medium' => 'MEDIUM',
+                        'critical' => __('filament.suspicious_activity.values.severity_critical'),
+                        'high' => __('filament.suspicious_activity.values.severity_high'),
+                        'medium' => __('filament.suspicious_activity.values.severity_medium'),
                     ]),
                 Filter::make('created_at')
                     ->label(__('filament.suspicious_activity.filters.date'))
