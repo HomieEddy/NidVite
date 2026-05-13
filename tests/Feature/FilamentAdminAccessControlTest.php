@@ -22,25 +22,49 @@ it('redirects guests to admin login for protected filament pages', function () {
 });
 
 it('allows active admins to access protected filament pages', function () {
+    /** @var User $admin */
     $admin = User::factory()->create([
         'role_id' => Role::where('slug', 'admin')->value('id'),
         'is_active' => true,
     ]);
 
-    $this->actingAs($admin);
+    $this->actingAs($admin)
+        ->get(ActivityLogViewer::getUrl())
+        ->assertOk();
 
-    expect(ActivityLogViewer::canAccess())->toBeTrue();
-    expect(SuspiciousActivityDashboard::canAccess())->toBeTrue();
+    $this->actingAs($admin)
+        ->get(SuspiciousActivityDashboard::getUrl())
+        ->assertOk();
 });
 
 it('denies viewer access to protected filament pages', function () {
+    /** @var User $viewer */
     $viewer = User::factory()->create([
         'role_id' => Role::where('slug', 'viewer')->value('id'),
         'is_active' => true,
     ]);
 
-    $this->actingAs($viewer);
+    $this->actingAs($viewer)
+        ->get(ActivityLogViewer::getUrl())
+        ->assertForbidden();
 
-    expect(ActivityLogViewer::canAccess())->toBeFalse();
-    expect(SuspiciousActivityDashboard::canAccess())->toBeFalse();
+    $this->actingAs($viewer)
+        ->get(SuspiciousActivityDashboard::getUrl())
+        ->assertForbidden();
+});
+
+it('denies manager access to protected filament pages', function () {
+    /** @var User $manager */
+    $manager = User::factory()->create([
+        'role_id' => Role::where('slug', 'manager')->value('id'),
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($manager)
+        ->get(ActivityLogViewer::getUrl())
+        ->assertForbidden();
+
+    $this->actingAs($manager)
+        ->get(SuspiciousActivityDashboard::getUrl())
+        ->assertForbidden();
 });
