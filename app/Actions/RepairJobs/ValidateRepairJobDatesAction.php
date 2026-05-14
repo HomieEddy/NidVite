@@ -9,12 +9,20 @@ use Illuminate\Validation\ValidationException;
 class ValidateRepairJobDatesAction
 {
     /**
-     * Validate repair job date fields to prevent past/future logic conflicts.
+     * Validate repair job date fields to prevent logical conflicts in scheduling.
      *
-     * @param  array<string, mixed>  $data
-     * @param  array<int|string>  $reportIds
+     * This method enforces three rules:
+     * 1. scheduled_at must not be before the latest linked report's created_at.
+     * 2. started_at must not be before scheduled_at.
+     * 3. completed_at must not be before started_at.
      *
-     * @throws ValidationException
+     * Throws a ValidationException with a localized message if any rule is violated.
+     *
+     * @param array<string, mixed> $data The repair job form data (must include date fields).
+     * @param array<int|string> $reportIds The IDs of the reports linked to the job.
+     *
+     * @throws ValidationException If any date sequence is invalid.
+     * @return void
      */
     public function execute(array $data, array $reportIds): void
     {

@@ -5,9 +5,14 @@ namespace App\Services\RepairJobs;
 class RepairJobStatusMapper
 {
     /**
-     * Map repair job status to corresponding report status.
+     * Map a repair job status to the corresponding report status.
      *
-     * @return string|null The target report status, or null if no mapping exists
+     * This static method provides a central mapping between repair job statuses and
+     * their associated report statuses for synchronization logic. Returns null if
+     * the job status does not have a corresponding report status.
+     *
+     * @param string $jobStatus The status of the repair job (e.g., 'planned', 'in_progress', 'completed').
+     * @return string|null The mapped report status, or null if no mapping exists.
      */
     public static function mapJobStatusToReportStatus(string $jobStatus): ?string
     {

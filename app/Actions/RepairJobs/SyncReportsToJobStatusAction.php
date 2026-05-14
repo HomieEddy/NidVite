@@ -9,9 +9,17 @@ use InvalidArgumentException;
 class SyncReportsToJobStatusAction
 {
     /**
-     * Sync all associated reports to the job's status.
+     * Synchronize the statuses of all associated reports to match the given repair job status.
      *
-     * @param  array<int|string>  $reportIds
+     * This method maps the provided repair job status to the appropriate report status using
+     * RepairJobStatusMapper, and then transitions each report in the provided list of IDs to
+     * the mapped status. If a report cannot be transitioned (e.g., invalid state), the exception
+     * is caught and reported, but processing continues for other reports.
+     *
+     * @param string $jobStatus The status of the repair job (e.g., 'planned', 'in_progress', 'completed').
+     * @param array<int|string> $reportIds The IDs of the reports to synchronize.
+     *
+     * @return void
      */
     public function execute(string $jobStatus, array $reportIds): void
     {
