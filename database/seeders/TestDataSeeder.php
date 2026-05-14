@@ -180,7 +180,7 @@ class TestDataSeeder extends Seeder
         $distribution = [
             'repaired' => (int) floor($validReports * 0.60),
             'scheduled' => (int) floor($validReports * 0.30),
-            'received' => (int) ($validReports - floor($validReports * 0.60) - floor($validReports * 0.30)),
+            'verified' => (int) ($validReports - floor($validReports * 0.60) - floor($validReports * 0.30)),
             'rejected' => self::REJECTED_REPORTS,
         ];
 
