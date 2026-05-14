@@ -18,11 +18,10 @@ class ValidateRepairJobDatesAction
      *
      * Throws a ValidationException with a localized message if any rule is violated.
      *
-     * @param array<string, mixed> $data The repair job form data (must include date fields).
-     * @param array<int|string> $reportIds The IDs of the reports linked to the job.
+     * @param  array<string, mixed>  $data  The repair job form data (must include date fields).
+     * @param  array<int|string>  $reportIds  The IDs of the reports linked to the job.
      *
      * @throws ValidationException If any date sequence is invalid.
-     * @return void
      */
     public function execute(array $data, array $reportIds): void
     {

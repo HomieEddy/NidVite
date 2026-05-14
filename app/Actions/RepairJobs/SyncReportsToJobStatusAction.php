@@ -16,10 +16,8 @@ class SyncReportsToJobStatusAction
      * the mapped status. If a report cannot be transitioned (e.g., invalid state), the exception
      * is caught and reported, but processing continues for other reports.
      *
-     * @param string $jobStatus The status of the repair job (e.g., 'planned', 'in_progress', 'completed').
-     * @param array<int|string> $reportIds The IDs of the reports to synchronize.
-     *
-     * @return void
+     * @param  string  $jobStatus  The status of the repair job (e.g., 'planned', 'in_progress', 'completed').
+     * @param  array<int|string>  $reportIds  The IDs of the reports to synchronize.
      */
     public function execute(string $jobStatus, array $reportIds): void
     {

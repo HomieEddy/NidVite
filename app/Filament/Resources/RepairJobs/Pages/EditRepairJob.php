@@ -5,6 +5,7 @@ namespace App\Filament\Resources\RepairJobs\Pages;
 use App\Actions\RepairJobs\SyncReportsToJobStatusAction;
 use App\Filament\Resources\RepairJobs\RepairJobResource;
 use App\Models\RepairJob;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
@@ -12,11 +13,10 @@ class EditRepairJob extends EditRecord
 {
     protected static string $resource = RepairJobResource::class;
 
-
     /**
      * Get the header actions for the edit repair job page.
      *
-     * @return array<int, \Filament\Actions\Action>
+     * @return array<int, Action>
      */
     protected function getHeaderActions(): array
     {
@@ -27,8 +27,6 @@ class EditRepairJob extends EditRecord
 
     /**
      * After saving the repair job, synchronize report statuses if the job status changed.
-     *
-     * @return void
      */
     protected function afterSave(): void
     {

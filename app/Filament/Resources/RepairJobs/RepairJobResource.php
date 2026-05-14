@@ -22,8 +22,6 @@ class RepairJobResource extends Resource
 
     /**
      * Get the translated navigation label for the repair jobs resource.
-     *
-     * @return string
      */
     public static function getNavigationLabel(): string
     {
@@ -32,8 +30,6 @@ class RepairJobResource extends Resource
 
     /**
      * Get the translated singular model label for the repair job resource.
-     *
-     * @return string
      */
     public static function getModelLabel(): string
     {
@@ -42,8 +38,6 @@ class RepairJobResource extends Resource
 
     /**
      * Get the translated plural model label for the repair jobs resource.
-     *
-     * @return string
      */
     public static function getPluralModelLabel(): string
     {
@@ -52,9 +46,6 @@ class RepairJobResource extends Resource
 
     /**
      * Configure the form schema used by the repair job resource.
-     *
-     * @param  Schema  $schema
-     * @return Schema
      */
     public static function form(Schema $schema): Schema
     {
@@ -63,9 +54,6 @@ class RepairJobResource extends Resource
 
     /**
      * Configure the table schema used by the repair job resource.
-     *
-     * @param  Table  $table
-     * @return Table
      */
     public static function table(Table $table): Table
     {

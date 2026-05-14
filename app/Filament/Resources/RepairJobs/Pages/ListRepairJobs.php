@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\RepairJobs\Pages;
 
 use App\Filament\Resources\RepairJobs\RepairJobResource;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
@@ -13,7 +14,7 @@ class ListRepairJobs extends ListRecords
     /**
      * Get the header actions for the list repair jobs page.
      *
-     * @return array<int, \Filament\Actions\Action>
+     * @return array<int, Action>
      */
     protected function getHeaderActions(): array
     {

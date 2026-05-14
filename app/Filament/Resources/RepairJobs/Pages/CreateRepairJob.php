@@ -35,8 +35,6 @@ class CreateRepairJob extends CreateRecord
 
     /**
      * After creating the repair job, synchronize the statuses of linked reports.
-     *
-     * @return void
      */
     protected function afterCreate(): void
     {

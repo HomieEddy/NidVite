@@ -11,7 +11,7 @@ class RepairJobStatusMapper
      * their associated report statuses for synchronization logic. Returns null if
      * the job status does not have a corresponding report status.
      *
-     * @param string $jobStatus The status of the repair job (e.g., 'planned', 'in_progress', 'completed').
+     * @param  string  $jobStatus  The status of the repair job (e.g., 'planned', 'in_progress', 'completed').
      * @return string|null The mapped report status, or null if no mapping exists.
      */
     public static function mapJobStatusToReportStatus(string $jobStatus): ?string
