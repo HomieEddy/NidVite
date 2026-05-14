@@ -92,12 +92,11 @@ function initPublicMapPage() {
 	}).addTo(map);
 
 	var statusColors = {
-		received: '#d97706',
+		received: '#3b82f6',
 		verified: '#3b82f6',
-		scheduled: '#6366f1',
-		in_progress: '#db2777',
+		scheduled: '#eab308',
+		in_progress: '#eab308',
 		repaired: '#10b981',
-		rejected: '#ef4444',
 	};
 
 	var normalizeLocationPiece = function (value) {

@@ -31,12 +31,11 @@
         letter-spacing: 0.01em;
         margin-bottom: 8px;
     }
-    .report-popup .status-received { background: #fef3c7; color: #92400e; }
+    .report-popup .status-received { background: #dbeafe; color: #1e40af; }
     .report-popup .status-verified { background: #dbeafe; color: #1e40af; }
-    .report-popup .status-scheduled { background: #e0e7ff; color: #3730a3; }
-    .report-popup .status-in_progress { background: #fce7f3; color: #9d174d; }
+    .report-popup .status-scheduled { background: #fef9c3; color: #854d0e; }
+    .report-popup .status-in_progress { background: #fef9c3; color: #854d0e; }
     .report-popup .status-repaired { background: #d1fae5; color: #065f46; }
-    .report-popup .status-rejected { background: #fee2e2; color: #991b1b; }
     .report-popup a {
         display: inline-block;
         padding: 8px 12px;
