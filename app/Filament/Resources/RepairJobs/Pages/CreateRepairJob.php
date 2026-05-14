@@ -14,6 +14,10 @@ class CreateRepairJob extends CreateRecord
     protected static string $resource = RepairJobResource::class;
 
     /**
+     * Mutate the form data before creating a repair job.
+     *
+     * Validates the repair job dates and sets the created_by field.
+     *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
@@ -29,6 +33,11 @@ class CreateRepairJob extends CreateRecord
         return $data;
     }
 
+    /**
+     * After creating the repair job, synchronize the statuses of linked reports.
+     *
+     * @return void
+     */
     protected function afterCreate(): void
     {
         /** @var RepairJob $record */

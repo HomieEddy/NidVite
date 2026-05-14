@@ -12,6 +12,12 @@ class EditRepairJob extends EditRecord
 {
     protected static string $resource = RepairJobResource::class;
 
+
+    /**
+     * Get the header actions for the edit repair job page.
+     *
+     * @return array<int, \Filament\Actions\Action>
+     */
     protected function getHeaderActions(): array
     {
         return [
@@ -19,6 +25,11 @@ class EditRepairJob extends EditRecord
         ];
     }
 
+    /**
+     * After saving the repair job, synchronize report statuses if the job status changed.
+     *
+     * @return void
+     */
     protected function afterSave(): void
     {
         /** @var RepairJob $record */

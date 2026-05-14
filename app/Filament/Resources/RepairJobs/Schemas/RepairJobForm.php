@@ -13,6 +13,14 @@ use Illuminate\Database\Eloquent\Builder;
 
 class RepairJobForm
 {
+    /**
+     * Configure the repair job form schema.
+     *
+     * Adds dynamic minDate constraints and option label logic for reports.
+     *
+     * @param Schema $schema
+     * @return Schema
+     */
     public static function configure(Schema $schema): Schema
     {
         $latestSelectedReportCreatedAt = function (Get $get): ?string {

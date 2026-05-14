@@ -10,6 +10,11 @@ class ListRepairJobs extends ListRecords
 {
     protected static string $resource = RepairJobResource::class;
 
+    /**
+     * Get the header actions for the list repair jobs page.
+     *
+     * @return array<int, \Filament\Actions\Action>
+     */
     protected function getHeaderActions(): array
     {
         return [

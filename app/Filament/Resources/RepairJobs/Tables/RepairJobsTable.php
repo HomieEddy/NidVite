@@ -19,6 +19,14 @@ use Filament\Tables\Table;
 
 class RepairJobsTable
 {
+    /**
+     * Configure the repair jobs table for Filament admin.
+     *
+     * Sets up columns, filters, and actions for the repair jobs listing.
+     *
+     * @param Table $table
+     * @return Table
+     */
     public static function configure(Table $table): Table
     {
         return $table
