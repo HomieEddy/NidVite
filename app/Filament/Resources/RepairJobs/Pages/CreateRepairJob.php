@@ -7,7 +7,9 @@ use App\Actions\RepairJobs\ValidateRepairJobDatesAction;
 use App\Filament\Resources\RepairJobs\RepairJobResource;
 use App\Models\RepairJob;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Throwable;
 
 class CreateRepairJob extends CreateRecord
 {
@@ -41,10 +43,17 @@ class CreateRepairJob extends CreateRecord
         /** @var RepairJob $record */
         $record = $this->record;
 
-        $components = $this->form->getFlatComponents(withActions: false, withHidden: true);
-        $reportsComponent = $components['reports'] ?? null;
-        $reportIds = $reportsComponent !== null ? array_values(array_filter((array) $reportsComponent->getState())) : [];
+        $reportIds = $record->reports()->pluck('reports.id')->all();
 
-        app(SyncReportsToJobStatusAction::class)->execute($record->status, $reportIds);
+        try {
+            app(SyncReportsToJobStatusAction::class)->execute($record->status, $reportIds);
+        } catch (Throwable $e) {
+            report($e);
+
+            Notification::make()
+                ->danger()
+                ->title('Repair job created, but linked reports could not be synchronized.')
+                ->send();
+        }
     }
 }

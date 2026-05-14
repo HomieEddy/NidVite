@@ -57,6 +57,11 @@ return [
         'rejected' => 'Rejected',
     ],
 
+    'auto_rejection' => [
+        'spam' => 'Automatically rejected by spam detection.',
+        'road_validation' => 'Automatically rejected by road validation.',
+    ],
+
     'validation' => [
         'location_required' => 'Please allow geolocation or specify the location.',
         'outside_montreal' => 'This location appears to be outside Montreal. Please report issues located within Montreal only.',

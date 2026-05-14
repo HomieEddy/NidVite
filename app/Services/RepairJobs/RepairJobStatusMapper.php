@@ -2,6 +2,8 @@
 
 namespace App\Services\RepairJobs;
 
+use App\Enums\ReportStatus;
+
 class RepairJobStatusMapper
 {
     /**
@@ -17,9 +19,9 @@ class RepairJobStatusMapper
     public static function mapJobStatusToReportStatus(string $jobStatus): ?string
     {
         return match ($jobStatus) {
-            'planned' => 'scheduled',
-            'in_progress' => 'in_progress',
-            'completed' => 'repaired',
+            'planned' => ReportStatus::Scheduled->value,
+            'in_progress' => ReportStatus::InProgress->value,
+            'completed' => ReportStatus::Repaired->value,
             default => null,
         };
     }

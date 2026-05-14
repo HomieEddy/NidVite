@@ -7,7 +7,9 @@ use App\Filament\Resources\RepairJobs\RepairJobResource;
 use App\Models\RepairJob;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Throwable;
 
 class EditRepairJob extends EditRecord
 {
@@ -33,17 +35,22 @@ class EditRepairJob extends EditRecord
         /** @var RepairJob $record */
         $record = $this->record;
 
-        $originalStatus = $record->getOriginal('status');
-        $currentStatus = $record->status;
-
-        // Only sync if status actually changed
-        if ($originalStatus === $currentStatus) {
+        if (! $record->wasChanged('status')) {
             return;
         }
 
         $record->loadMissing('reports');
         $reportIds = $record->reports->pluck('id')->all();
 
-        app(SyncReportsToJobStatusAction::class)->execute($currentStatus, $reportIds);
+        try {
+            app(SyncReportsToJobStatusAction::class)->execute($record->status, $reportIds);
+        } catch (Throwable $e) {
+            report($e);
+
+            Notification::make()
+                ->danger()
+                ->title('Failed to sync linked report statuses.')
+                ->send();
+        }
     }
 }

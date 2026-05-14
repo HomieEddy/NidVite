@@ -5,6 +5,7 @@ namespace App\Actions\RepairJobs;
 use App\Models\Report;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ValidateRepairJobDatesAction
 {
@@ -52,11 +53,23 @@ class ValidateRepairJobDatesAction
             return;
         }
 
-        if (Carbon::parse($data['scheduled_at'])->lt(Carbon::parse($latestReportCreatedAt))) {
+        $scheduledAt = $this->parseDateOrFail(
+            $data['scheduled_at'],
+            'scheduled_at',
+            __('filament.admin.fields_common.scheduled_at')
+        );
+
+        $latestCreatedAt = $this->parseDateOrFail(
+            $latestReportCreatedAt,
+            'scheduled_at',
+            __('filament.admin.fields_common.scheduled_at')
+        );
+
+        if ($scheduledAt->lt($latestCreatedAt)) {
             throw ValidationException::withMessages([
                 'scheduled_at' => __('validation.after_or_equal', [
                     'attribute' => __('filament.admin.fields_common.scheduled_at'),
-                    'date' => $latestReportCreatedAt,
+                    'date' => $latestCreatedAt->format('Y-m-d H:i'),
                 ]),
             ]);
         }
@@ -75,7 +88,19 @@ class ValidateRepairJobDatesAction
             return;
         }
 
-        if (Carbon::parse($data['started_at'])->lt(Carbon::parse($data['scheduled_at']))) {
+        $startedAt = $this->parseDateOrFail(
+            $data['started_at'],
+            'started_at',
+            __('filament.admin.fields_common.started_at')
+        );
+
+        $scheduledAt = $this->parseDateOrFail(
+            $data['scheduled_at'],
+            'scheduled_at',
+            __('filament.admin.fields_common.scheduled_at')
+        );
+
+        if ($startedAt->lt($scheduledAt)) {
             throw ValidationException::withMessages([
                 'started_at' => __('validation.after_or_equal', [
                     'attribute' => __('filament.admin.fields_common.started_at'),
@@ -98,12 +123,38 @@ class ValidateRepairJobDatesAction
             return;
         }
 
-        if (Carbon::parse($data['completed_at'])->lt(Carbon::parse($data['started_at']))) {
+        $completedAt = $this->parseDateOrFail(
+            $data['completed_at'],
+            'completed_at',
+            __('filament.admin.fields_common.completed_at')
+        );
+
+        $startedAt = $this->parseDateOrFail(
+            $data['started_at'],
+            'started_at',
+            __('filament.admin.fields_common.started_at')
+        );
+
+        if ($completedAt->lt($startedAt)) {
             throw ValidationException::withMessages([
                 'completed_at' => __('validation.after_or_equal', [
                     'attribute' => __('filament.admin.fields_common.completed_at'),
                     'date' => $data['started_at'],
                 ]),
+            ]);
+        }
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function parseDateOrFail(mixed $value, string $field, string $attribute): Carbon
+    {
+        try {
+            return Carbon::parse($value);
+        } catch (Throwable) {
+            throw ValidationException::withMessages([
+                $field => __('validation.date', ['attribute' => $attribute]),
             ]);
         }
     }

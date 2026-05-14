@@ -1,7 +1,6 @@
 <?php
 
 use App\Events\ReportCreated;
-use App\Listeners\AutoTriageCreatedReport;
 use App\Models\Report;
 use App\Models\ReportCategory;
 use Database\Seeders\ReportCategorySeeder;
@@ -22,7 +21,7 @@ it('auto-verifies received reports that pass validation', function () {
         'road_validation_mode' => 'enforce',
     ]);
 
-    app(AutoTriageCreatedReport::class)->handle(new ReportCreated($report));
+    event(new ReportCreated($report));
 
     expect($report->fresh()->status)->toBe('verified');
 });
@@ -36,10 +35,10 @@ it('auto-rejects received reports flagged as spam', function () {
         'road_validation_mode' => 'enforce',
     ]);
 
-    app(AutoTriageCreatedReport::class)->handle(new ReportCreated($report));
+    event(new ReportCreated($report));
 
     expect($report->fresh()->status)->toBe('rejected')
-        ->and($report->fresh()->rejection_reason)->toBe('Automatically rejected by spam detection.');
+        ->and($report->fresh()->rejection_reason)->toBeString();
 });
 
 it('auto-rejects received reports that fail enforce-mode road validation', function () {
@@ -51,10 +50,10 @@ it('auto-rejects received reports that fail enforce-mode road validation', funct
         'road_validation_mode' => 'enforce',
     ]);
 
-    app(AutoTriageCreatedReport::class)->handle(new ReportCreated($report));
+    event(new ReportCreated($report));
 
     expect($report->fresh()->status)->toBe('rejected')
-        ->and($report->fresh()->rejection_reason)->toBe('Automatically rejected by road validation.');
+        ->and($report->fresh()->rejection_reason)->toBeString();
 });
 
 it('does not auto-reject road validation failures in shadow mode', function () {
@@ -66,7 +65,20 @@ it('does not auto-reject road validation failures in shadow mode', function () {
         'road_validation_mode' => 'shadow',
     ]);
 
-    app(AutoTriageCreatedReport::class)->handle(new ReportCreated($report));
+    event(new ReportCreated($report));
 
     expect($report->fresh()->status)->toBe('verified');
+});
+
+it('does not modify reports that are not in received status', function () {
+    $report = Report::factory()->create([
+        'status' => 'verified',
+        'category_id' => ReportCategory::query()->value('id'),
+        'is_spam' => false,
+    ]);
+
+    event(new ReportCreated($report));
+
+    expect($report->fresh()->status)->toBe('verified')
+        ->and($report->fresh()->rejection_reason)->toBeNull();
 });

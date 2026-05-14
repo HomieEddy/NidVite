@@ -4,6 +4,7 @@ namespace App\Actions\RepairJobs;
 
 use App\Models\Report;
 use App\Services\RepairJobs\RepairJobStatusMapper;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use InvalidArgumentException;
 
 class SyncReportsToJobStatusAction
@@ -32,10 +33,10 @@ class SyncReportsToJobStatusAction
         }
 
         foreach ($reportIds as $reportId) {
-            $report = Report::query()->findOrFail($reportId);
             try {
+                $report = Report::query()->findOrFail($reportId);
                 $report->transitionTo($targetReportStatus);
-            } catch (InvalidArgumentException $e) {
+            } catch (InvalidArgumentException|ModelNotFoundException $e) {
                 report($e);
             }
         }

@@ -39,10 +39,10 @@ class AppServiceProvider extends ServiceProvider
                 EnforceAdminConcurrentSessionLimit::class,
             ],
             ReportCreated::class => [
-                InvalidatePublicResponseCache::class,
                 DetectSuspiciousReportActivity::class,
                 AutoTriageCreatedReport::class,
                 SendCriticalReportAlerts::class,
+                InvalidatePublicResponseCache::class,
             ],
         ] as $event => $listeners) {
             foreach ($listeners as $listener) {

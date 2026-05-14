@@ -92,6 +92,7 @@ class ListReports extends ListRecords
                 ->label(__('filament.admin.resources.reports.saved_views.actions.delete'))
                 ->icon('heroicon-o-trash')
                 ->color('danger')
+                ->requiresConfirmation()
                 ->form([
                     Select::make('view_id')
                         ->label(__('filament.admin.resources.reports.saved_views.fields.view'))
@@ -112,6 +113,7 @@ class ListReports extends ListRecords
             Action::make('saved_views')
                 ->label(__('filament.admin.resources.reports.saved_views.actions.menu'))
                 ->icon('heroicon-o-bookmark-square')
+                ->authorize(fn (): bool => Auth::check())
                 ->slideOver()
                 ->form([
                     Select::make('operation')
@@ -125,6 +127,15 @@ class ListReports extends ListRecords
                         ->default('save')
                         ->live()
                         ->required(),
+                    Select::make('confirm_delete')
+                        ->label('Confirm delete')
+                        ->options([
+                            'no' => 'No',
+                            'yes' => 'Yes',
+                        ])
+                        ->default('no')
+                        ->required(fn (callable $get): bool => $get('operation') === 'delete')
+                        ->visible(fn (callable $get): bool => $get('operation') === 'delete'),
                     TextInput::make('name')
                         ->label(__('filament.admin.resources.reports.saved_views.fields.name'))
                         ->dehydrateStateUsing(fn ($state): string => trim((string) $state))
@@ -221,7 +232,7 @@ class ListReports extends ListRecords
             if ($name === '' || mb_strlen($name) > 100) {
                 Notification::make()
                     ->danger()
-                    ->title(__('filament.admin.resources.reports.saved_views.feedback.updated'))
+                    ->title('Invalid view name.')
                     ->send();
 
                 return;
@@ -249,6 +260,11 @@ class ListReports extends ListRecords
                 ->find($data['view_id'] ?? null);
 
             if (! $view) {
+                Notification::make()
+                    ->danger()
+                    ->title('Saved view not found.')
+                    ->send();
+
                 return;
             }
 
@@ -256,6 +272,11 @@ class ListReports extends ListRecords
             $newName = trim((string) ($data['rename_to'] ?? ''));
             if ($newName !== '') {
                 if (mb_strlen($newName) > 100) {
+                    Notification::make()
+                        ->danger()
+                        ->title('View name is too long.')
+                        ->send();
+
                     return;
                 }
 
@@ -266,6 +287,11 @@ class ListReports extends ListRecords
                     ->exists();
 
                 if ($nameExists) {
+                    Notification::make()
+                        ->danger()
+                        ->title('A saved view with this name already exists.')
+                        ->send();
+
                     return;
                 }
 
@@ -288,6 +314,11 @@ class ListReports extends ListRecords
                 ->find($data['view_id'] ?? null);
 
             if (! $view) {
+                Notification::make()
+                    ->danger()
+                    ->title('Saved view not found.')
+                    ->send();
+
                 return;
             }
 
@@ -302,6 +333,15 @@ class ListReports extends ListRecords
         }
 
         if ($operation === 'delete') {
+            if (($data['confirm_delete'] ?? 'no') !== 'yes') {
+                Notification::make()
+                    ->danger()
+                    ->title('Delete confirmation is required.')
+                    ->send();
+
+                return;
+            }
+
             ReportSavedView::query()
                 ->where('user_id', Auth::id())
                 ->whereKey($data['view_id'] ?? null)

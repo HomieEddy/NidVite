@@ -8,6 +8,8 @@ use Filament\Widgets\Widget;
 
 class ReportsMap extends Widget
 {
+    private const BOROUGH_NA = 'N/A';
+
     protected string $view = 'filament.widgets.reports-map';
 
     protected static ?int $sort = -10;
@@ -21,6 +23,11 @@ class ReportsMap extends Widget
     public string $appliedStatus = '';
 
     public string $appliedBorough = '';
+
+    /**
+     * @var array<string, string>|null
+     */
+    private ?array $availableBoroughs = null;
 
     public function applyFilters(): void
     {
@@ -54,14 +61,20 @@ class ReportsMap extends Widget
      */
     public function getAvailableBoroughs(): array
     {
-        return Report::query()
+        if ($this->availableBoroughs !== null) {
+            return $this->availableBoroughs;
+        }
+
+        $this->availableBoroughs = Report::query()
             ->whereNotNull('borough')
             ->where('borough', '!=', '')
-            ->where('borough', '!=', 'N/A')
+            ->where('borough', '!=', self::BOROUGH_NA)
             ->orderBy('borough')
             ->distinct()
             ->pluck('borough', 'borough')
             ->toArray();
+
+        return $this->availableBoroughs;
     }
 
     public function getMapSrcProperty(): string

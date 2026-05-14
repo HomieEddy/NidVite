@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\RepairJobs\Schemas;
 
+use App\Enums\ReportStatus;
 use App\Models\Report;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -20,16 +21,31 @@ class RepairJobForm
      */
     public static function configure(Schema $schema): Schema
     {
-        $latestSelectedReportCreatedAt = function (Get $get): ?string {
+        $cachedReportIds = [];
+        $cachedLatestCreatedAt = null;
+
+        $latestSelectedReportCreatedAt = function (Get $get) use (&$cachedReportIds, &$cachedLatestCreatedAt): ?string {
             $reportIds = array_values(array_filter((array) $get('reports')));
 
             if ($reportIds === []) {
+                $cachedReportIds = [];
+                $cachedLatestCreatedAt = null;
+
                 return null;
             }
 
-            return Report::query()
+            sort($reportIds);
+
+            if ($cachedReportIds === $reportIds) {
+                return $cachedLatestCreatedAt;
+            }
+
+            $cachedReportIds = $reportIds;
+            $cachedLatestCreatedAt = Report::query()
                 ->whereIn('id', $reportIds)
                 ->max('created_at');
+
+            return $cachedLatestCreatedAt;
         };
 
         return $schema
@@ -50,7 +66,7 @@ class RepairJobForm
                                 'reports.borough',
                                 'reports.neighborhood',
                             ])
-                            ->where('reports.status', 'verified')
+                            ->where('reports.status', ReportStatus::Verified->value)
                     )
                     ->getOptionLabelFromRecordUsing(fn (Report $record): string => ($label = implode(' | ', array_filter([
                         $record->public_tracking_id,

@@ -18,13 +18,13 @@ class AutoTriageCreatedReport
 
         try {
             if ((bool) $report->is_spam) {
-                $report->transitionTo(ReportStatus::Rejected->value, 'Automatically rejected by spam detection.');
+                $report->transitionTo(ReportStatus::Rejected->value, __('report.auto_rejection.spam'));
 
                 return;
             }
 
             if ($this->shouldRejectByRoadValidation($report->road_validation_decision, $report->road_validation_mode)) {
-                $report->transitionTo(ReportStatus::Rejected->value, 'Automatically rejected by road validation.');
+                $report->transitionTo(ReportStatus::Rejected->value, __('report.auto_rejection.road_validation'));
 
                 return;
             }

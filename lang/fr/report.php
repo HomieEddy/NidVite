@@ -57,6 +57,11 @@ return [
         'rejected' => 'Rejeté',
     ],
 
+    'auto_rejection' => [
+        'spam' => 'Rejet automatique par détection de pourriel.',
+        'road_validation' => 'Rejet automatique par validation routière.',
+    ],
+
     'validation' => [
         'location_required' => 'Veuillez autoriser la géolocalisation ou préciser l\'emplacement.',
         'outside_montreal' => 'Cet emplacement semble être en dehors de Montréal. Veuillez signaler uniquement les problèmes situés sur le territoire de Montréal.',

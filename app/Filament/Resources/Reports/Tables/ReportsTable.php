@@ -192,6 +192,15 @@ class ReportsTable
                         && $record->canTransitionTo('verified'))
                     ->authorize(fn (Report $record): bool => Auth::user()?->can('update', $record) ?? false)
                     ->action(function (Report $record): void {
+                        if (! (Auth::user()?->can('update', $record) ?? false) || ! $record->canTransitionTo('verified')) {
+                            Notification::make()
+                                ->danger()
+                                ->title('This report can no longer be verified.')
+                                ->send();
+
+                            return;
+                        }
+
                         $record->transitionTo('verified');
                     }),
                 Action::make('reject')
@@ -208,6 +217,15 @@ class ReportsTable
                             ->maxLength(500),
                     ])
                     ->action(function (Report $record, array $data): void {
+                        if (! (Auth::user()?->can('update', $record) ?? false) || ! $record->canTransitionTo('rejected')) {
+                            Notification::make()
+                                ->danger()
+                                ->title('This report can no longer be rejected.')
+                                ->send();
+
+                            return;
+                        }
+
                         $reason = trim((string) ($data['reason'] ?? ''));
 
                         $record->transitionTo('rejected', $reason !== '' ? $reason : null);
