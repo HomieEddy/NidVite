@@ -148,7 +148,9 @@ class ListReports extends ListRecords
                         ->maxLength(100)
                         ->visible(fn (callable $get): bool => $get('operation') === 'update'),
                 ])
-                ->action(fn (array $data): void => $this->handleSavedViewOperation($data)),
+                ->action(function (array $data): void {
+                    $this->handleSavedViewOperation($data);
+                }),
             Action::make('export_excel')
                 ->label(__('filament.admin.resources.reports.actions.export_excel'))
                 ->icon('heroicon-o-table-cells')
