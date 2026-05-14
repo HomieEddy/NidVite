@@ -9,6 +9,7 @@ use App\Filament\Resources\RepairJobs\Schemas\RepairJobForm;
 use App\Filament\Resources\RepairJobs\Tables\RepairJobsTable;
 use App\Models\RepairJob;
 use BackedEnum;
+use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -75,7 +76,7 @@ class RepairJobResource extends Resource
     /**
      * Get the page routes for the repair job resource.
      *
-     * @return array<string, string>
+     * @return array<string, PageRegistration>
      */
     public static function getPages(): array
     {
