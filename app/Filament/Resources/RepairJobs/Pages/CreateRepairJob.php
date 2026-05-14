@@ -3,11 +3,13 @@
 namespace App\Filament\Resources\RepairJobs\Pages;
 
 use App\Filament\Resources\RepairJobs\RepairJobResource;
+use App\Models\RepairJob;
 use App\Models\Report;
 use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 
 class CreateRepairJob extends CreateRecord
 {
@@ -58,5 +60,45 @@ class CreateRepairJob extends CreateRecord
         $data['created_by'] = Filament::auth()->id();
 
         return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        /** @var RepairJob $record */
+        $record = $this->record;
+
+        $components = $this->form->getFlatComponents(withActions: false, withHidden: true);
+        $reportsComponent = $components['reports'] ?? null;
+        $reportIds = $reportsComponent !== null ? array_values(array_filter((array) $reportsComponent->getState())) : [];
+
+        if (empty($reportIds)) {
+            return;
+        }
+
+        $jobStatus = $record->status;
+        $targetReportStatus = $this->mapJobStatusToReportStatus($jobStatus);
+
+        if ($targetReportStatus === null) {
+            return;
+        }
+
+        foreach ($reportIds as $reportId) {
+            $report = Report::query()->findOrFail($reportId);
+            try {
+                $report->transitionTo($targetReportStatus);
+            } catch (InvalidArgumentException $e) {
+                report($e);
+            }
+        }
+    }
+
+    private function mapJobStatusToReportStatus(string $jobStatus): ?string
+    {
+        return match ($jobStatus) {
+            'planned' => 'scheduled',
+            'in_progress' => 'in_progress',
+            'completed' => 'repaired',
+            default => null,
+        };
     }
 }
