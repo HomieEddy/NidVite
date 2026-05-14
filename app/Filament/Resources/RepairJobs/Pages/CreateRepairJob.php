@@ -2,14 +2,12 @@
 
 namespace App\Filament\Resources\RepairJobs\Pages;
 
+use App\Actions\RepairJobs\SyncReportsToJobStatusAction;
+use App\Actions\RepairJobs\ValidateRepairJobDatesAction;
 use App\Filament\Resources\RepairJobs\RepairJobResource;
 use App\Models\RepairJob;
-use App\Models\Report;
 use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Support\Carbon;
-use Illuminate\Validation\ValidationException;
-use InvalidArgumentException;
 
 class CreateRepairJob extends CreateRecord
 {
@@ -24,38 +22,7 @@ class CreateRepairJob extends CreateRecord
         $components = $this->form->getFlatComponents(withActions: false, withHidden: true);
         $reportIds = array_values(array_filter((array) (($components['reports'] ?? null)?->getState() ?? [])));
 
-        if ($reportIds !== []) {
-            $latestReportCreatedAt = Report::query()
-                ->whereIn('id', $reportIds)
-                ->max('created_at');
-
-            if ($latestReportCreatedAt !== null && filled($data['scheduled_at'] ?? null) && Carbon::parse($data['scheduled_at'])->lt(Carbon::parse($latestReportCreatedAt))) {
-                throw ValidationException::withMessages([
-                    'scheduled_at' => __('validation.after_or_equal', [
-                        'attribute' => __('filament.admin.fields_common.scheduled_at'),
-                        'date' => $latestReportCreatedAt,
-                    ]),
-                ]);
-            }
-        }
-
-        if (filled($data['scheduled_at'] ?? null) && filled($data['started_at'] ?? null) && Carbon::parse($data['started_at'])->lt(Carbon::parse($data['scheduled_at']))) {
-            throw ValidationException::withMessages([
-                'started_at' => __('validation.after_or_equal', [
-                    'attribute' => __('filament.admin.fields_common.started_at'),
-                    'date' => $data['scheduled_at'],
-                ]),
-            ]);
-        }
-
-        if (filled($data['started_at'] ?? null) && filled($data['completed_at'] ?? null) && Carbon::parse($data['completed_at'])->lt(Carbon::parse($data['started_at']))) {
-            throw ValidationException::withMessages([
-                'completed_at' => __('validation.after_or_equal', [
-                    'attribute' => __('filament.admin.fields_common.completed_at'),
-                    'date' => $data['started_at'],
-                ]),
-            ]);
-        }
+        app(ValidateRepairJobDatesAction::class)->execute($data, $reportIds);
 
         $data['created_by'] = Filament::auth()->id();
 
@@ -71,34 +38,6 @@ class CreateRepairJob extends CreateRecord
         $reportsComponent = $components['reports'] ?? null;
         $reportIds = $reportsComponent !== null ? array_values(array_filter((array) $reportsComponent->getState())) : [];
 
-        if (empty($reportIds)) {
-            return;
-        }
-
-        $jobStatus = $record->status;
-        $targetReportStatus = $this->mapJobStatusToReportStatus($jobStatus);
-
-        if ($targetReportStatus === null) {
-            return;
-        }
-
-        foreach ($reportIds as $reportId) {
-            $report = Report::query()->findOrFail($reportId);
-            try {
-                $report->transitionTo($targetReportStatus);
-            } catch (InvalidArgumentException $e) {
-                report($e);
-            }
-        }
-    }
-
-    private function mapJobStatusToReportStatus(string $jobStatus): ?string
-    {
-        return match ($jobStatus) {
-            'planned' => 'scheduled',
-            'in_progress' => 'in_progress',
-            'completed' => 'repaired',
-            default => null,
-        };
+        app(SyncReportsToJobStatusAction::class)->execute($record->status, $reportIds);
     }
 }

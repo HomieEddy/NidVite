@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\RepairJobs\Pages;
 
+use App\Actions\RepairJobs\SyncReportsToJobStatusAction;
 use App\Filament\Resources\RepairJobs\RepairJobResource;
 use App\Models\RepairJob;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
-use InvalidArgumentException;
 
 class EditRepairJob extends EditRecord
 {
@@ -32,30 +32,9 @@ class EditRepairJob extends EditRecord
             return;
         }
 
-        $targetReportStatus = $this->mapJobStatusToReportStatus($currentStatus);
-
-        if ($targetReportStatus === null) {
-            return;
-        }
-
         $record->loadMissing('reports');
+        $reportIds = $record->reports->pluck('id')->all();
 
-        foreach ($record->reports as $report) {
-            try {
-                $report->transitionTo($targetReportStatus);
-            } catch (InvalidArgumentException $e) {
-                report($e);
-            }
-        }
-    }
-
-    private function mapJobStatusToReportStatus(string $jobStatus): ?string
-    {
-        return match ($jobStatus) {
-            'planned' => 'scheduled',
-            'in_progress' => 'in_progress',
-            'completed' => 'repaired',
-            default => null,
-        };
+        app(SyncReportsToJobStatusAction::class)->execute($currentStatus, $reportIds);
     }
 }
