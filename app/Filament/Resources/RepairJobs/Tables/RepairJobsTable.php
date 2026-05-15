@@ -29,6 +29,7 @@ class RepairJobsTable
         return $table
             ->emptyStateHeading(__('filament.admin.resources.repair_jobs.empty_state.heading'))
             ->emptyStateDescription(__('filament.admin.resources.repair_jobs.empty_state.description'))
+            ->defaultSort('scheduled_at', 'desc')
             ->emptyStateActions([
                 Action::make('create')
                     ->label(__('filament.admin.resources.repair_jobs.actions.create'))
