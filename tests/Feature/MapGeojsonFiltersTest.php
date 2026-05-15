@@ -2,6 +2,7 @@
 
 use App\Models\Report;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\ResponseCache\Middlewares\CacheResponse;
 
 uses(RefreshDatabase::class);
 
@@ -9,6 +10,28 @@ it('serves standard public map when embed query flag is absent', function () {
     $response = $this->get(route('map.public'));
 
     $response->assertOk()->assertViewIs('map');
+});
+
+it('shows localized dummy data notice on public map in non-production environments', function () {
+    $this->withoutMiddleware(CacheResponse::class);
+    app()->detectEnvironment(fn () => 'testing');
+    app()->setLocale('fr');
+
+    $this->get(route('map.public'))
+        ->assertOk()
+        ->assertSee('Données de démonstration')
+        ->assertSee('données fictives utilisées pour le prototypage');
+});
+
+it('hides dummy data notice on public map in production', function () {
+    $this->withoutMiddleware(CacheResponse::class);
+    app()->detectEnvironment(fn () => 'production');
+    app()->setLocale('fr');
+
+    $this->get(route('map.public'))
+        ->assertOk()
+        ->assertDontSee('Données de démonstration')
+        ->assertDontSee('données fictives utilisées pour le prototypage');
 });
 
 it('serves embed map template when embed query flag is present', function () {
