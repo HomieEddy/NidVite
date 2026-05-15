@@ -3,6 +3,8 @@
 @section('title', config('app.name'))
 
 @section('content')
+@include('components.dummy-data-notice')
+
 <div x-data="nidviteTracker(@js(__('home.report_not_found')))" class="relative flex flex-col min-h-0 overflow-hidden">
     <div class="pointer-events-none absolute -top-24 -left-16 h-56 w-56 rounded-full bg-amber-300/30 blur-3xl"></div>
     <div class="pointer-events-none absolute top-32 -right-20 h-64 w-64 rounded-full bg-teal-300/20 blur-3xl"></div>
