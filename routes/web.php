@@ -84,21 +84,17 @@ Route::get('/media/{media}', SignedMediaController::class)
     ->middleware(['signed', $publicApiThrottle]);
 
 Route::get('/locale/{locale}', function (string $locale) {
-    if (in_array($locale, ['fr', 'en'], true)) {
-        app()->setLocale($locale);
+    app()->setLocale($locale);
 
-        Cookie::queue(cookie(
-            name: 'locale',
-            value: $locale,
-            minutes: 60 * 24 * 365,
-            path: '/',
-            secure: config('session.secure'),
-            httpOnly: true,
-            sameSite: config('session.same_site', 'lax'),
-        ));
-
-        return redirect()->back();
-    }
+    Cookie::queue(cookie(
+        name: 'locale',
+        value: $locale,
+        minutes: 60 * 24 * 365,
+        path: '/',
+        secure: config('session.secure'),
+        httpOnly: true,
+        sameSite: config('session.same_site', 'lax'),
+    ));
 
     return redirect()->back();
 })->name('locale.switch')
