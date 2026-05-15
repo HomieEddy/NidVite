@@ -13,7 +13,7 @@
 <body>
     <div
         id="map"
-        data-geojson-url="{{ route('api.reports.geojson', request()->only(['status', 'neighborhood', 'borough'])) }}"
+        data-geojson-url="{{ route('api.reports.geojson', request()->only(['status', 'neighborhood', 'borough']), false) }}"
         data-no-address="{{ __('map.no_address') }}"
         data-view-details="{{ __('map.view_details') }}"
     ></div>

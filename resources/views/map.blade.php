@@ -78,7 +78,7 @@
 
     <div
         id="map"
-        data-geojson-url="{{ route('api.reports.geojson') }}"
+        data-geojson-url="{{ route('api.reports.geojson', [], false) }}"
         data-no-address="{{ __('map.no_address') }}"
         data-view-details="{{ __('map.view_details') }}"
     ></div>

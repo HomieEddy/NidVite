@@ -121,7 +121,7 @@ function initPublicMapPage() {
 	var geojsonRequestUrl = new URL(geojsonUrl, window.location.origin);
 	geojsonRequestUrl.searchParams.set('_ts', String(Date.now()));
 
-	var showMapError = function () {
+	var showMapError = function (details) {
 		if (mapEl.querySelector('[data-map-error]')) {
 			return;
 		}
@@ -130,6 +130,9 @@ function initPublicMapPage() {
 		errorEl.setAttribute('data-map-error', '1');
 		errorEl.className = 'absolute left-3 right-3 top-3 z-[1000] rounded-lg border border-red-200 bg-white/95 px-3 py-2 text-xs font-semibold text-red-700 shadow';
 		errorEl.textContent = 'Unable to load map reports right now. Please refresh.';
+		if (details) {
+			errorEl.textContent += ' (' + details + ')';
+		}
 		mapEl.appendChild(errorEl);
 	};
 
@@ -142,7 +145,7 @@ function initPublicMapPage() {
 	})
 		.then(function (response) {
 			if (!response.ok) {
-				throw new Error('geojson_fetch_failed');
+				throw new Error('geojson_fetch_failed_' + response.status);
 			}
 
 			return response.json();
@@ -240,8 +243,9 @@ function initPublicMapPage() {
 				map.fitBounds(bounds, { padding: [50, 50] });
 			}
 		})
-		.catch(function () {
-			showMapError();
+		.catch(function (error) {
+			var detail = error && error.message ? error.message : 'unknown_error';
+			showMapError(detail);
 		});
 }
 
