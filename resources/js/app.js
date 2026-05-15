@@ -118,8 +118,24 @@ function initPublicMapPage() {
 		return text;
 	};
 
-	fetch(geojsonUrl, {
+	var geojsonRequestUrl = new URL(geojsonUrl, window.location.origin);
+	geojsonRequestUrl.searchParams.set('_ts', String(Date.now()));
+
+	var showMapError = function () {
+		if (mapEl.querySelector('[data-map-error]')) {
+			return;
+		}
+
+		var errorEl = document.createElement('div');
+		errorEl.setAttribute('data-map-error', '1');
+		errorEl.className = 'absolute left-3 right-3 top-3 z-[1000] rounded-lg border border-red-200 bg-white/95 px-3 py-2 text-xs font-semibold text-red-700 shadow';
+		errorEl.textContent = 'Unable to load map reports right now. Please refresh.';
+		mapEl.appendChild(errorEl);
+	};
+
+	fetch(geojsonRequestUrl.toString(), {
 		cache: 'no-store',
+		credentials: 'same-origin',
 		headers: {
 			'Accept': 'application/json',
 		},
@@ -225,7 +241,7 @@ function initPublicMapPage() {
 			}
 		})
 		.catch(function () {
-			// Keep failure silent in production to avoid noisy console logs.
+			showMapError();
 		});
 }
 
