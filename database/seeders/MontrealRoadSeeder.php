@@ -12,6 +12,8 @@ class MontrealRoadSeeder extends Seeder
 
     public function run(): void
     {
+        DB::statement('TRUNCATE TABLE montreal_roads RESTART IDENTITY');
+
         $geojsonPath = database_path('geo/mtl_geobase.json');
         $geojsonContents = file_get_contents($geojsonPath);
         if ($geojsonContents === false) {
@@ -27,7 +29,8 @@ class MontrealRoadSeeder extends Seeder
             throw new RuntimeException('GeoJSON missing features array');
         }
 
-        $rows = [];
+        $rows = 0;
+        $chunk = [];
 
         foreach ($geojson['features'] as $feature) {
             if (! isset($feature['geometry']['type']) || $feature['geometry']['type'] !== 'LineString') {
@@ -48,29 +51,39 @@ class MontrealRoadSeeder extends Seeder
             $name = trim($props['ODONYME'] ?? '') ?: trim($props['NOM_VOIE'] ?? '') ?: 'Unnamed';
             $borough = trim($props['ARR_GCH'] ?? '') ?: trim($props['ARR_DRT'] ?? '') ?: 'Montreal';
 
-            $rows[] = [$name, $borough, 'mtl_geobase', $wkt];
+            $chunk[] = [$name, $borough, 'mtl_geobase', $wkt];
+            $rows++;
+
+            if (count($chunk) >= self::INSERT_CHUNK_SIZE) {
+                $this->insertChunk($chunk);
+                $chunk = [];
+            }
         }
 
-        DB::transaction(function () use ($rows): void {
-            DB::statement('TRUNCATE TABLE montreal_roads RESTART IDENTITY');
+        if ($chunk !== []) {
+            $this->insertChunk($chunk);
+        }
 
-            foreach (array_chunk($rows, self::INSERT_CHUNK_SIZE) as $chunk) {
-                $placeholders = [];
-                $bindings = [];
+        $this->command?->info("MontrealRoadSeeder imported {$rows} mtl_geobase road segments.");
+    }
 
-                foreach ($chunk as $row) {
-                    $placeholders[] = '(?, ?, ?, ST_GeomFromText(?, 4326), NOW(), NOW())';
-                    array_push($bindings, ...$row);
-                }
+    /**
+     * @param  array<int, array{string, string, string, string}>  $chunk
+     */
+    private function insertChunk(array $chunk): void
+    {
+        $placeholders = [];
+        $bindings = [];
 
-                DB::statement(
-                    'INSERT INTO montreal_roads (name, borough, source, geom, created_at, updated_at) VALUES '
-                    .implode(', ', $placeholders),
-                    $bindings
-                );
-            }
-        });
+        foreach ($chunk as $row) {
+            $placeholders[] = '(?, ?, ?, ST_GeomFromText(?, 4326), NOW(), NOW())';
+            array_push($bindings, ...$row);
+        }
 
-        $this->command?->info('MontrealRoadSeeder imported '.count($rows).' mtl_geobase road segments.');
+        DB::statement(
+            'INSERT INTO montreal_roads (name, borough, source, geom, created_at, updated_at) VALUES '
+            .implode(', ', $placeholders),
+            $bindings
+        );
     }
 }

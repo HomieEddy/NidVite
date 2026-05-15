@@ -22,6 +22,8 @@ class StagingDemoSeeder extends Seeder
 
         $demoPassword = (string) (config('admin-auth.staging_demo_seed_password') ?: Str::password(24));
 
+        $this->call(MontrealRoadSeeder::class);
+
         DB::transaction(function () use ($demoPassword): void {
             DB::table('job_reports')->delete();
             DB::table('email_delivery_logs')->delete();
@@ -100,7 +102,6 @@ class StagingDemoSeeder extends Seeder
             // Keep demo seed deterministic with no audit residue.
             DB::table('activity_log')->delete();
 
-            $this->call(MontrealRoadSeeder::class);
             $this->call(TestDataSeeder::class);
         });
     }
