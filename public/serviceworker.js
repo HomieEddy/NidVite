@@ -75,9 +75,13 @@ self.addEventListener("fetch", event => {
                 return response || fetch(event.request);
             })
             .catch(() => {
-                return caches.match(offlineUrl).then(response => {
-                    return response || Response.error();
-                });
+                if (event.request.mode === 'navigate') {
+                    return caches.match(offlineUrl).then(response => {
+                        return response || Response.error();
+                    });
+                }
+
+                return Response.error();
             })
     )
 });

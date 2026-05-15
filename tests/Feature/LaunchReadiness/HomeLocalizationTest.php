@@ -38,6 +38,20 @@ it('switches locale using a cookie without writing to the session', function () 
         ->assertSessionMissing('locale');
 });
 
+it('rejects unsupported locale switches without writing to the session', function () {
+    $this->from('/')
+        ->get('/locale/unsupported')
+        ->assertNotFound()
+        ->assertSessionMissing('locale');
+});
+
+it('switches locale safely without a referrer', function () {
+    $this->get(route('locale.switch', ['locale' => 'en']))
+        ->assertRedirect('/')
+        ->assertCookie('locale')
+        ->assertSessionMissing('locale');
+});
+
 it('renders english homepage copy from locale cookie', function () {
     $this->withoutMiddleware(CacheResponse::class);
 

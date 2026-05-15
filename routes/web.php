@@ -17,13 +17,18 @@ $cacheWhenPublic = static fn ($route) => $route->when(! app()->environment('stag
 
 Route::pattern('trackingId', 'MTL[A-Z0-9]{8}');
 
-$cacheWhenPublic(Route::get('/', [HomeController::class, 'index']));
+$cacheWhenPublic(
+    Route::get('/', [HomeController::class, 'index'])
+        ->middleware($publicApiThrottle)
+);
 
 Route::view('/signaler', 'report')
-    ->name('report.create');
+    ->name('report.create')
+    ->middleware($publicApiThrottle);
 
 Route::view('/offline', 'vendor.laravelpwa.offline')
-    ->name('offline');
+    ->name('offline')
+    ->middleware($publicApiThrottle);
 
 Route::prefix('/suivi/{trackingId}')
     ->controller(ReportTrackingController::class)
@@ -54,6 +59,7 @@ Route::view('/conditions', 'pages.terms')
 $cacheWhenPublic(
     Route::get('/carte', [MapController::class, 'index'])
         ->name('map.public')
+        ->middleware($publicApiThrottle)
 );
 
 Route::prefix('/api/reports')
@@ -96,4 +102,5 @@ Route::get('/locale/{locale}', function (string $locale) {
 
     return redirect()->back();
 })->name('locale.switch')
-    ->middleware($publicApiThrottle);
+    ->middleware($publicApiThrottle)
+    ->whereIn('locale', ['fr', 'en']);
