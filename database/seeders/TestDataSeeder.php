@@ -238,6 +238,8 @@ class TestDataSeeder extends Seeder
      */
     private function seedReports(int $potholeCategoryId): Collection
     {
+        $this->assertMontrealRoadsSeeded();
+
         $distribution = [
             'repaired' => self::REPAIRED_REPORTS,
             'verified' => self::VERIFIED_REPORTS,
@@ -335,11 +337,14 @@ class TestDataSeeder extends Seeder
             return [round($result->lat, 6), round($result->lng, 6)];
         }
 
-        // Fallback to downtown Montreal if no roads exist
-        $offsetLat = random_int(-500, 500) / 10000;
-        $offsetLng = random_int(-500, 500) / 10000;
+        throw new \RuntimeException('Unable to generate demo report location because no Montreal road geometry was selected.');
+    }
 
-        return [round(45.5017 + $offsetLat, 6), round(-73.5673 + $offsetLng, 6)];
+    private function assertMontrealRoadsSeeded(): void
+    {
+        if (DB::table('montreal_roads')->where('source', 'mtl_geobase')->doesntExist()) {
+            throw new \RuntimeException('Montreal roads must be seeded from database/geo/mtl_geobase.json before TestDataSeeder runs.');
+        }
     }
 
     /**

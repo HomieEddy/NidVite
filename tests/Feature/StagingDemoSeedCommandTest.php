@@ -9,6 +9,7 @@ use App\Models\Vendor;
 use Database\Seeders\StagingDemoSeeder;
 use Database\Seeders\TestDataSeeder;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 it('registers the staging demo seed command', function () {
@@ -38,7 +39,21 @@ it('runs demo seed command in testing environment', function () {
         ->and(RepairJob::query()->where('status', 'planned')->count())->toBe(25)
         ->and(Vendor::query()->count())->toBe(3)
         ->and(Material::query()->count())->toBe(3)
-        ->and(ReportCategory::query()->pluck('slug')->all())->toBe(['pothole']);
+        ->and(ReportCategory::query()->pluck('slug')->all())->toBe(['pothole'])
+        ->and(DB::table('montreal_roads')->where('source', 'mtl_geobase')->count())->toBeGreaterThan(0);
+
+    $maxDistance = DB::selectOne(
+        'SELECT MAX(ST_Distance(r.location, mr.geom::geography)) AS max_distance
+         FROM reports r
+         CROSS JOIN LATERAL (
+            SELECT geom
+            FROM montreal_roads
+            ORDER BY geom::geography <-> r.location
+            LIMIT 1
+         ) mr'
+    );
+
+    expect((float) $maxDistance->max_distance)->toBeLessThan(2.0);
 });
 
 it('runs fresh migrate and core seed before demo seed when fresh option is used', function () {
@@ -71,6 +86,14 @@ it('prevents direct test data seeder execution in production', function () {
 
     expect(fn () => app(TestDataSeeder::class)->run())
         ->toThrow(RuntimeException::class, 'TestDataSeeder may only run in local, testing, or staging environments.');
+});
+
+it('requires Montreal road geometry before direct test data seeding', function () {
+    app()->detectEnvironment(fn () => 'testing');
+    DB::table('montreal_roads')->delete();
+
+    expect(fn () => app(TestDataSeeder::class)->run())
+        ->toThrow(RuntimeException::class, 'Montreal roads must be seeded from database/geo/mtl_geobase.json before TestDataSeeder runs.');
 });
 
 it('uses configured staging demo password instead of hardcoded shared credentials', function () {
