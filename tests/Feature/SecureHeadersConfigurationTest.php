@@ -20,6 +20,15 @@ it('adds required secure headers to responses', function () {
 
     expect((string) $response->headers->get('Permissions-Policy'))
         ->not->toContain('geolocation=*');
+
+    $reverbHost = env('VITE_REVERB_HOST', env('REVERB_HOST'));
+    $reverbPort = env('VITE_REVERB_PORT', env('REVERB_PORT'));
+
+    if ($reverbHost && $reverbPort) {
+        expect((string) $response->headers->get('Content-Security-Policy'))
+            ->toContain(sprintf('ws://%s:%s', $reverbHost, $reverbPort))
+            ->toContain(sprintf('wss://%s:%s', $reverbHost, $reverbPort));
+    }
 });
 
 it('passes the secure headers ci guard command when configuration is valid', function () {

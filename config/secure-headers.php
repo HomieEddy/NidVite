@@ -1,5 +1,14 @@
 <?php
 
+$reverbHost = env('VITE_REVERB_HOST', env('REVERB_HOST'));
+$reverbPort = env('VITE_REVERB_PORT', env('REVERB_PORT'));
+$reverbConnectSources = $reverbHost && $reverbPort
+    ? [
+        sprintf('ws://%s:%s', $reverbHost, $reverbPort),
+        sprintf('wss://%s:%s', $reverbHost, $reverbPort),
+    ]
+    : [];
+
 return [
     'server' => '',
 
@@ -96,6 +105,7 @@ return [
                 'https://www.gstatic.com/recaptcha/',
                 'https://www.recaptcha.net/recaptcha/',
                 'https://nominatim.openstreetmap.org',
+                ...$reverbConnectSources,
             ],
         ],
 
