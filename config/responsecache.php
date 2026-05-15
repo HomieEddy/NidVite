@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Http\PublicResponseCacheProfile;
 use Spatie\ResponseCache\CacheProfiles\CacheAllSuccessfulGetRequests;
 use Spatie\ResponseCache\Hasher\DefaultHasher;
 use Spatie\ResponseCache\Replacers\CsrfTokenReplacer;
@@ -18,7 +19,7 @@ return [
      *  You can provide your own class given that it implements the
      *  CacheProfile interface.
      */
-    'cache_profile' => CacheAllSuccessfulGetRequests::class,
+    'cache_profile' => PublicResponseCacheProfile::class,
 
     /*
      *  Optionally, you can specify a header that will force a cache bypass.
