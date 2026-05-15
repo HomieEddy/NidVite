@@ -118,20 +118,41 @@ function initPublicMapPage() {
 		return text;
 	};
 
-	fetch(geojsonUrl)
+	fetch(geojsonUrl, {
+		cache: 'no-store',
+		headers: {
+			'Accept': 'application/json',
+		},
+	})
 		.then(function (response) {
+			if (!response.ok) {
+				throw new Error('geojson_fetch_failed');
+			}
+
 			return response.json();
 		})
 		.then(function (data) {
+			if (!data || !Array.isArray(data.features)) {
+				throw new Error('geojson_payload_invalid');
+			}
+
 			var bounds = L.latLngBounds();
 			var coordinateUsage = {};
 
 			data.features.forEach(function (feature) {
+				if (!feature || !feature.geometry || !Array.isArray(feature.geometry.coordinates) || feature.geometry.coordinates.length < 2) {
+					return;
+				}
+
 				var coords = feature.geometry.coordinates;
-				var props = feature.properties;
+				var props = feature.properties || {};
 				var color = statusColors[props.status] || '#6b7280';
-				var lng = coords[0];
-				var lat = coords[1];
+				var lng = Number(coords[0]);
+				var lat = Number(coords[1]);
+
+				if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+					return;
+				}
 				var key = lat.toFixed(6) + ',' + lng.toFixed(6);
 				var index = coordinateUsage[key] || 0;
 				coordinateUsage[key] = index + 1;
