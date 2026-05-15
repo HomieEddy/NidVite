@@ -96,7 +96,13 @@ Route::get('/locale/{locale}', function (string $locale) {
         sameSite: config('session.same_site', 'lax'),
     ));
 
-    return redirect()->back();
+    $fallbackUrl = url('/');
+    $previousUrl = url()->previous();
+
+    $switchPathPrefix = '/locale/';
+    $previousPath = parse_url($previousUrl, PHP_URL_PATH);
+    $isLocaleSwitchPath = is_string($previousPath) && str_starts_with($previousPath, $switchPathPrefix);
+
+    return redirect()->to($isLocaleSwitchPath ? $fallbackUrl : $previousUrl);
 })->name('locale.switch')
-    ->middleware($publicApiThrottle)
     ->whereIn('locale', ['fr', 'en']);
