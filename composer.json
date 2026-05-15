@@ -79,6 +79,9 @@
         ],
         "quality:rector-dry-run": [
             "rector process --dry-run --config rector.php app/Actions/Reports app/Filament/Resources/Reports/Schemas app/Filament/Resources/RepairJobs/Schemas"
+        ],
+        "test:host": [
+            "powershell -ExecutionPolicy Bypass -File scripts/test-host.ps1"
         ]
     },
     "extra": {

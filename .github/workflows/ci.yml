@@ -53,8 +53,19 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
+      - name: Cache vendor directory
+        id: vendor-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php82-vendor-${{ hashFiles('**/composer.lock') }}
+
       - name: Install dependencies
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Dump Composer autoload
+        run: composer dump-autoload --optimize
 
       - name: Validate composer metadata
         run: composer validate --strict
@@ -154,8 +165,19 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
+      - name: Cache vendor directory
+        id: vendor-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php82-vendor-${{ hashFiles('**/composer.lock') }}
+
       - name: Install dependencies
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Dump Composer autoload
+        run: composer dump-autoload --optimize
 
       - name: Copy environment file
         run: cp .env.example .env
@@ -182,10 +204,21 @@ jobs:
           PGPASSWORD: password
         run: psql -h localhost -p 5432 -U sail -d testing -c "CREATE EXTENSION IF NOT EXISTS postgis;"
 
+      - name: Run migrations
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: testing
+          DB_USERNAME: sail
+          DB_PASSWORD: password
+        run: php artisan migrate --force
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install npm dependencies and build
         run: |
@@ -200,4 +233,4 @@ jobs:
           DB_DATABASE: testing
           DB_USERNAME: sail
           DB_PASSWORD: password
-        run: ./vendor/bin/pest --colors=never
+        run: php artisan test --parallel --colors=never
