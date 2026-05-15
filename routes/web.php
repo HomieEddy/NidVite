@@ -19,6 +19,9 @@ Route::get('/signaler', function () {
     return view('report');
 })->name('report.create');
 
+Route::view('/offline', 'vendor.laravelpwa.offline')
+    ->name('offline');
+
 Route::get('/suivi/{trackingId}', [ReportTrackingController::class, 'show'])
     ->name('report.tracking')
     ->where('trackingId', 'MTL[A-Z0-9]{8}');
