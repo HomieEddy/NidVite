@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\Material;
+use App\Models\RepairJob;
 use App\Models\Report;
 use App\Models\ReportCategory;
-use App\Models\RepairJob;
 use App\Models\User;
 use App\Models\Vendor;
 use Database\Seeders\StagingDemoSeeder;
