@@ -101,16 +101,6 @@ jobs:
           PGPASSWORD: password
         run: psql -h localhost -p 5432 -U sail -d testing -c "CREATE EXTENSION IF NOT EXISTS postgis;"
 
-      - name: Prepare parallel test databases
-        env:
-          PGPASSWORD: password
-        run: |
-          for i in 1 2 3 4; do
-            db_name="testing_test_${i}"
-            psql -h localhost -p 5432 -U sail -d postgres -tc "SELECT 1 FROM pg_database WHERE datname='${db_name}'" | grep -q 1 || psql -h localhost -p 5432 -U sail -d postgres -c "CREATE DATABASE ${db_name};"
-            psql -h localhost -p 5432 -U sail -d "${db_name}" -c "CREATE EXTENSION IF NOT EXISTS postgis;"
-          done
-
       - name: Run migrations
         env:
           DB_CONNECTION: pgsql
@@ -233,4 +223,4 @@ jobs:
           DB_DATABASE: testing
           DB_USERNAME: sail
           DB_PASSWORD: password
-        run: ./vendor/bin/pest --parallel --colors=never
+        run: php artisan test --parallel --colors=never
