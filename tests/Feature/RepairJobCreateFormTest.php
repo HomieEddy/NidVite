@@ -9,6 +9,7 @@ use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
@@ -83,6 +84,8 @@ it('rejects scheduled_at earlier than the latest linked report date on submit', 
 });
 
 it('restricts create repair job page access for guests and unauthorized roles', function () {
+    Auth::logout();
+
     $this->get(RepairJobResource::getUrl('create'))
         ->assertRedirect(route('filament.admin.auth.login'));
 

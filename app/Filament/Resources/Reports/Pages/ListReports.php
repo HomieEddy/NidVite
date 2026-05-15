@@ -108,6 +108,7 @@ class ListReports extends ListRecords
                     $this->handleSavedViewOperation([
                         'operation' => 'delete',
                         'view_id' => $data['view_id'] ?? null,
+                        'confirm_delete' => 'yes',
                     ]);
                 }),
             Action::make('saved_views')
