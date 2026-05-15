@@ -4,6 +4,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\ReportTrackingController;
 use App\Http\Controllers\SignedMediaController;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 use Spatie\Health\Http\Controllers\HealthCheckJsonResultsController;
 use Spatie\ResponseCache\Middlewares\CacheResponse;
@@ -71,8 +72,19 @@ Route::get('/media/{media}', SignedMediaController::class)
 
 Route::get('/locale/{locale}', function (string $locale) {
     if (in_array($locale, ['fr', 'en'], true)) {
-        session()->put('locale', $locale);
         app()->setLocale($locale);
+
+        Cookie::queue(cookie(
+            name: 'locale',
+            value: $locale,
+            minutes: 60 * 24 * 365,
+            path: '/',
+            secure: (bool) config('session.secure'),
+            httpOnly: true,
+            sameSite: (string) config('session.same_site', 'lax'),
+        ));
+
+        return redirect()->back();
     }
 
     return redirect()->back();
