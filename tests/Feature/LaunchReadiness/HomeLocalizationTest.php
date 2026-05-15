@@ -30,6 +30,55 @@ it('renders localized homepage call-to-actions in french and english', function 
         ->assertSee('Report ID', false);
 });
 
+it('switches locale using a cookie without writing to the session', function () {
+    $this->from('/')
+        ->get(route('locale.switch', ['locale' => 'en']))
+        ->assertRedirect('/')
+        ->assertCookie('locale');
+});
+
+it('renders english homepage copy from locale cookie', function () {
+    $this->withoutMiddleware(CacheResponse::class);
+
+    $this->mock(GetPublicReportStatsAction::class, function ($mock): void {
+        $mock->shouldReceive('__invoke')
+            ->once()
+            ->with('en')
+            ->andReturn([
+                'totalReported' => 0,
+                'totalFixed' => 0,
+                'totalPending' => 0,
+                'velocity' => 'N/A',
+            ]);
+    });
+
+    $this->withCookie('locale', 'en')
+        ->get('/')
+        ->assertOk()
+        ->assertSeeText('Report an issue')
+        ->assertSee('Report ID', false);
+});
+
+it('ignores unsupported locale cookies', function () {
+    $this->withoutMiddleware(CacheResponse::class);
+
+    $this->mock(GetPublicReportStatsAction::class, function ($mock): void {
+        $mock->shouldReceive('__invoke')
+            ->once()
+            ->andReturn([
+                'totalReported' => 0,
+                'totalFixed' => 0,
+                'totalPending' => 0,
+                'velocity' => 'N/D',
+            ]);
+    });
+
+    $this->withCookie('locale', 'zz')
+        ->get('/')
+        ->assertOk()
+        ->assertSeeText('Faire un signalement');
+});
+
 it('falls back to default locale copy when locale is unsupported', function () {
     $this->withoutMiddleware(CacheResponse::class);
 
