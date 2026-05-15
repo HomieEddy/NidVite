@@ -27,9 +27,10 @@ Route::view('/offline', 'vendor.laravelpwa.offline')
 
 Route::prefix('/suivi/{trackingId}')
     ->controller(ReportTrackingController::class)
-    ->group(function () use ($trackingMutationThrottle): void {
+    ->group(function () use ($publicApiThrottle, $trackingMutationThrottle): void {
         Route::get('/', 'show')
-            ->name('report.tracking');
+            ->name('report.tracking')
+            ->middleware($publicApiThrottle);
 
         Route::post('/preferences', 'updatePreference')
             ->name('report.tracking.preference.update')
@@ -94,4 +95,5 @@ Route::get('/locale/{locale}', function (string $locale) {
     }
 
     return redirect()->back();
-})->name('locale.switch');
+})->name('locale.switch')
+    ->middleware($publicApiThrottle);

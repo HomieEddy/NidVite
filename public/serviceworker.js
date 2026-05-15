@@ -27,8 +27,8 @@ self.addEventListener("install", event => {
                                 return cache.put(url, response);
                             }
                         })
-                        .catch(() => {
-                            // Keep the service worker install quiet if the dev server is mid-reload.
+                        .catch(error => {
+                            console.warn('[SW] Failed to cache required asset:', url, error);
                         })
                 );
 

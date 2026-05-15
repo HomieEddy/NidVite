@@ -27,9 +27,9 @@ class ListReports extends ListRecords
     public function getTabs(): array
     {
         return [
-            Tab::make('Reports')
+            Tab::make(__('filament.admin.resources.reports.tabs.reports'))
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', '!=', 'rejected')),
-            Tab::make('Rejected')
+            Tab::make(__('filament.admin.resources.reports.tabs.rejected'))
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', 'rejected')),
         ];
     }

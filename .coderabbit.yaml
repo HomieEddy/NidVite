@@ -17,6 +17,12 @@ reviews:
   collapse_walkthrough: false
   changed_files_summary: true
   path_filters:
+    - "!vendor/**"
+    - "!node_modules/**"
+    - "!bootstrap/cache/**"
+    - "!storage/**"
+    - "!public/build/**"
+    - "!public/vendor/**"
     - "!database/geo/**"
     - "!docs/**"
     - "!resources/views/vendor/**"

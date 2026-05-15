@@ -159,6 +159,10 @@ return [
                     'heading' => 'No reports found',
                     'description' => 'Reports will appear here once citizens submit them.',
                 ],
+                'tabs' => [
+                    'reports' => 'Reports',
+                    'rejected' => 'Rejected',
+                ],
                 'actions' => [
                     'create' => 'Create Report',
                     'view_on_map' => 'View on Map',

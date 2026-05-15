@@ -58,6 +58,14 @@ it('prevents direct staging demo seeder execution outside staging and testing', 
         ->toThrow(RuntimeException::class, 'StagingDemoSeeder can only run in staging/testing environments.');
 });
 
+it('requires configured staging demo password in staging environment', function () {
+    app()->detectEnvironment(fn () => 'staging');
+    config()->set('admin-auth.staging_demo_seed_password', '');
+
+    expect(fn () => app(StagingDemoSeeder::class)->run())
+        ->toThrow(RuntimeException::class, 'staging_demo_seed_password must be configured for staging environment');
+});
+
 it('prevents direct test data seeder execution in production', function () {
     app()->detectEnvironment(fn () => 'production');
 

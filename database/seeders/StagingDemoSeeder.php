@@ -99,8 +99,8 @@ class StagingDemoSeeder extends Seeder
 
             // Keep demo seed deterministic with no audit residue.
             DB::table('activity_log')->delete();
-        });
 
-        $this->call(TestDataSeeder::class);
+            $this->call(TestDataSeeder::class);
+        });
     }
 }

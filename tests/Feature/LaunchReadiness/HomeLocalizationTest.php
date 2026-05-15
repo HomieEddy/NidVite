@@ -34,7 +34,8 @@ it('switches locale using a cookie without writing to the session', function () 
     $this->from('/')
         ->get(route('locale.switch', ['locale' => 'en']))
         ->assertRedirect('/')
-        ->assertCookie('locale');
+        ->assertCookie('locale')
+        ->assertSessionMissing('locale');
 });
 
 it('renders english homepage copy from locale cookie', function () {
