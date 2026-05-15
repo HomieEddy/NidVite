@@ -65,6 +65,14 @@ it('switches locale safely without a referrer', function () {
         ->assertSessionMissing('locale');
 });
 
+it('switches locale safely when previous url is also a locale switch route', function () {
+    $this->from(route('locale.switch', ['locale' => 'fr']))
+        ->get(route('locale.switch', ['locale' => 'en']))
+        ->assertRedirect('/')
+        ->assertCookie('locale')
+        ->assertSessionMissing('locale');
+});
+
 it('renders english homepage copy from locale cookie', function () {
     $this->withoutMiddleware(CacheResponse::class);
 
