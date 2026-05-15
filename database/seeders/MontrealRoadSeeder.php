@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Generator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -15,24 +16,19 @@ class MontrealRoadSeeder extends Seeder
         DB::statement('TRUNCATE TABLE montreal_roads RESTART IDENTITY');
 
         $geojsonPath = database_path('geo/mtl_geobase.json');
-        $geojsonContents = file_get_contents($geojsonPath);
-        if ($geojsonContents === false) {
+        if (! is_file($geojsonPath)) {
             throw new RuntimeException("Unable to read GeoJSON file at path: {$geojsonPath}");
-        }
-
-        $geojson = json_decode($geojsonContents, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new RuntimeException('Failed to decode GeoJSON: '.json_last_error_msg());
-        }
-
-        if (! isset($geojson['features'])) {
-            throw new RuntimeException('GeoJSON missing features array');
         }
 
         $rows = 0;
         $chunk = [];
 
-        foreach ($geojson['features'] as $feature) {
+        foreach ($this->features($geojsonPath) as $featureJson) {
+            $feature = json_decode($featureJson, true);
+            if (json_last_error() !== JSON_ERROR_NONE || ! is_array($feature)) {
+                throw new RuntimeException('Failed to decode GeoJSON feature: '.json_last_error_msg());
+            }
+
             if (! isset($feature['geometry']['type']) || $feature['geometry']['type'] !== 'LineString') {
                 continue;
             }
@@ -65,6 +61,105 @@ class MontrealRoadSeeder extends Seeder
         }
 
         $this->command?->info("MontrealRoadSeeder imported {$rows} mtl_geobase road segments.");
+    }
+
+    /**
+     * Streams the FeatureCollection without decoding the full 42 MB file at once.
+     *
+     * @return Generator<int, string>
+     */
+    private function features(string $geojsonPath): Generator
+    {
+        $handle = fopen($geojsonPath, 'rb');
+        if ($handle === false) {
+            throw new RuntimeException("Unable to read GeoJSON file at path: {$geojsonPath}");
+        }
+
+        try {
+            $buffer = '';
+            $inFeatures = false;
+            $collecting = false;
+            $feature = '';
+            $depth = 0;
+            $inString = false;
+            $escaped = false;
+
+            while (($chunk = fread($handle, 65536)) !== false && $chunk !== '') {
+                $length = strlen($chunk);
+
+                for ($i = 0; $i < $length; $i++) {
+                    $char = $chunk[$i];
+
+                    if (! $inFeatures) {
+                        $buffer .= $char;
+                        if (str_contains($buffer, '"features"')) {
+                            $afterFeatures = substr($buffer, (int) strpos($buffer, '"features"') + 10);
+                            if (str_contains($afterFeatures, '[')) {
+                                $inFeatures = true;
+                            }
+                        }
+
+                        if (strlen($buffer) > 1024) {
+                            $buffer = substr($buffer, -1024);
+                        }
+
+                        continue;
+                    }
+
+                    if (! $collecting) {
+                        if ($char === '{') {
+                            $collecting = true;
+                            $feature = '{';
+                            $depth = 1;
+                            $inString = false;
+                            $escaped = false;
+                        } elseif ($char === ']') {
+                            return;
+                        }
+
+                        continue;
+                    }
+
+                    $feature .= $char;
+
+                    if ($escaped) {
+                        $escaped = false;
+
+                        continue;
+                    }
+
+                    if ($char === '\\' && $inString) {
+                        $escaped = true;
+
+                        continue;
+                    }
+
+                    if ($char === '"') {
+                        $inString = ! $inString;
+
+                        continue;
+                    }
+
+                    if ($inString) {
+                        continue;
+                    }
+
+                    if ($char === '{') {
+                        $depth++;
+                    } elseif ($char === '}') {
+                        $depth--;
+
+                        if ($depth === 0) {
+                            yield $feature;
+                            $collecting = false;
+                            $feature = '';
+                        }
+                    }
+                }
+            }
+        } finally {
+            fclose($handle);
+        }
     }
 
     /**
