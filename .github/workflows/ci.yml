@@ -204,6 +204,16 @@ jobs:
           PGPASSWORD: password
         run: psql -h localhost -p 5432 -U sail -d testing -c "CREATE EXTENSION IF NOT EXISTS postgis;"
 
+      - name: Run migrations
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: testing
+          DB_USERNAME: sail
+          DB_PASSWORD: password
+        run: php artisan migrate --force
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
