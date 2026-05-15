@@ -33,6 +33,7 @@
     }
     .report-popup .status-received { background: #dbeafe; color: #1e40af; }
     .report-popup .status-verified { background: #dbeafe; color: #1e40af; }
+    .report-popup .status-planned { background: #fef9c3; color: #854d0e; }
     .report-popup .status-scheduled { background: #fef9c3; color: #854d0e; }
     .report-popup .status-in_progress { background: #fef9c3; color: #854d0e; }
     .report-popup .status-repaired { background: #d1fae5; color: #065f46; }
@@ -55,6 +56,8 @@
 @endpush
 
 @section('content')
+@include('components.dummy-data-notice')
+
 <div class="map-page-container px-4 py-2">
     {{-- Back button + header --}}
     <div class="flex items-center justify-between mb-2 shrink-0">

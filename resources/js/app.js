@@ -94,7 +94,8 @@ function initPublicMapPage() {
 	var statusColors = {
 		received: '#3b82f6',
 		verified: '#3b82f6',
-		scheduled: '#eab308',
+		planned: '#facc15',
+		scheduled: '#facc15',
 		in_progress: '#eab308',
 		repaired: '#10b981',
 	};
