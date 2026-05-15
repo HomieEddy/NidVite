@@ -53,7 +53,15 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
+      - name: Cache vendor directory
+        id: vendor-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php82-vendor-${{ hashFiles('**/composer.lock') }}
+
       - name: Install dependencies
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Validate composer metadata
@@ -154,7 +162,15 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
+      - name: Cache vendor directory
+        id: vendor-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php82-vendor-${{ hashFiles('**/composer.lock') }}
+
       - name: Install dependencies
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Copy environment file
@@ -186,6 +202,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install npm dependencies and build
         run: |
@@ -200,4 +217,4 @@ jobs:
           DB_DATABASE: testing
           DB_USERNAME: sail
           DB_PASSWORD: password
-        run: ./vendor/bin/pest --colors=never
+        run: ./vendor/bin/pest --parallel --colors=never
