@@ -46,7 +46,10 @@ it('stores and loads saved report views for current user only', function () {
         ->set('tableFilters', ['status' => ['values' => ['received']]])
         ->sortTable('priority', 'asc')
         ->set('tableSearch', 'triage')
-        ->callAction('save_view', ['name' => 'My Queue']);
+        ->callAction('saved_views', [
+            'operation' => 'save',
+            'name' => 'My Queue',
+        ]);
 
     $saved = ReportSavedView::query()
         ->where('user_id', $admin->id)
@@ -62,10 +65,17 @@ it('stores and loads saved report views for current user only', function () {
     Livewire::test(ListReports::class)
         ->set('tableFilters', ['status' => ['values' => ['verified']]])
         ->set('tableSearch', 'override')
-        ->callAction('load_view', ['view_id' => $saved->id])
+        ->callAction('saved_views', [
+            'operation' => 'load',
+            'view_id' => $saved->id,
+        ])
         ->assertSet('tableFilters', ['status' => ['values' => ['received']]])
         ->assertSet('tableSearch', 'triage')
-        ->callAction('delete_view', ['view_id' => $otherView->id]);
+        ->callAction('saved_views', [
+            'operation' => 'delete',
+            'view_id' => $otherView->id,
+            'confirm_delete' => 'yes',
+        ]);
 
     expect(ReportSavedView::query()->whereKey($otherView->id)->exists())->toBeTrue();
 
@@ -73,7 +83,11 @@ it('stores and loads saved report views for current user only', function () {
         ->set('tableFilters', ['status' => ['values' => ['verified']]])
         ->sortTable('created_at', 'desc')
         ->set('tableSearch', 'updated')
-        ->callAction('update_view', ['view_id' => $saved->id, 'name' => 'My Queue Updated']);
+        ->callAction('saved_views', [
+            'operation' => 'update',
+            'view_id' => $saved->id,
+            'rename_to' => 'My Queue Updated',
+        ]);
 
     $saved->refresh();
 
@@ -84,7 +98,11 @@ it('stores and loads saved report views for current user only', function () {
         ->and($saved->search)->toBe('updated');
 
     Livewire::test(ListReports::class)
-        ->callAction('delete_view', ['view_id' => $saved->id]);
+        ->callAction('saved_views', [
+            'operation' => 'delete',
+            'view_id' => $saved->id,
+            'confirm_delete' => 'yes',
+        ]);
 
     expect(ReportSavedView::query()->whereKey($saved->id)->exists())->toBeFalse();
 });
@@ -244,7 +262,7 @@ it('bulk request-more-info appends note and blocks terminal rows', function () {
         'admin_notes' => 'Existing note',
     ]);
 
-    $terminal = Report::factory()->create(['status' => 'rejected']);
+    $terminal = Report::factory()->create(['status' => 'repaired']);
 
     Livewire::test(ListReports::class)
         ->callTableBulkAction('request_more_info', [$active, $terminal], [

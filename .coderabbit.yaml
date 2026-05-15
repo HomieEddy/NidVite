@@ -16,6 +16,16 @@ reviews:
   review_status: true
   collapse_walkthrough: false
   changed_files_summary: true
+  path_filters:
+    - "!vendor/**"
+    - "!node_modules/**"
+    - "!bootstrap/cache/**"
+    - "!storage/**"
+    - "!public/build/**"
+    - "!public/vendor/**"
+    - "!database/geo/**"
+    - "!docs/**"
+    - "!resources/views/vendor/**"
 
   # Auto-review triggers
   auto_review:
@@ -150,15 +160,6 @@ reviews:
       level: "5"
     pint:
       enabled: true
-
-  # Ignore generated files
-  ignore:
-    - "vendor/**"
-    - "node_modules/**"
-    - "bootstrap/cache/**"
-    - "storage/**"
-    - "public/build/**"
-    - "public/vendor/**"
 
 chat:
   auto_reply: true

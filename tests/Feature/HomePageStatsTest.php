@@ -108,3 +108,25 @@ it('renders velocity not-available when visible reports are not repaired', funct
         ->and($response->viewData('totalPending'))->toBe(1)
         ->and($response->viewData('velocity'))->toBe(__('report.velocity_na'));
 });
+
+it('shows dummy data notice on homepage in non-production environments', function () {
+    $this->withoutMiddleware(CacheResponse::class);
+    app()->detectEnvironment(fn () => 'testing');
+    app()->setLocale('en');
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('Demo data')
+        ->assertSee('dummy data for prototyping purposes');
+});
+
+it('hides dummy data notice on homepage in production', function () {
+    $this->withoutMiddleware(CacheResponse::class);
+    app()->detectEnvironment(fn () => 'production');
+    app()->setLocale('en');
+
+    $this->get('/')
+        ->assertOk()
+        ->assertDontSee('Demo data')
+        ->assertDontSee('dummy data for prototyping purposes');
+});

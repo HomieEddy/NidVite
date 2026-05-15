@@ -1,8 +1,13 @@
 <?php
 
+use App\Models\Material;
+use App\Models\RepairJob;
 use App\Models\Report;
+use App\Models\ReportCategory;
 use App\Models\User;
+use App\Models\Vendor;
 use Database\Seeders\StagingDemoSeeder;
+use Database\Seeders\TestDataSeeder;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 
@@ -25,7 +30,15 @@ it('runs demo seed command in testing environment', function () {
         ->expectsOutputToContain('Staging demo seed completed.')
         ->assertSuccessful();
 
-    expect(Report::withTrashed()->count())->toBe(0);
+    expect(Report::withTrashed()->count())->toBe(250)
+        ->and(Report::query()->where('status', 'repaired')->count())->toBe(188)
+        ->and(Report::query()->where('status', 'verified')->count())->toBe(37)
+        ->and(Report::query()->where('status', 'scheduled')->count())->toBe(25)
+        ->and(RepairJob::query()->where('status', 'completed')->count())->toBe(188)
+        ->and(RepairJob::query()->where('status', 'planned')->count())->toBe(25)
+        ->and(Vendor::query()->count())->toBe(3)
+        ->and(Material::query()->count())->toBe(3)
+        ->and(ReportCategory::query()->pluck('slug')->all())->toBe(['pothole']);
 });
 
 it('runs fresh migrate and core seed before demo seed when fresh option is used', function () {
@@ -35,7 +48,7 @@ it('runs fresh migrate and core seed before demo seed when fresh option is used'
         ->expectsOutputToContain('Staging demo seed completed.')
         ->assertSuccessful();
 
-    expect(Report::withTrashed()->count())->toBe(0);
+    expect(Report::withTrashed()->count())->toBe(250);
 });
 
 it('prevents direct staging demo seeder execution outside staging and testing', function () {
@@ -43,6 +56,21 @@ it('prevents direct staging demo seeder execution outside staging and testing', 
 
     expect(fn () => app(StagingDemoSeeder::class)->run())
         ->toThrow(RuntimeException::class, 'StagingDemoSeeder can only run in staging/testing environments.');
+});
+
+it('requires configured staging demo password in staging environment', function () {
+    app()->detectEnvironment(fn () => 'staging');
+    config()->set('admin-auth.staging_demo_seed_password', '');
+
+    expect(fn () => app(StagingDemoSeeder::class)->run())
+        ->toThrow(RuntimeException::class, 'staging_demo_seed_password must be configured for staging environment');
+});
+
+it('prevents direct test data seeder execution in production', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    expect(fn () => app(TestDataSeeder::class)->run())
+        ->toThrow(RuntimeException::class, 'TestDataSeeder may only run in local, testing, or staging environments.');
 });
 
 it('uses configured staging demo password instead of hardcoded shared credentials', function () {

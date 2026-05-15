@@ -159,6 +159,10 @@ return [
                     'heading' => 'Aucun signalement trouve',
                     'description' => 'Les signalements apparaitront ici une fois soumis.',
                 ],
+                'tabs' => [
+                    'reports' => 'Signalements',
+                    'rejected' => 'Rejetes',
+                ],
                 'actions' => [
                     'create' => 'Creer un signalement',
                     'view_on_map' => 'Voir sur la carte',

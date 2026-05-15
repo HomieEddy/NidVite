@@ -3,6 +3,10 @@
 return [
     'description' => 'Aidez-nous à améliorer les rues de Montréal en signalant les nids-de-poule et en suivant les réparations en cours.',
     'report_not_found' => 'Signalement non trouvé',
+    'demo_notice' => [
+        'title' => 'Données de démonstration',
+        'body' => 'Les signalements et les statistiques affichés sont des données fictives utilisées pour le prototypage.',
+    ],
 
     'actions' => [
         'report_issue' => 'Faire un signalement',

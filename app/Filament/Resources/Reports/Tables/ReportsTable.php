@@ -35,6 +35,7 @@ class ReportsTable
         return $table
             ->emptyStateHeading(__('filament.admin.resources.reports.empty_state.heading'))
             ->emptyStateDescription(__('filament.admin.resources.reports.empty_state.description'))
+            ->defaultSort('created_at', 'desc')
             ->emptyStateActions([
                 Action::make('create')
                     ->label(__('filament.admin.resources.reports.actions.create'))

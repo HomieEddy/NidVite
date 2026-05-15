@@ -13,6 +13,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Tabs\Tab;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,95 +24,20 @@ class ListReports extends ListRecords
 {
     protected static string $resource = ReportResource::class;
 
+    public function getTabs(): array
+    {
+        return [
+            Tab::make(__('filament.admin.resources.reports.tabs.reports'))
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', '!=', 'rejected')),
+            Tab::make(__('filament.admin.resources.reports.tabs.rejected'))
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', 'rejected')),
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             CreateAction::make(),
-            Action::make('save_view')
-                ->label(__('filament.admin.resources.reports.saved_views.actions.save'))
-                ->icon('heroicon-o-bookmark')
-                ->form([
-                    TextInput::make('name')
-                        ->label(__('filament.admin.resources.reports.saved_views.fields.name'))
-                        ->dehydrateStateUsing(fn ($state): string => trim((string) $state))
-                        ->minLength(1)
-                        ->maxLength(100)
-                        ->required(),
-                ])
-                ->action(function (array $data): void {
-                    $this->handleSavedViewOperation([
-                        'operation' => 'save',
-                        'name' => $data['name'] ?? null,
-                    ]);
-                }),
-            Action::make('update_view')
-                ->label(__('filament.admin.resources.reports.saved_views.actions.update'))
-                ->icon('heroicon-o-pencil-square')
-                ->form([
-                    Select::make('view_id')
-                        ->label(__('filament.admin.resources.reports.saved_views.fields.view'))
-                        ->options(fn (): array => ReportSavedView::query()
-                            ->where('user_id', Auth::id())
-                            ->orderBy('name')
-                            ->pluck('name', 'id')
-                            ->all())
-                        ->searchable()
-                        ->required(),
-                    TextInput::make('name')
-                        ->label(__('filament.admin.resources.reports.saved_views.fields.rename_to'))
-                        ->dehydrateStateUsing(fn ($state): string => trim((string) $state))
-                        ->maxLength(100),
-                ])
-                ->action(function (array $data): void {
-                    $this->handleSavedViewOperation([
-                        'operation' => 'update',
-                        'view_id' => $data['view_id'] ?? null,
-                        'rename_to' => $data['name'] ?? null,
-                    ]);
-                }),
-            Action::make('load_view')
-                ->label(__('filament.admin.resources.reports.saved_views.actions.load'))
-                ->icon('heroicon-o-folder-open')
-                ->form([
-                    Select::make('view_id')
-                        ->label(__('filament.admin.resources.reports.saved_views.fields.view'))
-                        ->options(fn (): array => ReportSavedView::query()
-                            ->where('user_id', Auth::id())
-                            ->orderBy('name')
-                            ->pluck('name', 'id')
-                            ->all())
-                        ->searchable()
-                        ->required(),
-                ])
-                ->action(function (array $data): void {
-                    $this->handleSavedViewOperation([
-                        'operation' => 'load',
-                        'view_id' => $data['view_id'] ?? null,
-                    ]);
-                }),
-            Action::make('delete_view')
-                ->label(__('filament.admin.resources.reports.saved_views.actions.delete'))
-                ->icon('heroicon-o-trash')
-                ->color('danger')
-                ->requiresConfirmation()
-                ->form([
-                    Select::make('view_id')
-                        ->label(__('filament.admin.resources.reports.saved_views.fields.view'))
-                        ->options(fn (): array => ReportSavedView::query()
-                            ->where('user_id', Auth::id())
-                            ->orderBy('name')
-                            ->pluck('name', 'id')
-                            ->all())
-                        ->searchable()
-                        ->required(),
-                ])
-                ->action(function (array $data): void {
-                    $this->handleSavedViewOperation([
-                        'operation' => 'delete',
-                        'view_id' => $data['view_id'] ?? null,
-                        'confirm_delete' => 'yes',
-                    ]);
-                }),
             Action::make('saved_views')
                 ->label(__('filament.admin.resources.reports.saved_views.actions.menu'))
                 ->icon('heroicon-o-bookmark-square')

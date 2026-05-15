@@ -23,7 +23,6 @@ class StagingDemoSeeder extends Seeder
         $demoPassword = (string) (config('admin-auth.staging_demo_seed_password') ?: Str::password(24));
 
         DB::transaction(function () use ($demoPassword): void {
-            // Staging must contain no reports.
             DB::table('job_reports')->delete();
             DB::table('email_delivery_logs')->delete();
             DB::table('suspicious_activities')->delete();
@@ -36,7 +35,6 @@ class StagingDemoSeeder extends Seeder
             DB::table('expenses')->delete();
             DB::table('repair_jobs')->delete();
 
-            // Reset demo entities for idempotent re-runs.
             DB::table('montreal_boundary')->delete();
             DB::table('materials')->delete();
             DB::table('vendors')->delete();
@@ -93,21 +91,6 @@ class StagingDemoSeeder extends Seeder
                 ]
             );
 
-            // Create Report Categories
-            DB::insert('INSERT INTO report_categories (slug, label_en, label_fr, icon, color, sort_order, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [
-                'pothole', 'Pothole', 'Nid-de-poule', 'circle-dot', '#EF4444', 1, true, now(), now(),
-            ]);
-
-            // Create Material
-            DB::insert('INSERT INTO materials (sku, name, description, unit, current_stock, reserved_stock, min_stock_alert, avg_purchase_price, last_purchase_price, location, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
-                'ASPHALT-BAGS', 'Asphalt Bags', 'Standard asphalt repair bags', 'bag', 100.0, 0.0, 20.0, '45.00', '48.50', 'Warehouse A', true, now(), now(),
-            ]);
-
-            // Create Vendor
-            DB::insert('INSERT INTO vendors (name, contact_name, email, phone, address, website, notes, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
-                'Test Vendor', 'Test Contact', 'test@vendor.local', '+1-555-0100', '123 Test Street, Montreal, QC', 'https://test-vendor.local', 'Dummy vendor', true, now(), now(),
-            ]);
-
             // Create Montreal Boundary
             $polygon = 'POLYGON((-73.95 45.52, -73.92 45.60, -73.85 45.68, -73.75 45.70, -73.65 45.68, -73.55 45.65, -73.48 45.60, -73.45 45.52, -73.48 45.45, -73.55 45.40, -73.65 45.42, -73.75 45.43, -73.85 45.45, -73.92 45.48, -73.95 45.52))';
             DB::insert('INSERT INTO montreal_boundary (name, boundary, created_at, updated_at) VALUES (?, ST_GeomFromText(?, 4326), ?, ?)', [
@@ -116,6 +99,8 @@ class StagingDemoSeeder extends Seeder
 
             // Keep demo seed deterministic with no audit residue.
             DB::table('activity_log')->delete();
+
+            $this->call(TestDataSeeder::class);
         });
     }
 }
