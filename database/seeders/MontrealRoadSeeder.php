@@ -8,7 +8,7 @@ use RuntimeException;
 
 class MontrealRoadSeeder extends Seeder
 {
-    private const INSERT_CHUNK_SIZE = 500;
+    private const INSERT_CHUNK_SIZE = 100;
 
     public function run(): void
     {
@@ -85,5 +85,7 @@ class MontrealRoadSeeder extends Seeder
             .implode(', ', $placeholders),
             $bindings
         );
+
+        $this->command?->getOutput()->write('.');
     }
 }
