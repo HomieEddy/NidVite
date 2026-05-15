@@ -1,9 +1,5 @@
 <?php
 
-use BaconQrCode\Renderer\Image\SvgImageBackEnd;
-use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
-use BaconQrCode\Writer;
 use App\Actions\Reports\SubmitReportAction;
 use App\Models\Report;
 use App\Models\ReportCategory;
@@ -49,8 +45,6 @@ new class extends Component
 
     public ?string $location_source = null;
 
-    public bool $manual_location_fallback = false;
-
     #[Validate('nullable|array|max:5')]
     public array $photos = [];
 
@@ -62,25 +56,18 @@ new class extends Component
 
     public ?string $submittedTrackingId = null;
 
-    public ?string $submittedTrackingUrl = null;
-
-    public string $submittedTrackingQrSvg = '';
-
-    public ?ReportCategory $potholeCategory = null;
-
     public function mount(): void
     {
         $this->honeypotData = new HoneypotData;
-        $this->potholeCategory = ReportCategory::where('slug', 'pothole')->first();
-
-        if ($this->potholeCategory !== null) {
-            $this->category_id = $this->potholeCategory->id;
+        $pothole = ReportCategory::where('slug', 'pothole')->first();
+        if ($pothole) {
+            $this->category_id = $pothole->id;
         }
     }
 
     public function getPotholeCategoryProperty()
     {
-        return $this->potholeCategory;
+        return ReportCategory::where('slug', 'pothole')->first();
     }
 
     public function getNeighborhoodsProperty(): array
@@ -109,57 +96,17 @@ new class extends Component
         $this->photoPreviews = array_values($this->photoPreviews);
     }
 
-    public function shouldShowManualLocationFields(): bool
-    {
-        if ($this->manual_location_fallback) {
-            return true;
-        }
-
-        if ($this->latitude === null || $this->longitude === null) {
-            return false;
-        }
-
-        if (($this->location_source ?? '') !== 'gps') {
-            return true;
-        }
-
-        $maxAccuracyMeters = (float) config('report_validation.max_location_accuracy_meters', 50);
-
-        if ($this->location_accuracy === null) {
-            return true;
-        }
-
-        if ($this->location_accuracy > $maxAccuracyMeters) {
-            return true;
-        }
-
-        $normalizedNeighborhood = mb_strtolower(trim($this->neighborhood));
-        $normalizedBorough = mb_strtolower(trim($this->borough));
-
-        if ($normalizedNeighborhood === '' || in_array($normalizedNeighborhood, ['montreal', 'n/a'], true)) {
-            return true;
-        }
-
-        if ($normalizedBorough === '' || in_array($normalizedBorough, ['montreal', 'n/a'], true)) {
-            return true;
-        }
-
-        return false;
-    }
-
     public function submit(): void
     {
         $this->protectAgainstSpam();
 
         $recaptchaEnabled = (bool) config('services.recaptcha.enabled', true);
-        $manualLocationFieldsRequired = $this->shouldShowManualLocationFields();
-        $addressRule = $manualLocationFieldsRequired ? 'required|string|max:500' : 'nullable|string|max:500';
 
         $validated = $this->validate([
             'reporter_email' => 'required|email|max:255',
             'category_id' => 'required|exists:report_categories,id',
             'description' => 'required|string|max:2000',
-            'address' => $addressRule,
+            'address' => 'required|string|max:500',
             'neighborhood' => 'nullable|string|max:100',
             'borough' => 'nullable|string|max:100',
             'photos' => 'nullable|array|max:5',
@@ -224,27 +171,13 @@ new class extends Component
         );
 
         $this->submittedTrackingId = $report->public_tracking_id;
-        $this->submittedTrackingUrl = route('report.tracking', ['trackingId' => $report->public_tracking_id]);
-        $this->submittedTrackingQrSvg = $this->makeQrSvg($this->submittedTrackingUrl);
         $this->submitted = true;
-        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'location_accuracy', 'location_source', 'manual_location_fallback', 'recaptcha_response']);
-
-        if ($this->potholeCategory !== null) {
-            $this->category_id = $this->potholeCategory->id;
-        }
+        $this->reset(['reporter_email', 'category_id', 'description', 'address', 'neighborhood', 'borough', 'photos', 'photoPreviews', 'latitude', 'longitude', 'recaptcha_response']);
     }
 
     public function getCategoriesProperty()
     {
         return ReportCategory::where('is_active', true)->orderBy('sort_order')->get();
-    }
-
-    private function makeQrSvg(string $content): string
-    {
-        $qrSize = (int) config('tracking_experience.qr.size', 168);
-        $writer = new Writer(new ImageRenderer(new RendererStyle($qrSize, 1), new SvgImageBackEnd));
-
-        return $writer->writeString($content);
     }
 } ?>
 
@@ -252,22 +185,8 @@ new class extends Component
     x-data="window.nidviteReportFormMapData({
         initialLatitude: @js($latitude),
         initialLongitude: @js($longitude),
-        initialAccuracy: @js($location_accuracy),
-        duplicateHintEndpoint: @js(route('api.reports.duplicate-hint')),
-        duplicateNudgeMessage: @js(__('report.duplicate_nudge_message')),
-        duplicateNudgeLink: @js(__('report.duplicate_nudge_link')),
-        gpsWarningAccuracyThreshold: @js((int) config('tracking_experience.evidence.gps_warning_accuracy_meters', 50)),
-        gpsWarningMissingMessage: @js(__('report.gps_warning_missing')),
-        gpsWarningWeakMessage: @js(__('report.gps_warning_weak', ['meters' => (int) config('tracking_experience.evidence.gps_warning_accuracy_meters', 50)])),
-        photoDarkWarningThreshold: @js((int) config('tracking_experience.evidence.photo.dark_warning_threshold', 45)),
-        photoDarkSevereThreshold: @js((int) config('tracking_experience.evidence.photo.dark_severe_threshold', 25)),
-        photoBlurWarningThreshold: @js((int) config('tracking_experience.evidence.photo.blur_warning_threshold', 12)),
-        photoBlurSevereThreshold: @js((int) config('tracking_experience.evidence.photo.blur_severe_threshold', 6)),
-        photoWarningMessage: @js(__('report.photo_quality_warning')),
-        photoSevereMessage: @js(__('report.photo_quality_severe')),
         geolocationNotSupported: @js(__('report.geolocation_not_supported')),
         geolocationFailed: @js(__('report.geolocation_failed')),
-        nominatimContactEmail: @js(config('services.nominatim.contact_email')),
     })"
     x-init="$nextTick(() => { setTimeout(() => initMap(), 100); })">
     <div class="pointer-events-none absolute -top-24 -left-16 h-52 w-52 rounded-full bg-amber-300/25 blur-3xl"></div>

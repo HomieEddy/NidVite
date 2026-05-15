@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class MontrealRoad extends Model
 {
@@ -17,33 +17,30 @@ class MontrealRoad extends Model
         'source',
     ];
 
-    public function scopeWithNearestDistance(Builder $query, float $latitude, float $longitude, ?int $radiusMeters = null): Builder
+    public static function distanceToNearestMeters(float $latitude, float $longitude, ?int $radiusMeters = null): ?float
     {
         $radius = $radiusMeters ?? (int) config('report_validation.road_search_radius_meters', 250);
 
-        return $query
-            ->select('montreal_roads.*')
-            ->selectRaw(
-                'ST_Distance(geom::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) AS distance',
-                [$longitude, $latitude]
+        $result = DB::selectOne(
+            'SELECT ST_Distance(
+                geom::geography,
+                ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography
+            ) AS distance
+            FROM montreal_roads
+            WHERE ST_DWithin(
+                geom::geography,
+                ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
+                ?
             )
-            ->whereRaw(
-                'ST_DWithin(geom::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)',
-                [$longitude, $latitude, $radius]
-            )
-            ->orderBy('distance');
-    }
+            ORDER BY distance ASC
+            LIMIT 1',
+            [$longitude, $latitude, $longitude, $latitude, $radius]
+        );
 
-    public static function distanceToNearestMeters(float $latitude, float $longitude, ?int $radiusMeters = null): ?float
-    {
-        $distance = static::query()
-            ->withNearestDistance($latitude, $longitude, $radiusMeters)
-            ->value('distance');
-
-        if ($distance === null) {
+        if ($result === null || $result->distance === null) {
             return null;
         }
 
-        return (float) $distance;
+        return (float) $result->distance;
     }
 }

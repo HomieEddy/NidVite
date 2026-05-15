@@ -27,20 +27,12 @@ class EnforceAdminConcurrentSessionLimit
             ->orderByDesc('last_activity')
             ->pluck('id');
 
-        $currentSessionId = session()->getId();
-        $isCurrentSessionPersisted = is_string($currentSessionId)
-            && $currentSessionId !== ''
-            && $sessionIds->contains($currentSessionId);
-
-        // On login, the new session row may not be persisted yet. Reserve one slot to avoid ending up at cap + 1.
-        $maxExistingSessions = max(0, $maxSessions - ($isCurrentSessionPersisted ? 0 : 1));
-
-        if ($sessionIds->count() <= $maxExistingSessions) {
+        if ($sessionIds->count() <= $maxSessions) {
             return;
         }
 
         DB::table(config('session.table', 'sessions'))
-            ->whereIn('id', $sessionIds->slice($maxExistingSessions)->values()->all())
+            ->whereIn('id', $sessionIds->slice($maxSessions)->values()->all())
             ->delete();
     }
 }

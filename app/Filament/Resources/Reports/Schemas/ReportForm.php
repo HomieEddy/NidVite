@@ -56,17 +56,6 @@ class ReportForm
                     ])
                     ->required()
                     ->default('normal'),
-                TextInput::make('reliability_score')
-                    ->label(__('filament.admin.resources.reports.fields.reliability_score'))
-                    ->numeric()
-                    ->disabled()
-                    ->dehydrated(false),
-                Textarea::make('reliability_breakdown')
-                    ->label(__('filament.admin.resources.reports.fields.reliability_breakdown'))
-                    ->formatStateUsing(fn ($state): ?string => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : null)
-                    ->disabled()
-                    ->dehydrated(false)
-                    ->columnSpanFull(),
                 Select::make('category_id')
                     ->relationship('category', 'id')
                     ->label(__('filament.admin.fields_common.category')),

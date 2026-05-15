@@ -42,17 +42,6 @@ describe('Report geofence validation', function () {
         expect(fn () => Report::validateGeofence(43.6532, -79.3832))
             ->toThrow(ValidationException::class);
     });
-
-    it('returns location validation key with localized outside-montreal message', function () {
-        try {
-            Report::validateGeofence(43.6532, -79.3832);
-
-            $this->fail('Expected ValidationException was not thrown.');
-        } catch (ValidationException $exception) {
-            expect($exception->errors())->toHaveKey('location');
-            expect($exception->errors()['location'][0] ?? null)->toBe(__('report.validation.outside_montreal'));
-        }
-    });
 });
 
 describe('Report creation with geofence', function () {

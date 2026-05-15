@@ -110,11 +110,11 @@ it('filters activity rows by user, action, and date range', function () {
     $this->actingAs($admin);
 
     Livewire::test(ActivityLogViewer::class)
-        ->filterTable('causer_id', ['value' => (string) $secondAdmin->getKey()])
+        ->filterTable('causer_id', $secondAdmin->getKey())
         ->assertCanSeeTableRecords([$secondRecord])
         ->assertCanNotSeeTableRecords([$firstRecord, $thirdRecord])
         ->resetTableFilters()
-        ->filterTable('description', ['value' => 'report.deleted'])
+        ->filterTable('description', 'report.deleted')
         ->assertCanSeeTableRecords([$thirdRecord])
         ->assertCanNotSeeTableRecords([$firstRecord, $secondRecord])
         ->resetTableFilters()

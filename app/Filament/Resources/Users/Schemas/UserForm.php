@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
-use App\Models\Role;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -26,13 +25,12 @@ class UserForm
                 TextInput::make('password')
                     ->label(__('filament.admin.fields_common.password'))
                     ->password()
-                    ->required(fn (string $operation): bool => $operation === 'create')
-                    ->dehydrated(fn (?string $state): bool => filled($state)),
+                    ->required(),
                 Select::make('role_id')
                     ->relationship('role', 'id')
                     ->label(__('filament.admin.fields_common.role'))
                     ->required()
-                    ->default(fn (): ?int => Role::query()->where('name', 'viewer')->value('id')),
+                    ->default(5),
                 Textarea::make('two_factor_secret')
                     ->label(__('filament.admin.fields_common.two_factor_secret'))
                     ->columnSpanFull(),

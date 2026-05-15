@@ -8,4 +8,3 @@ parameters:
     level: 5
     ignoreErrors:
         - '#Undefined variable: \$this#'
-        - '#Access to an undefined property Pest\\Mixins\\Expectation.*::\$not#'

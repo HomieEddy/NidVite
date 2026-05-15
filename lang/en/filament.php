@@ -44,11 +44,6 @@ return [
             'severity' => 'Severity',
             'date' => 'Date range',
         ],
-        'values' => [
-            'severity_critical' => 'CRITICAL',
-            'severity_high' => 'HIGH',
-            'severity_medium' => 'MEDIUM',
-        ],
     ],
 
     'notifications' => [
@@ -159,10 +154,6 @@ return [
                     'heading' => 'No reports found',
                     'description' => 'Reports will appear here once citizens submit them.',
                 ],
-                'tabs' => [
-                    'reports' => 'Reports',
-                    'rejected' => 'Rejected',
-                ],
                 'actions' => [
                     'create' => 'Create Report',
                     'view_on_map' => 'View on Map',
@@ -170,57 +161,12 @@ return [
                     'close' => 'Close',
                     'export_excel' => 'Export Excel',
                     'export_pdf' => 'Export PDF',
-                    'verify' => 'Verify',
-                    'reject' => 'Reject',
                     'override_validation' => 'Override Validation',
-                ],
-                'saved_views' => [
-                    'actions' => [
-                        'menu' => 'Saved Views',
-                        'save' => 'Save View',
-                        'update' => 'Update View',
-                        'load' => 'Load View',
-                        'delete' => 'Delete View',
-                    ],
-                    'fields' => [
-                        'operation' => 'Operation',
-                        'name' => 'View Name',
-                        'view' => 'Saved View',
-                        'rename_to' => 'Rename To (optional)',
-                    ],
-                    'feedback' => [
-                        'saved' => 'Saved view stored.',
-                        'updated' => 'Saved view updated.',
-                        'loaded' => 'Saved view loaded.',
-                        'deleted' => 'Saved view deleted.',
-                    ],
-                ],
-                'bulk_actions' => [
-                    'duplicate_close' => [
-                        'label' => 'Close As Duplicate',
-                        'reason' => 'Duplicate close reason (optional)',
-                        'default_reason' => 'Duplicate report closed during triage batch.',
-                    ],
-                    'assign_contractor' => [
-                        'label' => 'Assign Contractor',
-                        'contractor' => 'Contractor',
-                        'invalid_contractor' => 'Selected contractor is invalid or inactive.',
-                    ],
-                    'request_more_info' => [
-                        'label' => 'Request More Info',
-                        'note' => 'Request Note',
-                    ],
-                    'feedback' => [
-                        'summary' => 'Batch completed. Processed: :processed, blocked: :blocked.',
-                    ],
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
-                    'tracking_id' => 'Tracking ID',
                     'map' => 'Map',
                     'status' => 'Status',
-                    'reliability_score' => 'Reliability Score',
-                    'reliability_breakdown' => 'Reliability Breakdown',
                     'road_validation_status' => 'Road Validation',
                     'road_distance' => 'Road Distance',
                     'override_decision' => 'Override Decision',
@@ -344,7 +290,6 @@ return [
                 ],
                 'helper' => [
                     'select_received_reports' => 'Select at least one received report to assign to this job.',
-                    'select_verified_reports' => 'Select at least one verified report to assign to this job.',
                     'not_scheduled' => 'Not scheduled',
                 ],
             ],
@@ -399,7 +344,6 @@ return [
         'modals' => [
             'report_location' => [
                 'address' => 'Address:',
-                'report_map' => 'Report map',
                 'not_specified' => 'Not specified',
                 'coordinates' => 'Coordinates:',
                 'hint' => 'Open the location in a new tab to view the full interactive map.',

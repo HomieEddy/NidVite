@@ -92,83 +92,28 @@ function initPublicMapPage() {
 	}).addTo(map);
 
 	var statusColors = {
-		received: '#3b82f6',
+		received: '#d97706',
 		verified: '#3b82f6',
-		planned: '#facc15',
-		scheduled: '#facc15',
-		in_progress: '#eab308',
+		scheduled: '#6366f1',
+		in_progress: '#db2777',
 		repaired: '#10b981',
+		rejected: '#ef4444',
 	};
 
-	var normalizeLocationPiece = function (value) {
-		if (value === null || value === undefined) {
-			return '';
-		}
-
-		var text = String(value).trim();
-		if (!text) {
-			return '';
-		}
-
-		var lowered = text.toLowerCase();
-		if (lowered === 'montreal' || lowered === 'n/a') {
-			return '';
-		}
-
-		return text;
-	};
-
-	var geojsonRequestUrl = new URL(geojsonUrl, window.location.origin);
-	geojsonRequestUrl.searchParams.set('_ts', String(Date.now()));
-
-	var showMapError = function () {
-		if (mapEl.querySelector('[data-map-error]')) {
-			return;
-		}
-
-		var errorEl = document.createElement('div');
-		errorEl.setAttribute('data-map-error', '1');
-		errorEl.className = 'absolute left-3 right-3 top-3 z-[1000] rounded-lg border border-red-200 bg-white/95 px-3 py-2 text-xs font-semibold text-red-700 shadow';
-		errorEl.textContent = 'Unable to load map reports right now. Please refresh.';
-		mapEl.appendChild(errorEl);
-	};
-
-	fetch(geojsonRequestUrl.toString(), {
-		cache: 'no-store',
-		credentials: 'same-origin',
-		headers: {
-			'Accept': 'application/json',
-		},
-	})
+	fetch(geojsonUrl)
 		.then(function (response) {
-			if (!response.ok) {
-				throw new Error('geojson_fetch_failed');
-			}
-
 			return response.json();
 		})
 		.then(function (data) {
-			if (!data || !Array.isArray(data.features)) {
-				throw new Error('geojson_payload_invalid');
-			}
-
 			var bounds = L.latLngBounds();
 			var coordinateUsage = {};
 
 			data.features.forEach(function (feature) {
-				if (!feature || !feature.geometry || !Array.isArray(feature.geometry.coordinates) || feature.geometry.coordinates.length < 2) {
-					return;
-				}
-
 				var coords = feature.geometry.coordinates;
-				var props = feature.properties || {};
+				var props = feature.properties;
 				var color = statusColors[props.status] || '#6b7280';
-				var lng = Number(coords[0]);
-				var lat = Number(coords[1]);
-
-				if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-					return;
-				}
+				var lng = coords[0];
+				var lat = coords[1];
 				var key = lat.toFixed(6) + ',' + lng.toFixed(6);
 				var index = coordinateUsage[key] || 0;
 				coordinateUsage[key] = index + 1;
@@ -203,22 +148,8 @@ function initPublicMapPage() {
 				popupEl.appendChild(titleEl);
 
 				var hoodEl = document.createElement('p');
-				var neighborhood = normalizeLocationPiece(props.neighborhood);
-				var borough = normalizeLocationPiece(props.borough);
-				var locationParts = [];
-
-				if (neighborhood) {
-					locationParts.push(neighborhood);
-				}
-
-				if (borough && borough.toLowerCase() !== neighborhood.toLowerCase()) {
-					locationParts.push(borough);
-				}
-
-				if (locationParts.length > 0) {
-					hoodEl.textContent = locationParts.join(', ');
-					popupEl.appendChild(hoodEl);
-				}
+				hoodEl.textContent = props.neighborhood || '';
+				popupEl.appendChild(hoodEl);
 
 				var descEl = document.createElement('p');
 				descEl.textContent = props.description
@@ -241,7 +172,7 @@ function initPublicMapPage() {
 			}
 		})
 		.catch(function () {
-			showMapError();
+			// Keep failure silent in production to avoid noisy console logs.
 		});
 }
 
@@ -266,39 +197,30 @@ function getAlpineDataContext(element) {
 }
 
 function initReportFormBindings() {
-	if (window.__nidviteReportFormBindingsInitialized) {
-		return;
-	}
+	document.querySelectorAll('form[data-nidvite-recaptcha]').forEach(function (form) {
+		form.addEventListener('submit', function () {
+			if (window.nidviteSyncRecaptchaToken) {
+				window.nidviteSyncRecaptchaToken();
+			}
+		});
+	});
 
-	window.__nidviteReportFormBindingsInitialized = true;
+	document.querySelectorAll('[data-action="geocode-address"]').forEach(function (input) {
+		input.addEventListener('blur', function () {
+			var alpineData = getAlpineDataContext(input);
+			if (alpineData && typeof alpineData.geocodeAddress === 'function') {
+				alpineData.geocodeAddress();
+			}
+		});
+	});
 
-	document.addEventListener('submit', function (event) {
-		var form = event.target && event.target.closest ? event.target.closest('form[data-nidvite-recaptcha]') : null;
-		if (!form) return;
-
-		if (window.nidviteSyncRecaptchaToken) {
-			window.nidviteSyncRecaptchaToken();
-		}
-	}, true);
-
-	document.addEventListener('blur', function (event) {
-		var input = event.target && event.target.closest ? event.target.closest('[data-action="geocode-address"]') : null;
-		if (!input) return;
-
-		var alpineData = getAlpineDataContext(input);
-		if (alpineData && typeof alpineData.geocodeAddress === 'function') {
-			alpineData.geocodeAddress();
-		}
-	}, true);
-
-	document.addEventListener('click', function (event) {
-		var button = event.target && event.target.closest ? event.target.closest('[data-action="capture-location"]') : null;
-		if (!button) return;
-
-		var alpineData = getAlpineDataContext(button);
-		if (alpineData && typeof alpineData.captureLocation === 'function') {
-			alpineData.captureLocation();
-		}
+	document.querySelectorAll('[data-action="capture-location"]').forEach(function (button) {
+		button.addEventListener('click', function () {
+			var alpineData = getAlpineDataContext(button);
+			if (alpineData && typeof alpineData.captureLocation === 'function') {
+				alpineData.captureLocation();
+			}
+		});
 	});
 }
 

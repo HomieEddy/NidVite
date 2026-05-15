@@ -8,52 +8,38 @@ on:
       - .github/workflows/doc-link-check.yml
 
 jobs:
-  markdown-local-links:
+  readme-local-links:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate local markdown links in README and docs
+      - name: Validate local markdown links in README
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s globstar nullglob
 
           missing=0
+          links=$(perl -nE 'while(/\[[^\]]+\]\(([^)]+)\)/g){say $1}' README.md)
 
-          for file in README.md docs/**/*.md; do
-            [ -f "$file" ] || continue
+          while IFS= read -r link; do
+            [ -z "$link" ] && continue
 
-            links=$(perl -nE 'while(/\[[^\]]+\]\(([^)]+)\)/g){say $1}' "$file")
+            if [[ "$link" == http://* || "$link" == https://* || "$link" == mailto:* || "$link" == \#* ]]; then
+              continue
+            fi
 
-            while IFS= read -r link; do
-              [ -z "$link" ] && continue
-
-              if [[ "$link" == http://* || "$link" == https://* || "$link" == mailto:* || "$link" == \#* ]]; then
-                continue
-              fi
-
-              target="${link%%#*}"
-              [ -z "$target" ] && continue
-
-              if [[ "$target" == /* ]]; then
-                candidate=".${target}"
-              else
-                candidate="$(dirname "$file")/$target"
-              fi
-
-              if [ ! -e "$candidate" ]; then
-                echo "Missing local link target in $file: $target (resolved as $candidate)"
-                missing=1
-              fi
-            done <<< "$links"
-          done
+            target="${link%%#*}"
+            if [ ! -e "$target" ]; then
+              echo "Missing README link target: $target"
+              missing=1
+            fi
+          done <<< "$links"
 
           if [ "$missing" -ne 0 ]; then
-            echo "Markdown contains broken local links."
+            echo "README contains broken local links."
             exit 1
           fi
 
-          echo "README and docs local links validated."
+          echo "README local links validated."

@@ -14,16 +14,8 @@
         title="{{ $toggleLabel }}"
         aria-label="{{ $toggleLabel }}"
     >
-        <span
-            class="fi-topbar-item-label {{ $currentLocale === 'fr' ? 'text-primary-600 dark:text-primary-400' : 'opacity-60' }}"
-            @if ($currentLocale === 'fr') aria-current="true" @endif
-            title="{{ __('filament.admin.language_switcher.french_active') }}"
-        >FR</span>
+        <span class="fi-topbar-item-label {{ $currentLocale === 'fr' ? 'text-primary-600 dark:text-primary-400' : 'opacity-60' }}">FR</span>
         <span class="fi-topbar-item-label opacity-60">/</span>
-        <span
-            class="fi-topbar-item-label {{ $currentLocale === 'en' ? 'text-primary-600 dark:text-primary-400' : 'opacity-60' }}"
-            @if ($currentLocale === 'en') aria-current="true" @endif
-            title="{{ __('filament.admin.language_switcher.english_active') }}"
-        >EN</span>
+        <span class="fi-topbar-item-label {{ $currentLocale === 'en' ? 'text-primary-600 dark:text-primary-400' : 'opacity-60' }}">EN</span>
     </a>
 </div>

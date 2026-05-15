@@ -28,7 +28,7 @@ it('redirects guests to login for report admin pages', function () {
 
 it('denies viewer access to edit reports in filament', function () {
     $viewer = User::factory()->create([
-        'role_id' => Role::query()->where('slug', 'viewer')->firstOrFail()->id,
+        'role_id' => Role::where('slug', 'viewer')->value('id'),
         'is_active' => true,
     ]);
     $report = Report::factory()->create();
@@ -40,7 +40,7 @@ it('denies viewer access to edit reports in filament', function () {
 
 it('denies manager access to edit reports in filament', function () {
     $manager = User::factory()->create([
-        'role_id' => Role::query()->where('slug', 'manager')->firstOrFail()->id,
+        'role_id' => Role::where('slug', 'manager')->value('id'),
         'is_active' => true,
     ]);
     $report = Report::factory()->create();
@@ -51,15 +51,13 @@ it('denies manager access to edit reports in filament', function () {
 });
 
 it('applies throttle middleware to geojson endpoint', function () {
-    $ip = '10.22.22.'.random_int(10, 250);
-
     for ($i = 0; $i < 60; $i++) {
-        $this->withServerVariables(['REMOTE_ADDR' => $ip])
+        $this->withServerVariables(['REMOTE_ADDR' => '10.22.22.22'])
             ->getJson(route('api.reports.geojson'))
             ->assertOk();
     }
 
-    $this->withServerVariables(['REMOTE_ADDR' => $ip])
+    $this->withServerVariables(['REMOTE_ADDR' => '10.22.22.22'])
         ->getJson(route('api.reports.geojson'))
         ->assertStatus(429);
 });

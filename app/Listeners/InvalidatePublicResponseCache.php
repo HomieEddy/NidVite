@@ -9,9 +9,6 @@ class InvalidatePublicResponseCache
 {
     public function handle(ReportCreated $event): void
     {
-        ResponseCache::forget([
-            '/',
-            '/carte',
-        ]);
+        ResponseCache::clear();
     }
 }

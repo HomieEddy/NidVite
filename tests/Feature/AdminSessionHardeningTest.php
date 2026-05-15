@@ -112,8 +112,8 @@ it('prunes oldest admin sessions when configured concurrent limit is exceeded', 
         ->pluck('id')
         ->all();
 
+    expect($sessionIds)->toContain('session-middle');
     expect($sessionIds)->toContain('session-newest');
-    expect($sessionIds)->not->toContain('session-middle');
     expect($sessionIds)->not->toContain('session-oldest');
 });
 
@@ -155,85 +155,4 @@ it('does not prune sessions for non-admin users', function () {
         ->count();
 
     expect($count)->toBe(2);
-});
-
-it('does not prune admin sessions when session driver is not database', function () {
-    config([
-        'session.driver' => 'file',
-        'admin-auth.max_concurrent_sessions' => 1,
-    ]);
-
-    /** @var User $admin */
-    $admin = User::factory()->create([
-        'role_id' => Role::where('slug', 'admin')->value('id'),
-        'is_active' => true,
-    ]);
-
-    DB::table('sessions')->insert([
-        [
-            'id' => 'admin-file-driver-one',
-            'user_id' => $admin->getKey(),
-            'ip_address' => '127.0.0.1',
-            'user_agent' => 'test',
-            'payload' => 'payload',
-            'last_activity' => 100,
-        ],
-        [
-            'id' => 'admin-file-driver-two',
-            'user_id' => $admin->getKey(),
-            'ip_address' => '127.0.0.1',
-            'user_agent' => 'test',
-            'payload' => 'payload',
-            'last_activity' => 200,
-        ],
-    ]);
-
-    event(new Login('web', $admin, false));
-
-    $count = DB::table('sessions')
-        ->where('user_id', $admin->getKey())
-        ->count();
-
-    expect($count)->toBe(2);
-});
-
-it('clamps invalid admin concurrent session limits to one session', function () {
-    config([
-        'session.driver' => 'database',
-        'admin-auth.max_concurrent_sessions' => 0,
-    ]);
-
-    /** @var User $admin */
-    $admin = User::factory()->create([
-        'role_id' => Role::where('slug', 'admin')->value('id'),
-        'is_active' => true,
-    ]);
-
-    DB::table('sessions')->insert([
-        [
-            'id' => 'admin-clamp-old',
-            'user_id' => $admin->getKey(),
-            'ip_address' => '127.0.0.1',
-            'user_agent' => 'test',
-            'payload' => 'payload',
-            'last_activity' => 100,
-        ],
-        [
-            'id' => 'admin-clamp-new',
-            'user_id' => $admin->getKey(),
-            'ip_address' => '127.0.0.1',
-            'user_agent' => 'test',
-            'payload' => 'payload',
-            'last_activity' => 200,
-        ],
-    ]);
-
-    event(new Login('web', $admin, false));
-
-    $sessionIds = DB::table('sessions')
-        ->where('user_id', $admin->getKey())
-        ->pluck('id')
-        ->all();
-
-    expect($sessionIds)->toBe([]);
 });

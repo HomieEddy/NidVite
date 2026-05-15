@@ -3,10 +3,6 @@
 return [
     'description' => 'Help us improve Montreal streets by reporting potholes and tracking ongoing repairs.',
     'report_not_found' => 'Report not found',
-    'demo_notice' => [
-        'title' => 'Demo data',
-        'body' => 'The reports and statistics shown here are dummy data for prototyping purposes.',
-    ],
 
     'actions' => [
         'report_issue' => 'Report an issue',

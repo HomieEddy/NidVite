@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Events\ReportCreated;
 use App\Health\Checks\MailConfigurationCheck;
-use App\Listeners\AutoTriageCreatedReport;
 use App\Listeners\DetectSuspiciousReportActivity;
 use App\Listeners\EnforceAdminConcurrentSessionLimit;
 use App\Listeners\InvalidatePublicResponseCache;
@@ -34,21 +33,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        foreach ([
-            Login::class => [
-                EnforceAdminConcurrentSessionLimit::class,
-            ],
-            ReportCreated::class => [
-                DetectSuspiciousReportActivity::class,
-                AutoTriageCreatedReport::class,
-                SendCriticalReportAlerts::class,
-                InvalidatePublicResponseCache::class,
-            ],
-        ] as $event => $listeners) {
-            foreach ($listeners as $listener) {
-                Event::listen($event, $listener);
-            }
-        }
+        Event::listen(Login::class, EnforceAdminConcurrentSessionLimit::class);
+        Event::listen(ReportCreated::class, InvalidatePublicResponseCache::class);
+        Event::listen(ReportCreated::class, DetectSuspiciousReportActivity::class);
+        Event::listen(ReportCreated::class, SendCriticalReportAlerts::class);
 
         Health::checks([
             DatabaseCheck::new()->connectionName(config('database.default', 'pgsql')),

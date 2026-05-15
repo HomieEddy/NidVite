@@ -22,14 +22,6 @@
 {{ __('email.status_updated.track_button', [], $locale) }}
 </x-mail::button>
 
-@if(!empty($unsubscribeUrl))
-{{ __('email.status_updated.unsubscribe_hint', [], $locale) }}
-
-<x-mail::button :url="$unsubscribeUrl" color="error">
-{{ __('email.status_updated.unsubscribe_button', [], $locale) }}
-</x-mail::button>
-@endif
-
 {{ __('email.status_updated.footer', [], $locale) }}
 
 {{ __('email.status_updated.signature', [], $locale) }}<br>

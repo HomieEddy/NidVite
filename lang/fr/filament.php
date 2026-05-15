@@ -44,11 +44,6 @@ return [
             'severity' => 'Severite',
             'date' => 'Periode',
         ],
-        'values' => [
-            'severity_critical' => 'CRITIQUE',
-            'severity_high' => 'ELEVEE',
-            'severity_medium' => 'MOYENNE',
-        ],
     ],
 
     'notifications' => [
@@ -159,10 +154,6 @@ return [
                     'heading' => 'Aucun signalement trouve',
                     'description' => 'Les signalements apparaitront ici une fois soumis.',
                 ],
-                'tabs' => [
-                    'reports' => 'Signalements',
-                    'rejected' => 'Rejetes',
-                ],
                 'actions' => [
                     'create' => 'Creer un signalement',
                     'view_on_map' => 'Voir sur la carte',
@@ -170,57 +161,12 @@ return [
                     'close' => 'Fermer',
                     'export_excel' => 'Exporter Excel',
                     'export_pdf' => 'Exporter PDF',
-                    'verify' => 'Verifier',
-                    'reject' => 'Rejeter',
                     'override_validation' => 'Forcer la validation',
-                ],
-                'saved_views' => [
-                    'actions' => [
-                        'menu' => 'Vues enregistrees',
-                        'save' => 'Enregistrer la vue',
-                        'update' => 'Mettre a jour la vue',
-                        'load' => 'Charger la vue',
-                        'delete' => 'Supprimer la vue',
-                    ],
-                    'fields' => [
-                        'operation' => 'Operation',
-                        'name' => 'Nom de la vue',
-                        'view' => 'Vue enregistree',
-                        'rename_to' => 'Renommer en (optionnel)',
-                    ],
-                    'feedback' => [
-                        'saved' => 'Vue enregistree.',
-                        'updated' => 'Vue mise a jour.',
-                        'loaded' => 'Vue chargee.',
-                        'deleted' => 'Vue supprimee.',
-                    ],
-                ],
-                'bulk_actions' => [
-                    'duplicate_close' => [
-                        'label' => 'Fermer comme doublon',
-                        'reason' => 'Raison de fermeture du doublon (optionnel)',
-                        'default_reason' => 'Signalement doublon ferme pendant le lot de triage.',
-                    ],
-                    'assign_contractor' => [
-                        'label' => 'Assigner un entrepreneur',
-                        'contractor' => 'Entrepreneur',
-                        'invalid_contractor' => 'L\'entrepreneur selectionne est invalide ou inactif.',
-                    ],
-                    'request_more_info' => [
-                        'label' => 'Demander plus d\'infos',
-                        'note' => 'Note de demande',
-                    ],
-                    'feedback' => [
-                        'summary' => 'Lot termine. Traites : :processed, bloques : :blocked.',
-                    ],
                 ],
                 'fields' => [
                     'uuid' => 'UUID',
-                    'tracking_id' => 'ID de suivi',
                     'map' => 'Carte',
                     'status' => 'Statut',
-                    'reliability_score' => 'Score de fiabilite',
-                    'reliability_breakdown' => 'Details du score de fiabilite',
                     'road_validation_status' => 'Validation routiere',
                     'road_distance' => 'Distance a la route',
                     'override_decision' => 'Decision de remplacement',
@@ -344,7 +290,6 @@ return [
                 ],
                 'helper' => [
                     'select_received_reports' => 'Selectionnez au moins un signalement recu a assigner a cette intervention.',
-                    'select_verified_reports' => 'Selectionnez au moins un signalement verifie a assigner a cette intervention.',
                     'not_scheduled' => 'Non planifie',
                 ],
             ],
@@ -399,7 +344,6 @@ return [
         'modals' => [
             'report_location' => [
                 'address' => 'Adresse :',
-                'report_map' => 'Carte du signalement',
                 'not_specified' => 'Non precisee',
                 'coordinates' => 'Coordonnees :',
                 'hint' => 'Ouvrez la localisation dans un nouvel onglet pour voir la carte interactive complete.',

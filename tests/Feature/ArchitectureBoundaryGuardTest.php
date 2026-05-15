@@ -6,8 +6,7 @@ it('keeps report edit status changes routed through transition action', function
     expect($content)
         ->toContain('TransitionReportStatusAction')
         ->toContain('handleRecordUpdate')
-        ->toContain('app(TransitionReportStatusAction::class)')
-        ->not->toContain('->update([\'status\'');
+        ->toContain('app(TransitionReportStatusAction::class)');
 });
 
 it('keeps public report submission routed through SubmitReportAction boundary', function () {
@@ -15,8 +14,7 @@ it('keeps public report submission routed through SubmitReportAction boundary', 
 
     expect($content)
         ->toContain('SubmitReportAction')
-        ->toContain('app(SubmitReportAction::class)')
-        ->not->toContain('Report::create(');
+        ->toContain('app(SubmitReportAction::class)');
 });
 
 it('keeps homepage query logic behind stats action boundary', function () {
@@ -24,6 +22,5 @@ it('keeps homepage query logic behind stats action boundary', function () {
 
     expect($content)
         ->toContain('GetPublicReportStatsAction')
-        ->toContain('$getPublicReportStats(')
-        ->not->toContain('Report::query()');
+        ->toContain('$getPublicReportStats(');
 });

@@ -12,10 +12,6 @@ trait HasReportCoordinates
      */
     public function scopeWithCoordinates(Builder $query): Builder
     {
-        if ($query->getQuery()->columns === null) {
-            $query->select($this->qualifyColumn('*'));
-        }
-
         return $query->addSelect([
             DB::raw('ST_Y(location::geometry) as latitude'),
             DB::raw('ST_X(location::geometry) as longitude'),
@@ -40,7 +36,7 @@ trait HasReportCoordinates
             return null;
         }
 
-        $point = $this->newQuery()
+        $point = static::query()
             ->whereKey($this->getKey())
             ->withCoordinates()
             ->first();

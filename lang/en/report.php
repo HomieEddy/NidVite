@@ -41,12 +41,6 @@ return [
     'geolocation_captured' => 'Location captured',
     'geolocation_failed' => 'Unable to get location',
     'geolocation_not_supported' => 'Geolocation not supported by your browser',
-    'duplicate_nudge_message' => 'An open report is already nearby (about :distance m).',
-    'duplicate_nudge_link' => 'View report',
-    'gps_warning_missing' => 'No GPS coordinates detected yet. You can still submit, but precision will be lower.',
-    'gps_warning_weak' => 'GPS precision is weak (over :meters m). You can still submit, but recapturing is recommended.',
-    'photo_quality_warning' => 'A photo appears low-quality (dark or blurry). Submission is still allowed.',
-    'photo_quality_severe' => 'Photo quality is too low (very dark or very blurry). Add a clearer photo to continue.',
 
     'status' => [
         'received' => 'Received',
@@ -55,11 +49,6 @@ return [
         'in_progress' => 'In Progress',
         'repaired' => 'Repaired',
         'rejected' => 'Rejected',
-    ],
-
-    'auto_rejection' => [
-        'spam' => 'Automatically rejected by spam detection.',
-        'road_validation' => 'Automatically rejected by road validation.',
     ],
 
     'validation' => [

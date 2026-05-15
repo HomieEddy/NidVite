@@ -2,54 +2,24 @@
 
 namespace App\Filament\Resources\RepairJobs\Schemas;
 
-use App\Enums\ReportStatus;
 use App\Models\Report;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class RepairJobForm
 {
-    /**
-     * Configure the repair job form schema.
-     *
-     * Adds dynamic minDate constraints and option label logic for reports.
-     */
     public static function configure(Schema $schema): Schema
     {
-        $cachedReportIds = [];
-        $cachedLatestCreatedAt = null;
-
-        $latestSelectedReportCreatedAt = function (Get $get) use (&$cachedReportIds, &$cachedLatestCreatedAt): ?string {
-            $reportIds = array_values(array_filter((array) $get('reports')));
-
-            if ($reportIds === []) {
-                $cachedReportIds = [];
-                $cachedLatestCreatedAt = null;
-
-                return null;
-            }
-
-            sort($reportIds);
-
-            if ($cachedReportIds === $reportIds) {
-                return $cachedLatestCreatedAt;
-            }
-
-            $cachedReportIds = $reportIds;
-            $cachedLatestCreatedAt = Report::query()
-                ->whereIn('id', $reportIds)
-                ->max('created_at');
-
-            return $cachedLatestCreatedAt;
-        };
-
         return $schema
             ->components([
+                Hidden::make('created_by')
+                    ->default(fn (): int => Auth::id() ?? throw new \RuntimeException('Authenticated user required for created_by.')),
                 TextInput::make('title')
                     ->label(__('filament.admin.fields_common.title'))
                     ->required(),
@@ -59,64 +29,39 @@ class RepairJobForm
                         'reports',
                         'public_tracking_id',
                         modifyQueryUsing: fn (Builder $query) => $query
-                            ->select([
-                                'reports.id',
-                                'reports.public_tracking_id',
-                                'reports.address',
-                                'reports.borough',
-                                'reports.neighborhood',
-                            ])
-                            ->where('reports.status', ReportStatus::Verified->value)
+                            ->where('reports.status', 'received')
                     )
-                    ->getOptionLabelFromRecordUsing(fn (Report $record): string => ($label = implode(' | ', array_filter([
-                        $record->public_tracking_id,
+                    ->getOptionLabelFromRecordUsing(fn (Report $record): string => implode(' | ', array_filter([
                         $record->address,
                         $record->borough,
                         $record->neighborhood,
-                    ]))) !== '' ? $label : $record->public_tracking_id)
+                    ])))
                     ->getOptionLabelsUsing(fn (array $values): array => Report::query()
                         ->whereIn('id', $values)
-                        ->get(['id', 'public_tracking_id', 'address', 'borough', 'neighborhood'])
+                        ->get(['id', 'address', 'borough', 'neighborhood'])
                         ->mapWithKeys(fn (Report $record): array => [
-                            $record->id => ($label = implode(' | ', array_filter([
-                                $record->public_tracking_id,
+                            $record->id => implode(' | ', array_filter([
                                 $record->address,
                                 $record->borough,
                                 $record->neighborhood,
-                            ]))) !== '' ? $label : $record->public_tracking_id,
+                            ])),
                         ])
                         ->all())
                     ->multiple()
-                    ->live()
                     ->searchable()
                     ->preload()
                     ->required(fn (string $operation): bool => $operation === 'create')
                     ->minItems(fn (string $operation): ?int => $operation === 'create' ? 1 : null)
-                    ->helperText(__('filament.admin.resources.repair_jobs.helper.select_verified_reports')),
+                    ->helperText(__('filament.admin.resources.repair_jobs.helper.select_received_reports')),
                 Textarea::make('description')
                     ->label(__('filament.admin.fields_common.description'))
                     ->columnSpanFull(),
                 DateTimePicker::make('scheduled_at')
-                    ->label(__('filament.admin.fields_common.scheduled_at'))
-                    ->minDate($latestSelectedReportCreatedAt)
-                    ->rules(fn (Get $get): array => ($minimumDate = $latestSelectedReportCreatedAt($get)) === null
-                        ? []
-                        : ['after_or_equal:'.$minimumDate])
-                    ->live(),
+                    ->label(__('filament.admin.fields_common.scheduled_at')),
                 DateTimePicker::make('started_at')
-                    ->label(__('filament.admin.fields_common.started_at'))
-                    ->minDate(fn (Get $get): ?string => $get('scheduled_at') ?? $latestSelectedReportCreatedAt($get))
-                    ->rules(fn (Get $get): array => ($minimumDate = $get('scheduled_at') ?? $latestSelectedReportCreatedAt($get)) === null
-                        ? []
-                        : ['after_or_equal:'.$minimumDate])
-                    ->live(),
+                    ->label(__('filament.admin.fields_common.started_at')),
                 DateTimePicker::make('completed_at')
-                    ->label(__('filament.admin.fields_common.completed_at'))
-                    ->minDate(fn (Get $get): ?string => $get('started_at') ?? $get('scheduled_at') ?? $latestSelectedReportCreatedAt($get))
-                    ->rules(fn (Get $get): array => ($minimumDate = $get('started_at') ?? $get('scheduled_at') ?? $latestSelectedReportCreatedAt($get)) === null
-                        ? []
-                        : ['after_or_equal:'.$minimumDate])
-                    ->live(),
+                    ->label(__('filament.admin.fields_common.completed_at')),
                 Select::make('status')
                     ->label(__('filament.admin.fields_common.status'))
                     ->options([

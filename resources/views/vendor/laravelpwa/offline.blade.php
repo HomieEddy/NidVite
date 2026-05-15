@@ -1,4 +1,4 @@
-@extends('layouts.citizen')
+@extends('layouts.app')
 
 @section('content')
 

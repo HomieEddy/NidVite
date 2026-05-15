@@ -29,7 +29,6 @@ return [
     'last_7_days' => '7 derniers jours',
     'last_90_days' => '90 derniers jours',
     'map_filter_status' => 'Statut',
-    'map_filter_borough' => 'Arrondissement',
     'map_filter_neighborhood' => 'Quartier',
     'map_filter_neighborhood_placeholder' => 'Saisissez un quartier',
     'map_filter_all' => 'Tous',

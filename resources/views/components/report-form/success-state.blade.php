@@ -12,15 +12,6 @@
             <span class="font-semibold">{{ __('tracking.Numéro') }}:</span>
             <span class="font-mono bg-gray-100 px-2 py-0.5 rounded">{{ $submittedTrackingId }}</span>
         </p>
-        @if($submittedTrackingQrSvg !== '')
-            <div class="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4" data-testid="success-tracking-qr">
-                <p class="text-sm font-semibold text-gray-900 mb-2">{{ __('tracking.qr_title') }}</p>
-                <div class="inline-flex rounded-lg bg-white p-2 border border-gray-200">{!! $submittedTrackingQrSvg !!}</div>
-                @if($submittedTrackingUrl)
-                    <p class="mt-2 text-xs text-gray-500 break-all">{{ $submittedTrackingUrl }}</p>
-                @endif
-            </div>
-        @endif
         <a href="{{ route('report.tracking', $submittedTrackingId) }}" class="mb-3 w-full inline-flex items-center justify-center px-6 py-3.5 border border-amber-200 text-base font-semibold rounded-xl text-amber-700 bg-amber-50 hover:bg-amber-100 active:scale-[0.98] transition-all duration-200 btn-touch interactive-lift">
             {{ __('tracking.Suivi') }}
         </a>

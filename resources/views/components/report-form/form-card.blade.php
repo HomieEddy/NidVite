@@ -1,5 +1,5 @@
 <div class="citizen-card overflow-hidden animate-slide-up relative">
-    <div class="bg-gradient-to-r from-amber-700 via-amber-600 to-orange-500 px-5 py-5">
+    <div class="bg-linear-to-r from-amber-700 via-amber-600 to-orange-500 px-5 py-5">
         <h1 class="text-xl font-extrabold font-display text-white">{{ __('report.title') }}</h1>
         <p class="text-amber-100 text-sm mt-1">{{ __('report.subtitle') }}</p>
     </div>
@@ -9,9 +9,7 @@
         <input type="hidden" id="recaptcha-response" wire:model="recaptcha_response">
 
         @include('components.report-form.sections.contact-and-description')
-        @if ($this->shouldShowManualLocationFields())
-            @include('components.report-form.sections.neighborhood-and-borough')
-        @endif
+        @include('components.report-form.sections.neighborhood-and-borough')
         @include('components.report-form.sections.location')
         @include('components.report-form.sections.photos')
         @include('components.report-form.sections.submit')

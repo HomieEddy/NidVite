@@ -17,13 +17,11 @@ class ReportStatusUpdated extends Mailable implements ShouldQueue
     public function __construct(
         public Report $report,
         public string $oldStatus,
-        public ?string $unsubscribeUrl = null,
-        public ?string $localeOverride = null,
     ) {}
 
     public function envelope(): Envelope
     {
-        $locale = $this->localeOverride ?? $this->report->preferred_locale ?? 'fr';
+        $locale = $this->report->preferred_locale ?? 'fr';
 
         return new Envelope(
             subject: __('email.status_updated.subject', ['status' => __("status.{$this->report->status}")], $locale),
@@ -32,7 +30,7 @@ class ReportStatusUpdated extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
-        $locale = $this->localeOverride ?? $this->report->preferred_locale ?? 'fr';
+        $locale = $this->report->preferred_locale ?? 'fr';
 
         return new Content(
             markdown: 'emails.report-status-updated',
@@ -40,7 +38,6 @@ class ReportStatusUpdated extends Mailable implements ShouldQueue
                 'report' => $this->report,
                 'oldStatus' => $this->oldStatus,
                 'locale' => $locale,
-                'unsubscribeUrl' => $this->unsubscribeUrl,
             ],
         );
     }
