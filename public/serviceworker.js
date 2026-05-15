@@ -1,6 +1,7 @@
 var staticCacheName = "pwa-v" + new Date().getTime();
+var offlineUrl = '/offline';
 var requiredAssets = [
-    '/offline',
+    offlineUrl,
 ];
 var optionalAssets = [
     '/images/icons/icon-72x72.png',
@@ -20,13 +21,15 @@ self.addEventListener("install", event => {
         caches.open(staticCacheName)
             .then(cache => {
                 var requiredPromises = requiredAssets.map(url =>
-                    fetch(url).then(response => {
-                        if (!response.ok) {
-                            throw new Error('Required asset failed to cache: ' + url);
-                        }
-
-                        return cache.put(url, response);
-                    })
+                    fetch(url)
+                        .then(response => {
+                            if (response.ok) {
+                                return cache.put(url, response);
+                            }
+                        })
+                        .catch(() => {
+                            // Keep the service worker install quiet if the dev server is mid-reload.
+                        })
                 );
 
                 var optionalPromises = optionalAssets.map(url =>
@@ -62,13 +65,19 @@ self.addEventListener('activate', event => {
 
 // Serve from Cache
 self.addEventListener("fetch", event => {
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request)
             .then(response => {
                 return response || fetch(event.request);
             })
             .catch(() => {
-                return caches.match('offline');
+                return caches.match(offlineUrl).then(response => {
+                    return response || Response.error();
+                });
             })
     )
 });
