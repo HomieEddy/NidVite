@@ -159,6 +159,9 @@ reviews:
     - "storage/**"
     - "public/build/**"
     - "public/vendor/**"
+    - "database/geo/**"
+    - "docs/**"
+    - "resources/views/vendor/**"
 
 chat:
   auto_reply: true
