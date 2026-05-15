@@ -69,6 +69,34 @@ self.addEventListener("fetch", event => {
         return;
     }
 
+    var requestUrl = new URL(event.request.url);
+
+    if (requestUrl.origin === self.location.origin && requestUrl.pathname.startsWith('/api/')) {
+        event.respondWith(
+            fetch(event.request)
+                .then(response => {
+                    if (!response || !response.ok) {
+                        throw new Error('API request failed');
+                    }
+
+                    return response;
+                })
+                .catch(() => {
+                    return new Response(JSON.stringify({
+                        type: 'FeatureCollection',
+                        features: [],
+                    }), {
+                        status: 503,
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                })
+        );
+
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request)
             .then(response => {
