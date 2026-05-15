@@ -1,7 +1,6 @@
 <?php
 
 use App\Support\Http\PublicResponseCacheProfile;
-use Spatie\ResponseCache\CacheProfiles\CacheAllSuccessfulGetRequests;
 use Spatie\ResponseCache\Hasher\DefaultHasher;
 use Spatie\ResponseCache\Replacers\CsrfTokenReplacer;
 use Spatie\ResponseCache\Serializers\DefaultSerializer;
