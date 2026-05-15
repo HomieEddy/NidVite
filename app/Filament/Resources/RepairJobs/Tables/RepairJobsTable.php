@@ -19,11 +19,17 @@ use Filament\Tables\Table;
 
 class RepairJobsTable
 {
+    /**
+     * Configure the repair jobs table for Filament admin.
+     *
+     * Sets up columns, filters, and actions for the repair jobs listing.
+     */
     public static function configure(Table $table): Table
     {
         return $table
             ->emptyStateHeading(__('filament.admin.resources.repair_jobs.empty_state.heading'))
             ->emptyStateDescription(__('filament.admin.resources.repair_jobs.empty_state.description'))
+            ->defaultSort('scheduled_at', 'desc')
             ->emptyStateActions([
                 Action::make('create')
                     ->label(__('filament.admin.resources.repair_jobs.actions.create'))
@@ -46,14 +52,14 @@ class RepairJobsTable
                     })
                     ->sortable(),
                 TextColumn::make('scheduled_at')
-                    ->dateTime('M j, Y')
+                    ->dateTime()
                     ->sortable(),
                 TextColumn::make('started_at')
-                    ->dateTime('M j, Y')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('completed_at')
-                    ->dateTime('M j, Y')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('creator.name')
@@ -67,7 +73,7 @@ class RepairJobsTable
                     ->money('CAD')
                     ->sortable(),
                 TextColumn::make('created_at')
-                    ->dateTime('M j, Y')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -89,7 +95,7 @@ class RepairJobsTable
                     ->label(__('filament.admin.resources.repair_jobs.fields.created_by')),
                 Group::make('scheduled_at')
                     ->label(__('filament.admin.resources.repair_jobs.fields.scheduled_month'))
-                    ->getTitleFromRecordUsing(fn ($record) => $record->scheduled_at?->format('M Y') ?? __('filament.admin.resources.repair_jobs.helper.not_scheduled')),
+                    ->getTitleFromRecordUsing(fn ($record) => $record->scheduled_at?->translatedFormat('M Y') ?? __('filament.admin.resources.repair_jobs.helper.not_scheduled')),
             ])
             ->defaultGroup('status')
             ->recordActions([
@@ -121,7 +127,7 @@ class RepairJobsTable
                     ->fillForm(fn (RepairJob $record): array => [
                         'title' => $record->title,
                         'status' => __('filament.admin.resources.repair_jobs.statuses.'.$record->status),
-                        'scheduled_at' => optional($record->scheduled_at)->format('M j, Y H:i') ?? __('filament.admin.resources.repair_jobs.fields.status_fallback'),
+                        'scheduled_at' => optional($record->scheduled_at)->translatedFormat('M j, Y H:i') ?? __('filament.admin.resources.repair_jobs.fields.status_fallback'),
                         'reports' => $record->reports
                             ->map(fn ($report): array => [
                                 'tracking_id' => $report->public_tracking_id,

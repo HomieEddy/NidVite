@@ -23,13 +23,25 @@
             <div id="form-map" class="w-full h-52 rounded-xl border border-amber-100 mb-3" wire:ignore></div>
 
             <button type="button" data-action="capture-location"
-                class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-semibold rounded-xl shadow-sm text-white bg-linear-to-r from-amber-700 to-orange-500 hover:from-amber-800 hover:to-orange-600 active:scale-[0.98] transition-all duration-200 btn-touch interactive-lift">
+                class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-semibold rounded-xl shadow-sm text-white bg-gradient-to-r from-amber-700 to-orange-500 hover:from-amber-800 hover:to-orange-600 active:scale-[0.98] transition-all duration-200 btn-touch interactive-lift">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
                 {{ __('report.capture_location') }}
             </button>
+
+            <div x-show="gpsWarning" x-cloak data-action="gps-warning" class="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                <span x-text="gpsWarning"></span>
+            </div>
+
+            <div x-show="duplicateNudge" x-cloak data-action="duplicate-nudge" class="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                <p>
+                    <span x-text="duplicateNudgeText"></span>
+                    <a x-bind:href="duplicateNudge?.tracking_url" class="font-semibold underline ml-1" x-text="duplicateNudgeLinkText"></a>
+                </p>
+            </div>
+
             @error('location') <span class="mt-2 text-sm text-red-600 block">{{ $message }}</span> @enderror
         </div>
     </div>

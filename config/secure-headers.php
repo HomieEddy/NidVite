@@ -1,5 +1,14 @@
 <?php
 
+$reverbHost = env('VITE_REVERB_HOST', env('REVERB_HOST'));
+$reverbPort = env('VITE_REVERB_PORT', env('REVERB_PORT'));
+$reverbConnectSources = $reverbHost && $reverbPort
+    ? [
+        sprintf('ws://%s:%s', $reverbHost, $reverbPort),
+        sprintf('wss://%s:%s', $reverbHost, $reverbPort),
+    ]
+    : [];
+
 return [
     'server' => '',
 
@@ -20,7 +29,25 @@ return [
     'referrer-policy' => 'strict-origin-when-cross-origin',
 
     'permissions-policy' => [
-        'enable' => false,
+        'enable' => true,
+        'camera' => [
+            'none' => true,
+            '*' => false,
+            'self' => false,
+            'origins' => [],
+        ],
+        'microphone' => [
+            'none' => true,
+            '*' => false,
+            'self' => false,
+            'origins' => [],
+        ],
+        'geolocation' => [
+            'none' => false,
+            '*' => false,
+            'self' => true,
+            'origins' => [],
+        ],
     ],
 
     'hsts' => [
@@ -40,8 +67,8 @@ return [
 
         'script-src' => [
             'self' => true,
-            'unsafe-inline' => true,
-            'unsafe-eval' => true,
+            'unsafe-inline' => (bool) env('SECURE_HEADERS_CSP_UNSAFE_INLINE', false),
+            'unsafe-eval' => (bool) env('SECURE_HEADERS_CSP_UNSAFE_EVAL', false),
             'allow' => [
                 'https://www.google.com/recaptcha/',
                 'https://www.gstatic.com/recaptcha/',
@@ -78,6 +105,7 @@ return [
                 'https://www.gstatic.com/recaptcha/',
                 'https://www.recaptcha.net/recaptcha/',
                 'https://nominatim.openstreetmap.org',
+                ...$reverbConnectSources,
             ],
         ],
 

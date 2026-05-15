@@ -3,6 +3,8 @@
 @section('title', config('app.name'))
 
 @section('content')
+@include('components.dummy-data-notice')
+
 <div x-data="nidviteTracker(@js(__('home.report_not_found')))" class="relative flex flex-col min-h-0 overflow-hidden">
     <div class="pointer-events-none absolute -top-24 -left-16 h-56 w-56 rounded-full bg-amber-300/30 blur-3xl"></div>
     <div class="pointer-events-none absolute top-32 -right-20 h-64 w-64 rounded-full bg-teal-300/20 blur-3xl"></div>
@@ -44,9 +46,13 @@
                 <div x-show="showInput" x-cloak class="space-y-3 animate-fade-in">
                     <div class="bg-white/90 rounded-2xl shadow-xl p-4 space-y-3 border border-amber-100">
                         <div class="relative">
+                            <label for="home-tracking-id" class="sr-only">{{ __('home.actions.track_placeholder') }}</label>
                             <input type="text" x-model="trackingId"
+                                   id="home-tracking-id"
                                 class="block w-full rounded-xl border-gray-300/80 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-base transition px-4 py-3.5 pr-20 uppercase tracking-wide"
                                    placeholder="{{ __('home.actions.track_placeholder') }}"
+                                   autocomplete="off"
+                                   autocapitalize="characters"
                                    x-on:keydown.enter="lookup()">
                             <button type="button"
                                     x-on:click="lookup()"
@@ -93,6 +99,7 @@
             <div class="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between rounded-t-3xl z-10">
                 <h2 class="text-lg font-bold text-gray-900">{{ __('home.modal.title') }}</h2>
                 <button type="button" x-on:click="modalOpen = false" class="p-2 rounded-full hover:bg-gray-100 transition btn-touch">
+                    <span class="sr-only">{{ __('home.actions.cancel') }}</span>
                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>

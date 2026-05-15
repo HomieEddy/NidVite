@@ -2,7 +2,6 @@
 
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\GenerateDeviceFingerprint;
-use App\Http\Middleware\RemovePermissionsPolicyHeader;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\ThrottleReportSubmission;
 use Bepsvpt\SecureHeaders\SecureHeadersMiddleware;
@@ -35,7 +34,6 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $middleware->append(SecureHeadersMiddleware::class);
-        $middleware->append(RemovePermissionsPolicyHeader::class);
 
         $middleware->web(replace: [
             FrameworkEncryptCookies::class => EncryptCookies::class,

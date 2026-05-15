@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Expense;
 use App\Models\Material;
+use App\Models\MaterialPurchase;
 use App\Models\RepairJob;
 use App\Models\Report;
 use App\Models\ReportCategory;
@@ -17,90 +18,52 @@ use Illuminate\Support\Str;
 
 class TestDataSeeder extends Seeder
 {
-    private const TOTAL_REPORTS = 200;
+    private const TOTAL_REPORTS = 250;
 
-    private const REJECTED_REPORTS = 10;
+    private const REPAIRED_REPORTS = 188;
 
-    /** @var array<array{float, float}> */
-    private array $montrealCenters = [
-        [45.5017, -73.5673], // Ville-Marie
-        [45.5242, -73.5810], // Plateau
-        [45.5510, -73.6100], // Rosemont
-        [45.5600, -73.5850], // Villeray
-        [45.5300, -73.6200], // Outremont
-        [45.4750, -73.6150], // NDG
-        [45.4650, -73.6000], // Cote-des-Neiges
-        [45.5800, -73.5600], // Ahuntsic
-        [45.5550, -73.6350], // Saint-Laurent
-        [45.5100, -73.6400], // Snowdon
-    ];
+    private const VERIFIED_REPORTS = 37;
 
-    private array $streets = [
-        'Rue Sainte-Catherine',
-        'Boulevard Saint-Laurent',
-        'Rue Sherbrooke',
-        'Boulevard Rene-Levesque',
-        'Rue Ontario',
-        'Rue Saint-Denis',
-        'Rue Jean-Talon',
-        'Avenue Laurier',
-    ];
-
-    private array $boroughs = [
-        'Ville-Marie',
-        'Le Plateau-Mont-Royal',
-        'Rosemont-La Petite-Patrie',
-        'Villeray-Saint-Michel-Parc-Extension',
-        'Cote-des-Neiges-Notre-Dame-de-Grace',
-        'Ahuntsic-Cartierville',
-    ];
+    private const SCHEDULED_REPORTS = 25;
 
     public function run(): void
     {
-        $this->truncateTestData();
+        if (! app()->environment(['local', 'testing', 'staging'])) {
+            throw new \RuntimeException('TestDataSeeder may only run in local, testing, or staging environments.');
+        }
 
-        $users = $this->createStaffUsers();
+        DB::transaction(function (): void {
+            $this->truncateTestData();
 
-        $potholeCategory = ReportCategory::firstOrCreate(
-            ['slug' => 'pothole'],
-            [
-                'label_en' => 'Pothole',
-                'label_fr' => 'Nid-de-poule',
-                'icon' => 'heroicon-o-exclamation-triangle',
-                'color' => '#d97706',
-                'is_active' => true,
-                'sort_order' => 1,
-            ]
-        );
+            $users = $this->createStaffUsers();
+            $vendors = $this->seedVendors();
+            $materials = $this->seedAsphaltBagMaterials($vendors, (int) $users['accountant']->id);
+            $potholeCategory = $this->seedPotholeCategory();
 
-        $asphaltBags = Material::updateOrCreate(
-            ['sku' => 'ASP-001'],
-            [
-                'name' => 'Asphalt bags',
-                'description' => 'Asphalt bags for pothole repairs',
-                'unit' => 'bag',
-                'current_stock' => 10000,
-                'reserved_stock' => 0,
-                'min_stock_alert' => 500,
-                'avg_purchase_price' => 15.50,
-                'last_purchase_price' => 15.50,
-                'location' => 'Main warehouse',
-                'is_active' => true,
-            ]
-        );
+            $reports = $this->seedReports($potholeCategory->id);
+            $jobs = $this->seedJobsForReports($reports, (int) $users['manager']->id, (int) $users['service_worker']->id);
+            $this->seedAsphaltExpenses($jobs, $materials, $vendors, (int) $users['accountant']->id);
 
-        $vendors = $this->seedVendors();
+            $this->command?->info('TestDataSeeder completed.');
+            $this->command?->info('Reports: '.$reports->count().' ('.self::REPAIRED_REPORTS.' repaired, '.self::VERIFIED_REPORTS.' verified, '.self::SCHEDULED_REPORTS.' scheduled)');
+            $this->command?->info('Jobs: '.$jobs->count());
+            $this->command?->info('Expenses: '.$jobs->count().' (three asphalt bag sizes)');
+        });
+    }
 
-        $reports = $this->seedReports($potholeCategory->id);
-        $jobs = $this->seedJobsForReports($reports, (int) $users['manager']->id, (int) $users['service_worker']->id);
-        $this->seedAsphaltExpenses($jobs, $asphaltBags, $vendors, (int) $users['accountant']->id);
+    private function seedPotholeCategory(): ReportCategory
+    {
+        ReportCategory::query()->delete();
 
-        $validReports = self::TOTAL_REPORTS - self::REJECTED_REPORTS;
-
-        $this->command?->info('TestDataSeeder completed.');
-        $this->command?->info('Reports: '.$reports->count()." ({$validReports} valid + ".self::REJECTED_REPORTS.' rejected)');
-        $this->command?->info('Jobs: '.$jobs->count());
-        $this->command?->info('Expenses: '.$jobs->count().' (asphalt bags only)');
+        return ReportCategory::create([
+            'slug' => 'pothole',
+            'label_en' => 'Pothole',
+            'label_fr' => 'Nid-de-poule',
+            'icon' => 'circle-dot',
+            'color' => '#EF4444',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
     }
 
     /**
@@ -108,6 +71,8 @@ class TestDataSeeder extends Seeder
      */
     private function seedVendors(): Collection
     {
+        Vendor::query()->delete();
+
         $vendorRows = [
             [
                 'name' => 'Montreal Asphalt Supply',
@@ -156,9 +121,79 @@ class TestDataSeeder extends Seeder
         return $vendors;
     }
 
+    /**
+     * @param  Collection<int, Vendor>  $vendors
+     * @return Collection<int, Material>
+     */
+    private function seedAsphaltBagMaterials(Collection $vendors, int $accountantId): Collection
+    {
+        Material::query()->delete();
+
+        $materialRows = [
+            [
+                'vendor' => 'Montreal Asphalt Supply',
+                'sku' => 'ASP-SMALL-15KG',
+                'name' => 'Small asphalt repair bag',
+                'description' => '15 kg cold-mix asphalt bag for small pothole repairs.',
+                'current_stock' => 850,
+                'min_stock_alert' => 100,
+                'unit_cost' => 14.75,
+                'quantity' => 850,
+            ],
+            [
+                'vendor' => 'Nordic Road Materials',
+                'sku' => 'ASP-MEDIUM-25KG',
+                'name' => 'Medium asphalt repair bag',
+                'description' => '25 kg cold-mix asphalt bag for standard pothole repairs.',
+                'current_stock' => 650,
+                'min_stock_alert' => 80,
+                'unit_cost' => 22.50,
+                'quantity' => 650,
+            ],
+            [
+                'vendor' => 'Quebec Paving Depot',
+                'sku' => 'ASP-LARGE-40KG',
+                'name' => 'Large asphalt repair bag',
+                'description' => '40 kg cold-mix asphalt bag for large pothole repairs.',
+                'current_stock' => 425,
+                'min_stock_alert' => 60,
+                'unit_cost' => 34.25,
+                'quantity' => 425,
+            ],
+        ];
+
+        $materials = collect();
+
+        foreach ($materialRows as $row) {
+            $vendor = $vendors->firstWhere('name', $row['vendor']);
+            if (! $vendor) {
+                throw new \RuntimeException("Missing vendor '{$row['vendor']}' for material seed.");
+            }
+
+            $material = Material::create([
+                'sku' => $row['sku'],
+                'name' => $row['name'],
+                'description' => $row['description'],
+                'unit' => 'bag',
+                'current_stock' => $row['current_stock'],
+                'reserved_stock' => 0,
+                'min_stock_alert' => $row['min_stock_alert'],
+                'avg_purchase_price' => $row['unit_cost'],
+                'last_purchase_price' => $row['unit_cost'],
+                'location' => 'Main warehouse',
+                'is_active' => true,
+            ]);
+
+            $this->createMaterialPurchase($material, $vendor, (float) $row['quantity'], (float) $row['unit_cost'], $accountantId);
+            $materials->push($material);
+        }
+
+        return $materials;
+    }
+
     private function truncateTestData(): void
     {
-        DB::statement('TRUNCATE TABLE job_materials, job_workers, job_reports, expenses, repair_jobs, reports RESTART IDENTITY CASCADE');
+        DB::statement('TRUNCATE TABLE job_materials, job_workers, job_reports, material_purchases, expenses, repair_jobs, reports RESTART IDENTITY CASCADE');
     }
 
     /**
@@ -203,34 +238,44 @@ class TestDataSeeder extends Seeder
      */
     private function seedReports(int $potholeCategoryId): Collection
     {
-        $validReports = self::TOTAL_REPORTS - self::REJECTED_REPORTS;
+        $this->assertMontrealRoadsSeeded();
 
         $distribution = [
-            'repaired' => (int) floor($validReports * 0.60),
-            'scheduled' => (int) floor($validReports * 0.30),
-            'received' => (int) ($validReports - floor($validReports * 0.60) - floor($validReports * 0.30)),
-            'rejected' => self::REJECTED_REPORTS,
+            'repaired' => self::REPAIRED_REPORTS,
+            'verified' => self::VERIFIED_REPORTS,
+            'scheduled' => self::SCHEDULED_REPORTS,
         ];
 
         $reports = collect();
 
         foreach ($distribution as $status => $count) {
             for ($i = 0; $i < $count; $i++) {
-                $createdAt = now()->subDays(rand(0, 29))->subMinutes(rand(0, 1439));
+                $createdAt = match ($status) {
+                    'repaired' => now()->subDays(rand(7, 29))->subMinutes(rand(0, 1439)),
+                    'scheduled' => now()->subDays(rand(0, 7))->subMinutes(rand(0, 1439)),
+                    default => now()->subDays(rand(0, 14))->subMinutes(rand(0, 1439)),
+                };
                 $location = $this->randomMontrealLocation();
+                $nearestRoad = $this->getNearestRoadForLocation($location);
+                $streetName = $nearestRoad['street_name'];
+                $borough = trim($nearestRoad['borough']);
+
+                if ($borough === '' || in_array(mb_strtolower($borough), ['montreal', 'n/a'], true)) {
+                    $borough = null;
+                }
 
                 $reportId = DB::table('reports')->insertGetId([
                     'uuid' => (string) Str::uuid(),
-                    'public_tracking_id' => Report::generatePublicTrackingId(),
+                    'public_tracking_id' => $this->generatePublicTrackingId(),
                     'reporter_email' => 'citizen'.rand(1000, 999999).'@example.com',
                     'preferred_locale' => rand(0, 1) ? 'fr' : 'en',
                     'status' => $status,
                     'priority' => 'normal',
                     'category_id' => $potholeCategoryId,
                     'description' => 'Pothole reported on road surface.',
-                    'address' => rand(100, 9999).' '.$this->streets[array_rand($this->streets)],
-                    'neighborhood' => 'Montreal',
-                    'borough' => $this->boroughs[array_rand($this->boroughs)],
+                    'address' => rand(100, 9999).' '.$streetName,
+                    'neighborhood' => $borough,
+                    'borough' => $borough,
                     'geofence_passed' => true,
                     'is_spam' => false,
                     'first_scheduled_at' => in_array($status, ['scheduled', 'repaired'], true)
@@ -242,7 +287,7 @@ class TestDataSeeder extends Seeder
                     'completed_at' => $status === 'repaired'
                         ? $createdAt->copy()->addHours(rand(24, 168))
                         : null,
-                    'rejection_reason' => $status === 'rejected' ? 'out_of_scope' : null,
+                    'rejection_reason' => null,
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);
@@ -260,27 +305,82 @@ class TestDataSeeder extends Seeder
         return $reports;
     }
 
+    private function generatePublicTrackingId(): string
+    {
+        do {
+            $candidate = 'MTL'.strtoupper(Str::random(8));
+        } while (Report::query()->where('public_tracking_id', $candidate)->exists());
+
+        return $candidate;
+    }
+
     /**
-     * Generate a realistic location spread across Montreal.
+     * Generate a realistic location on an actual Montreal street.
      *
      * @return array{float, float} [lat, lng]
      */
     private function randomMontrealLocation(): array
     {
-        $center = $this->montrealCenters[array_rand($this->montrealCenters)];
+        $result = DB::selectOne(
+            'SELECT 
+                ST_Y(point) as lat, 
+                ST_X(point) as lng
+            FROM (
+                SELECT ST_LineInterpolatePoint(geom, random()) as point
+                FROM montreal_roads
+                ORDER BY RANDOM()
+                LIMIT 1
+            ) as t'
+        );
 
-        // About 100m to 1400m offset around a borough center.
-        $offsetLat = random_int(-120, 120) / 10000;
-        $offsetLng = random_int(-170, 170) / 10000;
+        if ($result) {
+            return [round($result->lat, 6), round($result->lng, 6)];
+        }
 
-        $lat = $center[0] + $offsetLat;
-        $lng = $center[1] + $offsetLng;
+        throw new \RuntimeException('Unable to generate demo report location because no Montreal road geometry was selected.');
+    }
 
-        // Keep points within a broad Montreal bounding box.
-        $lat = max(45.40, min(45.70, $lat));
-        $lng = max(-73.95, min(-73.45, $lng));
+    private function assertMontrealRoadsSeeded(): void
+    {
+        if (DB::table('montreal_roads')->where('source', 'mtl_geobase')->doesntExist()) {
+            throw new \RuntimeException('Montreal roads must be seeded from database/geo/mtl_geobase.json before TestDataSeeder runs.');
+        }
+    }
 
-        return [round($lat, 6), round($lng, 6)];
+    /**
+     * Get nearest road metadata for a location.
+     *
+     * @param  array{float, float}  $location  [lat, lng]
+     * @return array{street_name: string, borough: string}
+     */
+    private function getNearestRoadForLocation(array $location): array
+    {
+        $result = DB::selectOne(
+            'SELECT name, borough FROM montreal_roads
+             WHERE ST_DWithin(
+                geom::geography,
+                ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
+                50
+             )
+             ORDER BY ST_Distance(geom::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography)
+             LIMIT 1',
+            [$location[1], $location[0], $location[1], $location[0]]
+        );
+
+        if (! $result) {
+            return collect([
+                ['street_name' => 'Rue Sainte-Catherine', 'borough' => 'Ville-Marie'],
+                ['street_name' => 'Avenue du Parc', 'borough' => 'Le Plateau-Mont-Royal'],
+                ['street_name' => 'Boulevard Saint-Laurent', 'borough' => 'Rosemont-La Petite-Patrie'],
+                ['street_name' => 'Rue Jean-Talon', 'borough' => 'Villeray-Saint-Michel-Parc-Extension'],
+                ['street_name' => 'Chemin Queen Mary', 'borough' => 'Cote-des-Neiges-Notre-Dame-de-Grace'],
+            ])->random();
+        }
+
+        return [
+            'street_name' => $result->name ? trim($result->name) : 'Rue Sainte-Catherine',
+            'borough' => $result->borough ? trim($result->borough) : 'Ville-Marie',
+        ];
     }
 
     /**
@@ -292,14 +392,14 @@ class TestDataSeeder extends Seeder
         $jobs = collect();
 
         foreach ($reports as $report) {
-            if ($report->status === 'rejected') {
+            if ($report->status === 'verified') {
                 continue;
             }
 
             $jobStatus = match ($report->status) {
                 'repaired' => 'completed',
                 'scheduled' => 'planned',
-                default => 'planned',
+                default => throw new \RuntimeException("Unexpected report status '{$report->status}' for job seed."),
             };
 
             $scheduledAt = $report->first_scheduled_at ?? $report->created_at->copy()->addDays(rand(1, 5));
@@ -311,8 +411,8 @@ class TestDataSeeder extends Seeder
                 : null;
 
             $job = RepairJob::create([
-                'title' => 'Pothole repair '.$report->uuid,
-                'description' => 'Job created from report '.$report->uuid,
+                'title' => $this->repairJobTitle($report, $jobStatus),
+                'description' => 'Pothole repair generated from public report '.$report->public_tracking_id.'.',
                 'scheduled_at' => $scheduledAt,
                 'started_at' => $startedAt,
                 'completed_at' => $completedAt,
@@ -331,15 +431,28 @@ class TestDataSeeder extends Seeder
         return $jobs;
     }
 
+    private function repairJobTitle(Report $report, string $jobStatus): string
+    {
+        $statusLabel = $jobStatus === 'completed' ? 'Completed' : 'Scheduled';
+        $area = $report->borough ?: $report->neighborhood ?: 'Montreal';
+        $street = $report->address ? preg_replace('/^\d+\s+/', '', $report->address) : 'unpinned street';
+        $date = ($jobStatus === 'completed' ? $report->completed_at : $report->first_scheduled_at)?->format('M j');
+
+        return trim("{$statusLabel} pothole repair - {$area} - {$street}".($date ? " ({$date})" : ''));
+    }
+
     /**
      * @param  Collection<int, RepairJob>  $jobs
+     * @param  Collection<int, Material>  $materials
+     * @param  Collection<int, Vendor>  $vendors
      */
-    private function seedAsphaltExpenses(Collection $jobs, Material $asphaltBags, Collection $vendors, int $accountantId): void
+    private function seedAsphaltExpenses(Collection $jobs, Collection $materials, Collection $vendors, int $accountantId): void
     {
         foreach ($jobs as $job) {
-            $vendor = $vendors->random();
-            $quantity = $job->status === 'completed' ? rand(4, 12) : rand(1, 4);
-            $unitCost = 15.50;
+            $material = $materials->random();
+            $vendor = $this->vendorForMaterial($material, $vendors);
+            $quantity = $job->status === 'completed' ? rand(1, 6) : rand(1, 3);
+            $unitCost = (float) $material->last_purchase_price;
             $subtotal = $quantity * $unitCost;
             $taxRate = 0.14975;
             $taxAmount = round($subtotal * $taxRate, 2);
@@ -347,8 +460,8 @@ class TestDataSeeder extends Seeder
 
             Expense::create([
                 'repair_job_id' => $job->id,
-                'material_id' => $asphaltBags->id,
-                'description' => 'Asphalt bags',
+                'material_id' => $material->id,
+                'description' => $material->name,
                 'quantity' => $quantity,
                 'unit' => 'bag',
                 'unit_cost' => $unitCost,
@@ -365,7 +478,7 @@ class TestDataSeeder extends Seeder
             DB::table('job_materials')->updateOrInsert(
                 [
                     'repair_job_id' => $job->id,
-                    'material_id' => $asphaltBags->id,
+                    'material_id' => $material->id,
                 ],
                 [
                     'quantity_planned' => $quantity,
@@ -376,5 +489,47 @@ class TestDataSeeder extends Seeder
                 ]
             );
         }
+    }
+
+    /**
+     * @param  Collection<int, Vendor>  $vendors
+     */
+    private function vendorForMaterial(Material $material, Collection $vendors): Vendor
+    {
+        $vendorName = match ($material->sku) {
+            'ASP-SMALL-15KG' => 'Montreal Asphalt Supply',
+            'ASP-MEDIUM-25KG' => 'Nordic Road Materials',
+            'ASP-LARGE-40KG' => 'Quebec Paving Depot',
+            default => null,
+        };
+
+        $vendor = $vendorName ? $vendors->firstWhere('name', $vendorName) : null;
+
+        if (! $vendor) {
+            throw new \RuntimeException("Missing vendor for asphalt material '{$material->sku}'.");
+        }
+
+        return $vendor;
+    }
+
+    private function createMaterialPurchase(Material $material, Vendor $vendor, float $quantity, float $unitCost, int $accountantId): void
+    {
+        $subtotal = $quantity * $unitCost;
+        $taxRate = 0.14975;
+        $taxAmount = round($subtotal * $taxRate, 2);
+
+        MaterialPurchase::create([
+            'material_id' => $material->id,
+            'quantity' => $quantity,
+            'unit_cost' => $unitCost,
+            'subtotal' => round($subtotal, 2),
+            'tax_rate' => $taxRate,
+            'tax_amount' => $taxAmount,
+            'total' => round($subtotal + $taxAmount, 2),
+            'vendor' => $vendor->name,
+            'stock_updated' => true,
+            'purchased_at' => now()->subDays(35),
+            'created_by' => $accountantId,
+        ]);
     }
 }

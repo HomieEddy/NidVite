@@ -161,7 +161,7 @@ In a separate terminal:
 
 Processes background jobs: status change emails, media conversions.
 
-Post deploy, clear OPcache:
+Post-deploy, clear OPcache:
 
 ```bash
 ./vendor/bin/sail artisan ops:opcache-clear

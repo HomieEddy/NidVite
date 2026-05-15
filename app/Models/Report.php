@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ReportStatus;
 use App\Mail\ReportStatusUpdated;
 use App\Models\Concerns\HasReportCoordinates;
+use App\Services\Reports\ReliabilityScoreService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,8 +13,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -22,7 +25,13 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Throwable;
 
+/**
+ * @property float|null $latitude Dynamic property added by withCoordinates() scope
+ * @property float|null $longitude Dynamic property added by withCoordinates() scope
+ * @property float|null $avg_days Aggregated average days from query
+ */
 class Report extends Model implements HasMedia
 {
     use HasFactory, HasReportCoordinates, InteractsWithMedia, LogsActivity, SoftDeletes;
@@ -41,12 +50,16 @@ class Report extends Model implements HasMedia
             if (is_string($fingerprint) && $fingerprint !== '') {
                 $report->device_fingerprint_hash = $fingerprint;
             }
+
+            $report->applyReliabilityScoreSnapshot();
         });
 
         static::updating(function (Report $report): void {
             if ($report->isDirty('status') && ! $report->allowStatusTransitionWrite) {
                 throw new InvalidArgumentException('Direct status writes are not allowed. Use transitionTo().');
             }
+
+            $report->applyReliabilityScoreSnapshot();
         });
     }
 
@@ -55,6 +68,7 @@ class Report extends Model implements HasMedia
         'public_tracking_id',
         'reporter_email',
         'preferred_locale',
+        'notification_preference',
         'address',
         'neighborhood',
         'borough',
@@ -90,7 +104,48 @@ class Report extends Model implements HasMedia
         'location_accuracy' => 'float',
         'road_distance_meters' => 'float',
         'location_accuracy_passed' => 'boolean',
+        'contractor_user_id' => 'integer',
+        'reliability_score' => 'integer',
+        'reliability_breakdown' => 'array',
+        'reliability_scored_at' => 'datetime',
     ];
+
+    private function applyReliabilityScoreSnapshot(): void
+    {
+        if (! $this->canPersistReliabilitySnapshot()) {
+            return;
+        }
+
+        $snapshot = app(ReliabilityScoreService::class)->score($this);
+
+        $this->reliability_score = $snapshot['score'];
+        $this->reliability_breakdown = $snapshot['breakdown'];
+        $this->reliability_scored_at = now();
+    }
+
+    private function canPersistReliabilitySnapshot(): bool
+    {
+        static $cache = [];
+
+        $connection = $this->getConnectionName() ?? config('database.default');
+        $key = $connection.'|'.$this->getTable();
+
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        try {
+            $schema = Schema::connection($connection);
+
+            return $cache[$key] = $schema->hasColumn($this->getTable(), 'reliability_score')
+                && $schema->hasColumn($this->getTable(), 'reliability_breakdown')
+                && $schema->hasColumn($this->getTable(), 'reliability_scored_at');
+        } catch (Throwable $e) {
+            report($e);
+
+            return false;
+        }
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -121,6 +176,11 @@ class Report extends Model implements HasMedia
         return $this->belongsTo(ReportCategory::class, 'category_id');
     }
 
+    public function contractor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'contractor_user_id');
+    }
+
     public function repairJobs(): BelongsToMany
     {
         return $this->belongsToMany(RepairJob::class, 'job_reports')
@@ -136,6 +196,11 @@ class Report extends Model implements HasMedia
     public function suspiciousActivities(): HasMany
     {
         return $this->hasMany(SuspiciousActivity::class);
+    }
+
+    public function followers(): HasMany
+    {
+        return $this->hasMany(ReportFollower::class);
     }
 
     /**
@@ -226,7 +291,7 @@ class Report extends Model implements HasMedia
             $this->allowStatusTransitionWrite = true;
             $this->status = $newStatus;
 
-            if ($newStatus === ReportStatus::Rejected->value && $reason !== null) {
+            if ($newStatus === ReportStatus::Rejected->value) {
                 $this->rejection_reason = $reason;
             }
 
@@ -256,12 +321,72 @@ class Report extends Model implements HasMedia
      */
     protected function sendStatusNotification(string $oldStatus): void
     {
-        if ($this->reporter_email === null) {
-            return;
+        $reporterEmail = $this->reporter_email !== null ? mb_strtolower($this->reporter_email) : null;
+        $reporterSent = false;
+
+        if ($reporterEmail !== null) {
+            $preference = $this->notification_preference ?? 'all';
+
+            if ($this->shouldReceiveStatusForPreference($preference, $this->status)) {
+                Mail::to($reporterEmail)
+                    ->send(new ReportStatusUpdated($this, $oldStatus));
+
+                $reporterSent = true;
+            }
         }
 
-        Mail::to($this->reporter_email)
-            ->send(new ReportStatusUpdated($this, $oldStatus));
+        $today = now()->toDateString();
+
+        $this->followers()
+            ->where('is_active', true)
+            ->whereNull('unsubscribed_at')
+            ->where(function (Builder $query): void {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->where(function (Builder $query) use ($today): void {
+                $query->whereNull('last_notified_on')
+                    ->orWhere('last_notified_on', '<', $today);
+            })
+            ->get()
+            ->each(function (ReportFollower $follower) use ($oldStatus, $reporterEmail, $reporterSent, $today): void {
+                if ($reporterSent && $reporterEmail !== null && $follower->email === $reporterEmail) {
+                    return;
+                }
+
+                Mail::to($follower->email)->send(
+                    new ReportStatusUpdated(
+                        $this,
+                        $oldStatus,
+                        $follower->signedUnsubscribeUrl(),
+                        $follower->preferred_locale
+                    )
+                );
+
+                $follower->forceFill(['last_notified_on' => $today])->save();
+            });
+    }
+
+    protected function shouldReceiveStatusForPreference(string $preference, string $newStatus): bool
+    {
+        if ($preference === 'major') {
+            return in_array($newStatus, [
+                ReportStatus::Verified->value,
+                ReportStatus::Scheduled->value,
+                ReportStatus::InProgress->value,
+                ReportStatus::Repaired->value,
+                ReportStatus::Rejected->value,
+            ], true);
+        }
+
+        if ($preference === 'resolved') {
+            return in_array($newStatus, [
+                ReportStatus::Repaired->value,
+                ReportStatus::Rejected->value,
+            ], true);
+        }
+
+        return true;
     }
 
     /**
@@ -303,7 +428,7 @@ class Report extends Model implements HasMedia
 
         activity('report_validation_override')
             ->performedOn($this)
-            ->causedBy(auth()->user())
+            ->causedBy(Auth::user())
             ->withProperties([
                 'old_decision' => $oldDecision,
                 'new_decision' => $decision,

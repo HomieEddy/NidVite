@@ -9,16 +9,33 @@
     </div>
 
     @if($location)
-        <div style="padding: 14px; border: 1px solid #e5e7eb; border-radius: 0.5rem; background: #f9fafb;">
-            <p style="margin: 0 0 6px; font-size: 0.875rem; color: #111827;">
-                <strong>{{ __('filament.admin.modals.report_location.coordinates') }}</strong> {{ number_format($location->lat, 6) }}, {{ number_format($location->lng, 6) }}
-            </p>
-            <p style="margin: 0; font-size: 0.75rem; color: #6b7280;">
-                {{ __('filament.admin.modals.report_location.hint') }}
-            </p>
-            <p style="margin: 10px 0 0;">
-                <a href="https://www.openstreetmap.org/?mlat={{ $location->lat }}&mlon={{ $location->lng }}#map=15/{{ $location->lat }}/{{ $location->lng }}" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #d97706; text-decoration: none; font-weight: 600;">{{ __('filament.admin.modals.report_location.open_osm') }}</a>
-            </p>
+        @php
+            $lat = (float) $location->lat;
+            $lng = (float) $location->lng;
+            $delta = 0.0045;
+            $left = $lng - $delta;
+            $right = $lng + $delta;
+            $top = $lat + $delta;
+            $bottom = $lat - $delta;
+            $embedSrc = sprintf(
+                'https://www.openstreetmap.org/export/embed.html?bbox=%F%%2C%F%%2C%F%%2C%F&layer=mapnik&marker=%F%%2C%F',
+                $left,
+                $bottom,
+                $right,
+                $top,
+                $lat,
+                $lng
+            );
+        @endphp
+
+        <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; overflow: hidden; background: #f9fafb;">
+            <iframe
+                src="{{ $embedSrc }}"
+                style="display: block; width: 100%; height: 280px; border: 0;"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                title="{{ __('filament.admin.modals.report_location.report_map') }}"
+            ></iframe>
         </div>
     @else
         <div style="height: 200px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 0.5rem;">

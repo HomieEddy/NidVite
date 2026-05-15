@@ -20,9 +20,7 @@ class MapController extends Controller
             return view('map-embed');
         }
 
-        return view('map', [
-            'embedded' => $request->boolean('embed'),
-        ]);
+        return view('map');
     }
 
     /**
@@ -31,6 +29,7 @@ class MapController extends Controller
     public function geojson(Request $request): JsonResponse
     {
         $status = $request->query('status');
+        $borough = trim((string) $request->query('borough', ''));
         $validStatuses = array_values(array_filter(
             ReportStatus::values(),
             fn (string $value): bool => $value !== ReportStatus::Rejected->value
@@ -54,6 +53,10 @@ class MapController extends Controller
 
         if ($status !== null) {
             $reportsQuery->where('status', $status);
+        }
+
+        if ($borough !== '') {
+            $reportsQuery->where('borough', $borough);
         }
 
         $reports = $reportsQuery->get();

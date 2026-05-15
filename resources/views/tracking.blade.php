@@ -22,6 +22,18 @@
 </div>
 
 <div class="max-w-3xl mx-auto px-4 py-4">
+    @if(session('tracking_notice'))
+        <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {{ session('tracking_notice') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
     @php
         $statusClass = match($report->status) {
             'received' => 'bg-gray-100 text-gray-800',
@@ -92,6 +104,69 @@
                 </div>
             </div>
         @endif
+
+        @if($etaHint)
+            <div class="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-3" data-testid="tracking-eta-hint">
+                <p class="text-sm font-semibold text-blue-900">{{ __('tracking.eta_title') }}</p>
+                <p class="text-sm text-blue-800 mt-1">{{ $etaHint['label'] }}</p>
+                <p class="text-xs text-blue-700 mt-1">{{ $etaHint['disclaimer'] }}</p>
+            </div>
+        @endif
+
+        <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3" data-testid="tracking-qr-card">
+            <p class="text-sm font-semibold text-gray-900">{{ __('tracking.qr_title') }}</p>
+            <p class="text-xs text-gray-600 mt-1">{{ __('tracking.qr_help') }}</p>
+            <div class="mt-3 inline-flex rounded-lg bg-white p-2 border border-gray-200">
+                {!! $trackingQrSvg !!}
+            </div>
+            <p class="mt-2 text-xs text-gray-500 break-all">{{ $trackingUrl }}</p>
+        </div>
+    </div>
+
+    <div class="citizen-card p-5 mb-4 animate-fade-in">
+        <h3 class="text-base font-bold text-gray-900 mb-3">{{ __('tracking.notifications_title') }}</h3>
+        <p class="text-sm text-gray-600 mb-3">{{ __('tracking.notifications_help') }}</p>
+
+        <form method="POST" action="{{ route('report.tracking.preference.update', ['trackingId' => $report->public_tracking_id]) }}" class="space-y-3">
+            @csrf
+            <label for="notification_preference" class="text-sm font-semibold text-gray-800">{{ __('tracking.notifications_frequency_label') }}</label>
+            <select
+                id="notification_preference"
+                name="notification_preference"
+                class="w-full rounded-lg border-gray-300 focus:border-amber-500 focus:ring-amber-500"
+            >
+                <option value="all" @selected(($report->notification_preference ?? 'all') === 'all')>{{ __('tracking.notifications_frequency_all') }}</option>
+                <option value="major" @selected(($report->notification_preference ?? 'all') === 'major')>{{ __('tracking.notifications_frequency_major') }}</option>
+                <option value="resolved" @selected(($report->notification_preference ?? 'all') === 'resolved')>{{ __('tracking.notifications_frequency_resolved') }}</option>
+            </select>
+
+            <button type="submit" class="inline-flex items-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 transition btn-touch">
+                {{ __('tracking.notifications_save') }}
+            </button>
+        </form>
+    </div>
+
+    <div class="citizen-card p-5 mb-4 animate-fade-in">
+        <h3 class="text-base font-bold text-gray-900 mb-3">{{ __('tracking.follow_title') }}</h3>
+        <p class="text-sm text-gray-600 mb-3">{{ __('tracking.follow_help') }}</p>
+
+        <form method="POST" action="{{ route('report.followers.store', ['trackingId' => $report->public_tracking_id]) }}" class="space-y-3">
+            @csrf
+            <label for="follow_email" class="text-sm font-semibold text-gray-800">{{ __('tracking.follow_email_label') }}</label>
+            <input
+                id="follow_email"
+                name="email"
+                type="email"
+                required
+                autocomplete="email"
+                placeholder="{{ __('report.email_placeholder') }}"
+                class="w-full rounded-lg border-gray-300 focus:border-amber-500 focus:ring-amber-500"
+            >
+
+            <button type="submit" class="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 transition btn-touch">
+                {{ __('tracking.follow_submit') }}
+            </button>
+        </form>
     </div>
 
     {{-- Timeline --}}

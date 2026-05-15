@@ -56,14 +56,14 @@ class ExpensesTable
                     ->money('CAD')
                     ->sortable(),
                 TextColumn::make('incurred_at')
-                    ->dateTime('M j, Y')
+                    ->dateTime()
                     ->sortable(),
                 TextColumn::make('creator.name')
                     ->label(__('filament.admin.resources.expenses.fields.created_by'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('created_at')
-                    ->dateTime('M j, Y')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -81,7 +81,7 @@ class ExpensesTable
                     ->label(__('filament.admin.resources.expenses.fields.repair_job')),
                 Group::make('incurred_at')
                     ->label(__('filament.admin.resources.expenses.fields.month'))
-                    ->getTitleFromRecordUsing(fn ($record) => $record->incurred_at?->format('M Y') ?? __('filament.admin.resources.expenses.fields.unknown')),
+                    ->getTitleFromRecordUsing(fn ($record) => $record->incurred_at?->translatedFormat('M Y') ?? __('filament.admin.resources.expenses.fields.unknown')),
             ])
             ->defaultGroup('vendorRelation.name')
             ->recordActions([

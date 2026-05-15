@@ -40,6 +40,27 @@ it('queues critical alerts for admin and manager only', function () {
         return $job->afterCommit === true;
     });
     Queue::assertPushed(SendCriticalAlertEmailJob::class, 2);
+
+    $logIds = EmailDeliveryLog::query()->pluck('id')->all();
+
+    Queue::assertPushed(SendCriticalAlertEmailJob::class, function (SendCriticalAlertEmailJob $job) use ($logIds): bool {
+        return in_array($job->deliveryLogId, $logIds, true)
+            && in_array($job->userId, EmailDeliveryLog::query()->pluck('user_id')->all(), true);
+    });
+});
+
+it('skips inactive recipients even when their role is eligible', function () {
+    Queue::fake();
+
+    User::factory()->create(['role_id' => Role::where('slug', 'admin')->value('id'), 'is_active' => true]);
+    User::factory()->create(['role_id' => Role::where('slug', 'manager')->value('id'), 'is_active' => false]);
+
+    $report = Report::factory()->create(['priority' => 'critical']);
+
+    app(SendCriticalReportAlerts::class)->handle(new ReportCreated($report));
+
+    expect(EmailDeliveryLog::query()->count())->toBe(1);
+    Queue::assertPushed(SendCriticalAlertEmailJob::class, 1);
 });
 
 it('does not duplicate logs or jobs when alert event is handled twice', function () {

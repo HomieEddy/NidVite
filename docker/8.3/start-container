@@ -20,7 +20,7 @@ mkdir -p /var/www/html/storage/framework/views \
     /var/www/html/storage/framework/cache \
     /var/www/html/storage/framework/sessions \
     /var/www/html/bootstrap/cache
-chmod -R ug+rwX /var/www/html/storage /var/www/html/bootstrap/cache || true
+chmod -R ug+rwX /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Disable Xdebug by default for performance (can be enabled via SAIL_XDEBUG_MODE=develop)
 if [ "${SAIL_XDEBUG_MODE:-off}" = "off" ]; then
