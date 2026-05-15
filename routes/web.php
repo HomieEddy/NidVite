@@ -92,9 +92,9 @@ Route::get('/locale/{locale}', function (string $locale) {
             value: $locale,
             minutes: 60 * 24 * 365,
             path: '/',
-            secure: (bool) config('session.secure'),
+            secure: config('session.secure'),
             httpOnly: true,
-            sameSite: (string) config('session.same_site', 'lax'),
+            sameSite: config('session.same_site', 'lax'),
         ));
 
         return redirect()->back();

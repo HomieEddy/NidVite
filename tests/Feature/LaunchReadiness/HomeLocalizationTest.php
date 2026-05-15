@@ -31,11 +31,24 @@ it('renders localized homepage call-to-actions in french and english', function 
 });
 
 it('switches locale using a cookie without writing to the session', function () {
-    $this->from('/')
-        ->get(route('locale.switch', ['locale' => 'en']))
+    config()->set('session.secure', true);
+    config()->set('session.same_site', 'lax');
+
+    $response = $this->from('/')
+        ->get(route('locale.switch', ['locale' => 'en']));
+
+    $response
         ->assertRedirect('/')
         ->assertCookie('locale')
         ->assertSessionMissing('locale');
+
+    $localeCookie = collect($response->headers->getCookies())
+        ->first(fn ($cookie): bool => $cookie->getName() === 'locale');
+
+    expect($localeCookie)->not->toBeNull()
+        ->and($localeCookie->isSecure())->toBeTrue()
+        ->and($localeCookie->isHttpOnly())->toBeTrue()
+        ->and($localeCookie->getSameSite())->toBe('lax');
 });
 
 it('rejects unsupported locale switches without writing to the session', function () {
