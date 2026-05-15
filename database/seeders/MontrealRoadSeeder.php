@@ -8,10 +8,10 @@ use RuntimeException;
 
 class MontrealRoadSeeder extends Seeder
 {
+    private const INSERT_CHUNK_SIZE = 500;
+
     public function run(): void
     {
-        DB::table('montreal_roads')->delete();
-
         $geojsonPath = database_path('geo/mtl_geobase.json');
         $geojsonContents = file_get_contents($geojsonPath);
         if ($geojsonContents === false) {
@@ -26,6 +26,8 @@ class MontrealRoadSeeder extends Seeder
         if (! isset($geojson['features'])) {
             throw new RuntimeException('GeoJSON missing features array');
         }
+
+        $rows = [];
 
         foreach ($geojson['features'] as $feature) {
             if (! isset($feature['geometry']['type']) || $feature['geometry']['type'] !== 'LineString') {
@@ -46,11 +48,29 @@ class MontrealRoadSeeder extends Seeder
             $name = trim($props['ODONYME'] ?? '') ?: trim($props['NOM_VOIE'] ?? '') ?: 'Unnamed';
             $borough = trim($props['ARR_GCH'] ?? '') ?: trim($props['ARR_DRT'] ?? '') ?: 'Montreal';
 
-            DB::statement(
-                'INSERT INTO montreal_roads (name, borough, source, geom, created_at, updated_at)
-                 VALUES (?, ?, ?, ST_GeomFromText(?, 4326), NOW(), NOW())',
-                [$name, $borough, 'mtl_geobase', $wkt]
-            );
+            $rows[] = [$name, $borough, 'mtl_geobase', $wkt];
         }
+
+        DB::transaction(function () use ($rows): void {
+            DB::statement('TRUNCATE TABLE montreal_roads RESTART IDENTITY');
+
+            foreach (array_chunk($rows, self::INSERT_CHUNK_SIZE) as $chunk) {
+                $placeholders = [];
+                $bindings = [];
+
+                foreach ($chunk as $row) {
+                    $placeholders[] = '(?, ?, ?, ST_GeomFromText(?, 4326), NOW(), NOW())';
+                    array_push($bindings, ...$row);
+                }
+
+                DB::statement(
+                    'INSERT INTO montreal_roads (name, borough, source, geom, created_at, updated_at) VALUES '
+                    .implode(', ', $placeholders),
+                    $bindings
+                );
+            }
+        });
+
+        $this->command?->info('MontrealRoadSeeder imported '.count($rows).' mtl_geobase road segments.');
     }
 }
